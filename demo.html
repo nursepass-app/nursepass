@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NursePass — のあ先生と一緒に、国試を突破しよう</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pink:#e8739a;
+  --pink-light:#f5c6d8;
+  --pink-pale:#fdf0f5;
+  --pink-deep:#c4547a;
+  --sakura:#fbeaf0;
+  --text:#3a2030;
+  --text-mid:#7a5060;
+  --text-soft:#b08090;
+  --white:#fff;
+  --grad:linear-gradient(135deg,#fdf0f5 0%,#fff5f8 50%,#fbeef4 100%);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--grad);color:var(--text);overflow-x:hidden}
+
+/* PETALS */
+.petal-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+.petal{position:absolute;width:8px;height:10px;background:linear-gradient(135deg,#f9c8d8,#f5a0bf);border-radius:50% 50% 50% 0;opacity:0;animation:fall linear infinite}
+@keyframes fall{
+  0%{transform:translateY(-20px) rotate(0deg) translateX(0);opacity:0.7}
+  100%{transform:translateY(110vh) rotate(360deg) translateX(60px);opacity:0}
+}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;z-index:100;background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--pink-light);padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-family:'Zen Kaku Gothic New',sans-serif;font-size:20px;font-weight:700;color:var(--pink-deep);letter-spacing:.05em}
+.nav-logo span{color:var(--text-soft);font-size:12px;font-weight:400;margin-left:8px}
+.nav-cta{background:var(--pink);color:#fff;border:none;padding:8px 20px;border-radius:24px;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:.2s}
+.nav-cta:hover{background:var(--pink-deep)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:100px 24px 60px;position:relative;z-index:1}
+.hero-badge{display:inline-block;background:rgba(232,115,154,0.12);color:var(--pink-deep);font-size:12px;font-weight:700;padding:6px 16px;border-radius:20px;border:1px solid var(--pink-light);margin-bottom:24px;letter-spacing:.08em}
+.hero h1{font-family:'Zen Kaku Gothic New',sans-serif;font-size:clamp(32px,7vw,64px);font-weight:700;line-height:1.2;color:var(--text);margin-bottom:20px}
+.hero h1 em{font-style:normal;color:var(--pink)}
+.hero p{font-size:clamp(15px,2.5vw,18px);color:var(--text-mid);line-height:1.8;max-width:520px;margin:0 auto 40px}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:60px}
+.btn-primary{background:var(--pink);color:#fff;padding:14px 36px;border-radius:30px;font-size:16px;font-weight:700;text-decoration:none;transition:.2s;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+.btn-primary:hover{background:var(--pink-deep);transform:translateY(-2px)}
+.btn-secondary{background:rgba(255,255,255,0.8);color:var(--pink-deep);padding:14px 36px;border-radius:30px;font-size:16px;font-weight:700;text-decoration:none;border:1.5px solid var(--pink-light);transition:.2s;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+.btn-secondary:hover{background:#fff;border-color:var(--pink)}
+
+/* NOA CARD */
+.noa-card{background:linear-gradient(135deg,rgba(255,240,248,0.96),rgba(255,220,238,0.92));border:1.5px solid rgba(212,68,154,0.2);border-radius:20px;padding:18px 20px;max-width:420px;margin:0 auto;display:flex;align-items:flex-start;gap:14px;box-shadow:0 4px 24px rgba(212,68,154,0.12);animation:slideUp .8s ease both}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.noa-avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#f9a8d4,#ec4899);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px}
+.noa-msg p.label{font-size:10px;color:#d4449a;font-weight:700;letter-spacing:.06em;margin-bottom:6px}
+.noa-msg p.msg{font-size:14px;color:#3d1a4a;line-height:1.7;font-weight:500}
+.noa-msg .footer{margin-top:10px;display:flex;gap:8px;font-size:11px;color:#c080b0}
+.date-badge{background:rgba(212,68,154,0.1);color:#d4449a;padding:2px 10px;border-radius:8px;font-weight:700}
+
+/* STATS */
+.stats{position:relative;z-index:1;padding:20px 24px 60px}
+.stats-inner{max-width:800px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
+.stat-card{background:rgba(255,255,255,0.85);border-radius:16px;border:1px solid var(--pink-light);padding:24px 20px;text-align:center;backdrop-filter:blur(8px)}
+.stat-num{font-family:'Zen Kaku Gothic New',sans-serif;font-size:36px;font-weight:700;color:var(--pink);margin-bottom:6px}
+.stat-label{font-size:13px;color:var(--text-mid);line-height:1.5}
+
+/* SECTION */
+section{position:relative;z-index:1;padding:80px 24px}
+.section-inner{max-width:900px;margin:0 auto}
+.section-title{font-family:'Zen Kaku Gothic New',sans-serif;font-size:clamp(22px,4vw,32px);font-weight:700;text-align:center;margin-bottom:12px;color:var(--text)}
+.section-sub{text-align:center;color:var(--text-mid);font-size:15px;margin-bottom:48px;line-height:1.7}
+
+/* FEATURES */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.feature-card{background:rgba(255,255,255,0.9);border-radius:20px;padding:28px 24px;border:1px solid var(--pink-light);transition:.2s;position:relative;overflow:hidden}
+.feature-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(212,68,154,0.12)}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pink-light),var(--pink))}
+.feature-icon{font-size:28px;margin-bottom:14px}
+.feature-card h3{font-size:17px;font-weight:700;color:var(--text);margin-bottom:10px}
+.feature-card p{font-size:14px;color:var(--text-mid);line-height:1.7}
+.feature-tag{display:inline-block;background:var(--sakura);color:var(--pink-deep);font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;margin-top:12px}
+
+/* NOA SECTION */
+.noa-section{background:linear-gradient(135deg,rgba(253,240,245,0.8),rgba(255,240,250,0.9));border-radius:32px;padding:60px 40px;text-align:center;border:1px solid var(--pink-light)}
+.noa-big-avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#f9a8d4,#ec4899);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;margin:0 auto 20px;box-shadow:0 8px 24px rgba(212,68,154,0.25)}
+.noa-section h2{font-family:'Zen Kaku Gothic New',sans-serif;font-size:26px;font-weight:700;margin-bottom:12px;color:var(--text)}
+.noa-section p{font-size:15px;color:var(--text-mid);line-height:1.8;max-width:480px;margin:0 auto 28px}
+.noa-tags{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:24px}
+.noa-tag{background:rgba(255,255,255,0.85);color:var(--pink-deep);font-size:13px;padding:6px 16px;border-radius:20px;border:1px solid var(--pink-light);font-weight:500}
+
+/* QUESTIONS */
+.q-tabs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:32px}
+.q-tab{padding:10px 24px;border-radius:24px;border:1.5px solid var(--pink-light);background:rgba(255,255,255,0.8);font-size:14px;font-weight:700;color:var(--text-mid);cursor:pointer;transition:.2s}
+.q-tab.active{background:var(--pink);color:#fff;border-color:var(--pink)}
+.q-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.q-card{background:rgba(255,255,255,0.9);border-radius:16px;padding:20px;border:1px solid var(--pink-light);text-align:center}
+.q-card-num{font-size:28px;font-weight:700;color:var(--pink);margin-bottom:6px;font-family:'Zen Kaku Gothic New',sans-serif}
+.q-card-label{font-size:13px;color:var(--text-mid)}
+
+/* FIELDS */
+.field-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
+.chip{padding:7px 16px;border-radius:20px;border:1px solid var(--pink-light);background:rgba(255,255,255,0.85);font-size:13px;color:var(--text-mid);cursor:pointer;transition:.15s}
+.chip:hover,.chip.on{background:var(--pink);color:#fff;border-color:var(--pink)}
+
+/* CTA */
+.cta-section{text-align:center;padding:80px 24px}
+.cta-box{background:linear-gradient(135deg,#e8739a,#c4547a);border-radius:32px;padding:64px 40px;max-width:700px;margin:0 auto;color:#fff;position:relative;overflow:hidden}
+.cta-box::after{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;background:rgba(255,255,255,0.07);border-radius:50%}
+.cta-box h2{font-family:'Zen Kaku Gothic New',sans-serif;font-size:clamp(22px,4vw,30px);font-weight:700;margin-bottom:16px}
+.cta-box p{font-size:15px;opacity:.9;margin-bottom:32px;line-height:1.7}
+.btn-white{background:#fff;color:var(--pink-deep);padding:14px 40px;border-radius:30px;font-size:16px;font-weight:700;text-decoration:none;display:inline-block;transition:.2s}
+.btn-white:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.15)}
+
+/* URL DISPLAY */
+.url-box{background:rgba(255,255,255,0.2);border-radius:12px;padding:12px 20px;font-size:14px;font-family:monospace;margin-top:20px;letter-spacing:.03em;border:1px solid rgba(255,255,255,0.3)}
+
+/* FOOTER */
+footer{text-align:center;padding:32px 24px;color:var(--text-soft);font-size:13px;position:relative;z-index:1;border-top:1px solid var(--pink-light)}
+footer strong{color:var(--pink-deep)}
+
+/* SCROLL ANIMATION */
+.fade-in{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.fade-in.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- 花びら -->
+<div class="petal-bg" id="petals"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">NursePass <span>看護師国試対策</span></div>
+  <button class="nav-cta" onclick="document.querySelector('.cta-section').scrollIntoView({behavior:'smooth'})">デモを試す</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🌸 AI × 看護師国試 × 心理サポート</div>
+  <h1>のあ先生と一緒に、<br><em>国試を突破しよう。</em></h1>
+  <p>ただ問題を解くだけじゃない。<br>心に寄り添いながら、あなたの合格を支える<br>新しいかたちの国試対策アプリ。</p>
+  <div class="hero-btns">
+    <a href="https://yunoa091224.github.io/nursepass/" class="btn-primary" target="_blank">アプリを開く</a>
+    <a href="#features" class="btn-secondary">機能を見る</a>
+  </div>
+  <div class="noa-card">
+    <div class="noa-avatar">のあ</div>
+    <div class="noa-msg">
+      <p class="label">🌸 今日ののあ先生より</p>
+      <p class="msg">分からないことがあっても大丈夫。学び続ける姿勢がすでに素敵だよ。</p>
+      <div class="footer">
+        <span class="date-badge">今日の応援</span>
+        <span>国試まで一緒に頑張ろう ✨</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div class="stat-card fade-in">
+      <div class="stat-num">750</div>
+      <div class="stat-label">厳選問題<br>（必修700 + 状況設定50）</div>
+    </div>
+    <div class="stat-card fade-in">
+      <div class="stat-num">365</div>
+      <div class="stat-label">日分の応援メッセージ<br>月ごとにテーマ変化</div>
+    </div>
+    <div class="stat-card fade-in">
+      <div class="stat-num">80%</div>
+      <div class="stat-label">合格ライン設定で<br>リアルな試験体験</div>
+    </div>
+    <div class="stat-card fade-in">
+      <div class="stat-num">24h</div>
+      <div class="stat-label">のあ先生がいつでも<br>そばにいる</div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-inner">
+    <h2 class="section-title fade-in">NursePassが選ばれる理由</h2>
+    <p class="section-sub fade-in">単なる問題集アプリとは違う。<br>心のサポートと学習が融合した、唯一無二の体験。</p>
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="feature-icon">💬</div>
+        <h3>AIチャットサポート</h3>
+        <p>のあ先生がいつでも相談に乗ります。勉強の悩みも、不安な気持ちも、一人で抱え込まなくていい。</p>
+        <span class="feature-tag">心理サポート特化</span>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">📚</div>
+        <h3>750問の厳選問題</h3>
+        <p>必修科目700問＋状況設定問題50問。分野チップで絞り込み、苦手科目を集中攻略できます。</p>
+        <span class="feature-tag">効率学習</span>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🌸</div>
+        <h3>毎日の応援メッセージ</h3>
+        <p>1月は新年・目標設定、3月は国試直前・自信。月ごとのテーマで365日、のあ先生が応援します。</p>
+        <span class="feature-tag">モチベ維持</span>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">📊</div>
+        <h3>学習記録と分析</h3>
+        <p>正答率・苦手分野を自動記録。苦手問題は自動でリスト化され、効率的な復習が可能です。</p>
+        <span class="feature-tag">データドリブン</span>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">⏰</div>
+        <h3>国試カウントダウン</h3>
+        <p>毎年2月15日の国試まで残り何日かをリアルタイム表示。緊張感を持って学習できます。</p>
+        <span class="feature-tag">目標管理</span>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">🎯</div>
+        <h3>本番さながらの試験モード</h3>
+        <p>80%合格ラインを設定した本番形式。状況設定問題も10ケース形式で実践力を鍛えます。</p>
+        <span class="feature-tag">実戦対応</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NOA SENSEI -->
+<section>
+  <div class="section-inner">
+    <div class="noa-section fade-in">
+      <div class="noa-big-avatar">のあ<br>先生</div>
+      <h2>のあ先生について</h2>
+      <p>NursePassのAIコーチ「のあ先生」は、看護師・理学療法士・心理カウンセラーの資格を持つ開発者が設計した、<strong>心理サポートに特化したAI</strong>です。</p>
+      <div class="noa-tags">
+        <span class="noa-tag">24時間対応</span>
+        <span class="noa-tag">共感的なサポート</span>
+        <span class="noa-tag">看護専門知識</span>
+        <span class="noa-tag">モチベーション管理</span>
+        <span class="noa-tag">叶愛（かのあ）から命名</span>
+      </div>
+      <p style="font-size:13px;color:var(--text-soft);margin-top:-16px">「あなたの願いに、愛をそっと添える先生」</p>
+    </div>
+  </div>
+</section>
+
+<!-- QUESTIONS -->
+<section>
+  <div class="section-inner">
+    <h2 class="section-title fade-in">充実の問題コンテンツ</h2>
+    <p class="section-sub fade-in">全分野をカバーした750問で、合格に必要な力を体系的に身につける。</p>
+    <div class="q-info fade-in">
+      <div class="q-card">
+        <div class="q-card-num">700問</div>
+        <div class="q-card-label">必修・一般・専門<br>全分野対応</div>
+      </div>
+      <div class="q-card">
+        <div class="q-card-num">50問</div>
+        <div class="q-card-label">状況設定問題<br>10ケース形式</div>
+      </div>
+      <div class="q-card">
+        <div class="q-card-num">19</div>
+        <div class="q-card-label">学習分野<br>チップで絞り込み</div>
+      </div>
+    </div>
+    <div class="field-chips fade-in">
+      <span class="chip on">全分野</span>
+      <span class="chip">人体の構造と機能</span>
+      <span class="chip">成人看護学</span>
+      <span class="chip">老年看護学</span>
+      <span class="chip">小児看護学</span>
+      <span class="chip">母性看護学</span>
+      <span class="chip">精神看護学</span>
+      <span class="chip">在宅看護論</span>
+      <span class="chip">解剖生理</span>
+      <span class="chip">薬理・与薬</span>
+      <span class="chip">感染管理</span>
+      <span class="chip">救急・クリティカル</span>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section" id="cta">
+  <div class="cta-box fade-in">
+    <h2>今すぐ、のあ先生に会いに行こう</h2>
+    <p>インストール不要。スマホでURLを開くだけで<br>すぐに使えます。完全無料でお試しいただけます。</p>
+    <a href="https://yunoa091224.github.io/nursepass/" class="btn-white" target="_blank">NursePassを開く 🌸</a>
+    <div class="url-box">https://yunoa091224.github.io/nursepass/</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>NursePass — 開発・運営：<strong>ユーノアジャパン（Yuno'a Japan）</strong></p>
+  <p style="margin-top:8px">PT・看護・心理 × AI で、医療の学びをアップデートする</p>
+</footer>
+
+<script>
+// 花びら生成
+const petal = document.getElementById('petals');
+for(let i=0;i<18;i++){
+  const p=document.createElement('div');
+  p.className='petal';
+  p.style.cssText=`left:${Math.random()*100}%;animation-duration:${8+Math.random()*12}s;animation-delay:${Math.random()*10}s;width:${6+Math.random()*8}px;height:${8+Math.random()*10}px;opacity:${0.4+Math.random()*0.5}`;
+  petal.appendChild(p);
+}
+
+// Scroll animations
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:0.1});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+
+// Field chips
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('click',function(){
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+    this.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>
