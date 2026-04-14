@@ -1240,19 +1240,27 @@ function renderStats(){
   }
   function fieldBar(f){
     const qs=QUESTIONS.filter(q=>q.field===f);
+    const attempted=qs.filter(q=>history[String(q.id)]);
     const c=qs.reduce((s,q)=>{const h=history[String(q.id)];return s+(h?h.correct:0);},0);
     const w=qs.reduce((s,q)=>{const h=history[String(q.id)];return s+(h?h.wrong:0);},0);
     const t=c+w;
-    if(!t) return '';
-    const r=Math.round(c/t*100);
+    const acc=t?Math.round(c/t*100):null;
+    const cov=Math.round(attempted.length/qs.length*100);
     const label=f.replace('必修・','').replace('一般・','').replace('状況設定・','');
-    return `<div style="margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:#5a3a6a;margin-bottom:3px">
-        <span>${label}</span><span>${r}%（${c+w}問）</span>
+    const accColor=acc===null?'#aaa':acc>=80?'#16a34a':acc>=60?'#D9A060':'#ef4444';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#55504D;margin-bottom:3px">
+        <span style="font-weight:600">${label}</span>
+        <span style="display:flex;gap:8px">
+          <span style="color:${accColor};font-weight:700">${acc!==null?acc+'%正答':'未解答'}</span>
+          <span style="color:#8A6A50">${cov}%カバー(${attempted.length}/${qs.length})</span>
+        </span>
       </div>
-      <div style="height:5px;background:rgba(237,224,212,.2);border-radius:10px;overflow:hidden">
-        <div style="width:${r}%;height:100%;background:linear-gradient(90deg,#D9C5B2,#B8A090);border-radius:10px"></div>
-      </div></div>`;
+      <div style="display:flex;gap:3px;height:8px">
+        <div style="flex:${cov};background:${acc!==null?(acc>=80?'rgba(74,222,128,0.6)':acc>=60?'rgba(217,185,80,0.6)':'rgba(248,113,113,0.5)'):'rgba(217,197,178,0.5)'};border-radius:4px 0 0 4px;min-width:2px"></div>
+        <div style="flex:${100-cov};background:rgba(237,224,212,0.3);border-radius:0 4px 4px 0"></div>
+      </div>
+    </div>`;
   }
 
   const cats=['必修','一般','状況設定'];
@@ -1299,9 +1307,28 @@ function renderStats(){
     <div style="display:flex;gap:8px;margin-top:12px">${catHtml}</div>
     ${weekChart}
     ${fieldStats.length?`<div class="per-cat-stats" style="text-align:left">
-      <div class="cat-stat-header">▸ 分野別正答率（苦手順）</div>
+      <div class="cat-stat-header">▸ 分野別 正答率 &amp; カバー率（苦手順）</div>
       ${fieldStats.map(x=>fieldBar(x.f)).join('')}
-    </div>`:'<div style="color:#5A5450;font-size:13px;margin-top:16px">問題を解くと分野別データが表示されます</div>'}
+    </div>`:''}
+    ${(()=>{
+      // 未解答の多い分野トップ3を提案
+      const recs=FIELDS.map(f=>{
+        const qs=QUESTIONS.filter(q=>q.field===f);
+        const unattempted=qs.filter(q=>!history[String(q.id)]).length;
+        const weakCount=qs.filter(q=>{const h=history[String(q.id)];return h&&h.wrong>h.correct;}).length;
+        return{f,unattempted,weakCount,total:qs.length};
+      }).filter(x=>x.unattempted>0||x.weakCount>0)
+        .sort((a,b)=>(b.weakCount*2+b.unattempted)-(a.weakCount*2+a.unattempted))
+        .slice(0,3);
+      if(!recs.length) return '';
+      return `<div style="text-align:left;margin-top:6px">
+        <div class="cat-stat-header">▸ 今日おすすめの集中分野</div>
+        ${recs.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-bottom:6px;background:rgba(240,232,222,0.6);border-radius:10px;border:1px solid rgba(85,80,77,0.12)">
+          <span style="font-size:12px;color:#55504D;font-weight:600">${r.f.replace('必修・','').replace('一般・','').replace('状況設定・','')}</span>
+          <span style="font-size:11px;color:#8A6A50">${r.weakCount?`苦手${r.weakCount}問 · `:''}未解答${r.unattempted}問</span>
+        </div>`).join('')}
+      </div>`;
+    })()}
     <div style="text-align:left;margin-top:16px">
       <div class="cat-stat-header">▸ バッジコレクション（${earnedBadges.length}/${ACHIEVEMENTS.length}）</div>
       <div class="badge-grid">${ACHIEVEMENTS.map(a=>`
