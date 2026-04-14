@@ -197,6 +197,19 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .week-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
 .week-bar{width:100%;border-radius:4px 4px 0 0;min-height:2px;transition:.4s}
 .week-lbl{font-size:9px;color:#5A5450}
+/* 検索 */
+.search-wrap{background:rgba(255,255,255,0.88);border:1px solid rgba(85,80,77,0.18);border-radius:16px;padding:10px 14px;margin-bottom:12px;display:flex;gap:8px;align-items:center}
+.search-input{flex:1;border:none;background:transparent;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:#55504D;outline:none}
+.search-input::placeholder{color:#aaa}
+.search-results{background:rgba(255,255,255,0.95);border:1px solid rgba(85,80,77,0.15);border-radius:14px;padding:4px 0;margin-bottom:12px;max-height:280px;overflow-y:auto;display:none}
+.search-item{padding:9px 14px;border-bottom:1px solid rgba(85,80,77,0.07);cursor:pointer;transition:.15s}
+.search-item:hover{background:rgba(240,232,222,0.7)}
+.search-item:last-child{border-bottom:none}
+.search-q{font-size:12px;color:#55504D;margin-bottom:3px}
+.search-meta{font-size:10px;color:#8A6A50}
+/* ブックマーク */
+.bm-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:4px 8px;border-radius:8px;transition:.15s;line-height:1}
+.bm-btn:hover{background:rgba(217,197,178,0.2)}
 </style>
 </head>
 <body>
@@ -235,6 +248,12 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
       <div class="summary-card"><div class="summary-val" id="todayDisp">0</div><div class="summary-lbl">📝 今日の問題数</div></div>
       <div class="summary-card"><div class="summary-val" id="coverDisp">0%</div><div class="summary-lbl">✅ カバー率</div></div>
     </div>
+    <div class="search-wrap">
+      <span style="font-size:16px;color:#aaa">🔍</span>
+      <input class="search-input" id="searchInput" placeholder="問題を検索（キーワードで絞り込み）" oninput="onSearchInput(this.value)" autocomplete="off">
+      <button onclick="clearSearch()" style="background:none;border:none;color:#aaa;font-size:14px;cursor:pointer;padding:2px 4px;display:none" id="searchClear">✕</button>
+    </div>
+    <div class="search-results" id="searchResults"></div>
     <button onclick="startQuiz('mock')" style="width:100%;margin-bottom:12px;padding:14px 16px;background:linear-gradient(135deg,#6B5040,#8A6A50);color:white;border:none;border-radius:18px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 4px 16px rgba(107,80,64,0.3);display:flex;align-items:center;justify-content:center;gap:10px">
       <span style="font-size:20px">📝</span>
       <div style="text-align:left"><div>本番模擬試験</div><div style="font-size:11px;font-weight:400;opacity:0.85">必修50問＋一般60問＋状況設定15問＝125問</div></div>
@@ -261,6 +280,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
         <button class="chip" id="weakFilter必修" onclick="setWeakFilter('必修')">必修</button>
         <button class="chip" id="weakFilter一般" onclick="setWeakFilter('一般')">一般</button>
         <button class="chip" id="weakFilter状況設定" onclick="setWeakFilter('状況設定')">状況設定</button>
+        <button class="chip" id="weakFilterbookmark" onclick="setWeakFilter('bookmark')" style="margin-left:4px">🔖 ブックマーク</button>
       </div>
       <div id="weakSummaryBar" style="padding:0 16px 8px;font-size:11px;color:#8A6A50"></div>
       <div class="weak-list" id="weakList"></div>
@@ -333,6 +353,16 @@ let history = JSON.parse(localStorage.getItem('np_history')||'{}');
 let streakData = JSON.parse(localStorage.getItem('np_streak')||'{"lastDate":"","streak":0}');
 let weeklyData = JSON.parse(localStorage.getItem('np_weekly')||'{}');
 const todayKey = new Date().toISOString().slice(0,10);
+let bookmarks = JSON.parse(localStorage.getItem('np_bookmarks')||'{}');
+function saveBookmarks(){localStorage.setItem('np_bookmarks',JSON.stringify(bookmarks));}
+function toggleBookmark(id){
+  if(bookmarks[id]) delete bookmarks[id];
+  else bookmarks[id]=1;
+  saveBookmarks();
+  const btn=document.getElementById('bmBtn'+id);
+  if(btn) btn.textContent=bookmarks[id]?'🔖':'🤍';
+  if(btn) btn.title=bookmarks[id]?'ブックマーク済み':'ブックマーク';
+}
 
 function save(){localStorage.setItem('np_history',JSON.stringify(history))}
 
@@ -354,6 +384,40 @@ function updateDailyStats(){
   renderHomeSummary();
 }
 
+let searchTimer=null;
+function onSearchInput(val){
+  clearTimeout(searchTimer);
+  const cl=document.getElementById('searchClear');
+  const sr=document.getElementById('searchResults');
+  if(cl) cl.style.display=val?'block':'none';
+  if(!val.trim()){if(sr){sr.style.display='none';sr.innerHTML='';}return;}
+  searchTimer=setTimeout(()=>doSearch(val.trim()),200);
+}
+function doSearch(q){
+  const sr=document.getElementById('searchResults');
+  if(!sr) return;
+  const kws=q.toLowerCase().split(/\s+/);
+  const results=QUESTIONS.filter(x=>kws.every(k=>x.question.includes(k)||x.field.includes(k))).slice(0,20);
+  if(!results.length){sr.innerHTML='<div style="padding:12px 14px;color:#aaa;font-size:13px">見つかりませんでした</div>';sr.style.display='block';return;}
+  sr.innerHTML=results.map(x=>{
+    const h=history[String(x.id)];
+    const bm=bookmarks[x.id]?'🔖':'';
+    const acc=h?(h.correct+h.wrong?Math.round(h.correct/(h.correct+h.wrong)*100)+'%':'--'):'未解答';
+    return `<div class="search-item" onclick="drillOne(${x.id})">
+      <div class="search-q">${bm} ${x.question}</div>
+      <div class="search-meta">${x.category} ▸ ${x.field} ▸ 正答率：${acc}</div>
+    </div>`;
+  }).join('');
+  sr.style.display='block';
+}
+function clearSearch(){
+  const inp=document.getElementById('searchInput');
+  const sr=document.getElementById('searchResults');
+  const cl=document.getElementById('searchClear');
+  if(inp) inp.value='';
+  if(sr){sr.style.display='none';sr.innerHTML='';}
+  if(cl) cl.style.display='none';
+}
 function renderHomeSummary(){
   const streak=streakData.streak||0;
   const today=weeklyData[todayKey]||0;
@@ -520,6 +584,10 @@ function startQuiz(mode){
     pool=shuffle([...fieldFilter].filter(q=>!answeredIds.has(q.id))).slice(0,10);
     if(!pool.length){alert('このカテゴリの問題はすべて解答済みです！\nすごい！カバー率100%です！');return;}
   }
+  else if(mode==='bookmark'){
+    pool=shuffle(Object.keys(bookmarks).map(id=>QUESTIONS.find(x=>x.id==id)).filter(Boolean));
+    if(!pool.length){alert('ブックマーク済みの問題がありません。\n問題解答後に🤍ボタンで追加できます！');return;}
+  }
   else if(mode==='mock'){
     // 本番模擬試験: 必修50問 + 一般60問 + 状況設定15問 = 125問
     const hisshu=shuffle([...QUESTIONS.filter(q=>q.category==='必修')]).slice(0,50);
@@ -623,7 +691,12 @@ function answer(key){
     'ここで気づけてよかった！本番前に練習できて正解だよ。'
   ];
   const nmsg=correct?msgs_ok[Math.floor(Math.random()*msgs_ok.length)]:msgs_ng[Math.floor(Math.random()*msgs_ng.length)];
-  res.innerHTML=`<div class="result-label">${correct?'✓ 正解！':'✗ 不正解'}</div><div style="font-size:12px;color:${correct?'#166534':'#B8A090'};font-weight:600;margin:4px 0 6px;padding:4px 8px;background:${correct?'rgba(74,222,128,0.08)':'rgba(217,197,178,0.08)'};border-radius:8px">${nmsg}</div><div class="explanation">${q.explanation}</div>`;
+  const isBm=!!bookmarks[q.id];
+  res.innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+    <div class="result-label">${correct?'✓ 正解！':'✗ 不正解'}</div>
+    <button class="bm-btn" id="bmBtn${q.id}" onclick="toggleBookmark(${q.id})" title="${isBm?'ブックマーク済み':'ブックマーク'}">${isBm?'🔖':'🤍'}</button>
+  </div>
+  <div style="font-size:12px;color:${correct?'#166534':'#B8A090'};font-weight:600;margin:4px 0 6px;padding:4px 8px;background:${correct?'rgba(74,222,128,0.08)':'rgba(217,197,178,0.08)'};border-radius:8px">${nmsg}</div><div class="explanation">${q.explanation}</div>`;
   choices.after(res);
   const mc=createMiniChat(q);
   res.after(mc);
@@ -807,7 +880,7 @@ function backHome(){
 let weakFilter='all';
 function setWeakFilter(f){
   weakFilter=f;
-  ['all','必修','一般','状況設定'].forEach(k=>{
+  ['all','必修','一般','状況設定','bookmark'].forEach(k=>{
     const btn=document.getElementById('weakFilter'+(k==='all'?'All':k));
     if(btn) btn.classList.toggle('selected',k===f);
   });
@@ -818,15 +891,29 @@ function renderWeak(){
   const sb=document.getElementById('weakSummaryBar');
   const wb=document.getElementById('weakDrillBtn');
   const allWeak=Object.keys(history).filter(id=>history[id].wrong>0);
-  // 苦手克服数（wrongより正解が多いもの）
   const mastered=allWeak.filter(id=>history[id].correct>history[id].wrong).length;
-  // フィルタ適用
+  const bmCount=Object.keys(bookmarks).length;
+  let items=[];
+  if(weakFilter==='bookmark'){
+    items=Object.keys(bookmarks).map(id=>{const q=QUESTIONS.find(x=>x.id==id);return q?{id,q}:null;}).filter(Boolean);
+    if(sb) sb.innerHTML=`ブックマーク <strong style="color:#B8907A">${bmCount}</strong>問`;
+    if(wb) wb.style.display=items.length?'block':'none';
+    if(!items.length){wl.innerHTML='<div class="empty">ブックマークした問題はないよ。<br>問題画面で🤍を押してみて！</div>';return;}
+    wl.innerHTML=items.map(({id,q})=>{
+      const h=history[id];
+      return `<div class="weak-item" onclick="drillOne(${q.id})">
+        <div class="weak-q">🔖 ${q.question}</div>
+        <div class="weak-meta">${q.category} ▸ ${q.field}${h?' ▸ 正解'+h.correct+'回 / 間違え'+h.wrong+'回':' ▸ 未解答'}</div>
+      </div>`;
+    }).join('');
+    return;
+  }
   let weakIds=allWeak;
   if(weakFilter!=='all'){
     weakIds=allWeak.filter(id=>{const q=QUESTIONS.find(x=>x.id==id);return q&&q.category===weakFilter;});
   }
   weakIds.sort((a,b)=>history[b].wrong-history[a].wrong);
-  if(sb) sb.innerHTML=allWeak.length?`苦手問題 <strong style="color:#B8907A">${allWeak.length}</strong>問 ／ 克服済み <strong style="color:#16a34a">${mastered}</strong>問`:'';
+  if(sb) sb.innerHTML=allWeak.length?`苦手問題 <strong style="color:#B8907A">${allWeak.length}</strong>問 ／ 克服済み <strong style="color:#16a34a">${mastered}</strong>問 ／ 🔖${bmCount}問`:'';
   if(wb) wb.style.display=weakIds.length?'block':'none';
   if(!weakIds.length){wl.innerHTML='<div class="empty">'+(weakFilter==='all'?'まだ苦手問題はないよ。<br>問題を解いてみよう！':`${weakFilter}の苦手問題はまだないよ。`)+'</div>';return;}
   wl.innerHTML=weakIds.slice(0,50).map(id=>{
@@ -834,17 +921,23 @@ function renderWeak(){
     if(!q) return '';
     const h=history[id];
     const isMastered=h.correct>h.wrong;
+    const bm=bookmarks[id]?'🔖 ':'';
     return `<div class="weak-item" onclick="drillOne(${q.id})" style="${isMastered?'border-color:rgba(74,222,128,0.35);background:rgba(74,222,128,0.06)':''}">
-      <div class="weak-q">${q.question}</div>
+      <div class="weak-q">${bm}${q.question}</div>
       <div class="weak-meta">${q.category} ▸ ${q.field} ▸ 間違え${h.wrong}回 / 正解${h.correct}回 ${isMastered?'<span style="color:#16a34a;font-weight:700">✓ 克服</span>':''}</div>
     </div>`;
   }).join('');
 }
 function drillAllWeak(){
-  let weakIds=Object.keys(history).filter(id=>history[id].wrong>0);
-  if(weakFilter!=='all') weakIds=weakIds.filter(id=>{const q=QUESTIONS.find(x=>x.id==id);return q&&q.category===weakFilter;});
-  const pool=shuffle(weakIds.map(id=>QUESTIONS.find(x=>x.id==id)).filter(Boolean));
-  if(!pool.length){alert('苦手問題がありません！');return;}
+  let pool;
+  if(weakFilter==='bookmark'){
+    pool=shuffle(Object.keys(bookmarks).map(id=>QUESTIONS.find(x=>x.id==id)).filter(Boolean));
+  } else {
+    let weakIds=Object.keys(history).filter(id=>history[id].wrong>0);
+    if(weakFilter!=='all') weakIds=weakIds.filter(id=>{const q=QUESTIONS.find(x=>x.id==id);return q&&q.category===weakFilter;});
+    pool=shuffle(weakIds.map(id=>QUESTIONS.find(x=>x.id==id)).filter(Boolean));
+  }
+  if(!pool.length){alert('問題がありません！');return;}
   session={pool,idx:0,correct:0,wrong:0,mode:'weak'};
   showQuiz();
 }
@@ -993,7 +1086,9 @@ function ansJok(key){
   var ch2=document.getElementById('jokCh');
   var res=document.createElement('div');
   res.className='result-area '+(ok?'correct':'wrong');
-  res.innerHTML='<div class="result-label">'+(ok?'✓ 正解！':'✗ 不正解')+'</div>'+
+  var isBm2=!!bookmarks[q.id];
+  res.innerHTML='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px"><div class="result-label">'+(ok?'✓ 正解！':'✗ 不正解')+'</div>'+
+    '<button class="bm-btn" id="bmBtn'+q.id+'" onclick="toggleBookmark('+q.id+')" title="'+(isBm2?'ブックマーク済み':'ブックマーク')+'">'+(isBm2?'🔖':'🤍')+'</button></div>'+
     '<div style="font-size:12px;font-weight:600;margin:4px 0 6px;padding:4px 8px;border-radius:8px;background:'+(ok?'rgba(74,222,128,0.08)':'rgba(217,197,178,0.08)')+';color:'+(ok?'#166534':'#B8A090')+'">'+nmsg+'</div>'+
     '<div class="explanation">'+q.explanation+'</div>';
   ch2.after(res);
