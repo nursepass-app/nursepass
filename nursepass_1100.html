@@ -210,6 +210,21 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 /* ブックマーク */
 .bm-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:4px 8px;border-radius:8px;transition:.15s;line-height:1}
 .bm-btn:hover{background:rgba(217,197,178,0.2)}
+/* アチーブメント */
+.badge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.badge-item{text-align:center;padding:8px 4px;border-radius:12px;border:1.5px solid rgba(85,80,77,0.15)}
+.badge-item.earned{background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(237,224,212,0.8));border-color:rgba(217,197,178,0.5)}
+.badge-item.locked{background:rgba(240,232,222,0.3);border-color:rgba(85,80,77,0.1);filter:grayscale(1);opacity:0.5}
+.badge-icon{font-size:22px;display:block;margin-bottom:4px;line-height:1}
+.badge-name{font-size:9px;font-weight:700;color:#6B5040;line-height:1.3}
+/* タイムアタック */
+.timer-bar{height:5px;background:rgba(237,224,212,.2);border-radius:10px;overflow:hidden;margin:4px 16px 0}
+.timer-fill{height:100%;border-radius:10px;transition:.3s linear;background:linear-gradient(90deg,#4ade80,#D9C5B2)}
+.timer-fill.warn{background:linear-gradient(90deg,#f87171,#ef4444)}
+.timer-count{font-size:11px;font-weight:700;text-align:right;padding:2px 16px 0;color:#5A5450}
+/* アチーブメント解除トースト */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;font-family:'Noto Sans JP',sans-serif;z-index:999;animation:toastIn .4s ease;box-shadow:0 4px 16px rgba(184,160,144,0.4);white-space:nowrap}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 /* ダークモード */
 body.dark{background:linear-gradient(135deg,#1a1614 0%,#251e1a 50%,#2a2018 100%)}
 body.dark .card{background:rgba(35,28,24,0.95);border-color:rgba(180,160,140,0.15)}
@@ -410,6 +425,71 @@ function toggleBookmark(id){
   const btn=document.getElementById('bmBtn'+id);
   if(btn) btn.textContent=bookmarks[id]?'🔖':'🤍';
   if(btn) btn.title=bookmarks[id]?'ブックマーク済み':'ブックマーク';
+}
+// ===== アチーブメント =====
+const ACHIEVEMENTS=[
+  {id:'first',  icon:'🌱', name:'はじめの一歩', desc:'初めて問題を解く'},
+  {id:'q50',    icon:'✨', name:'50問突破',      desc:'50問解答'},
+  {id:'q100',   icon:'💯', name:'100問突破',     desc:'100問解答'},
+  {id:'q500',   icon:'🏆', name:'500問突破',     desc:'500問解答'},
+  {id:'q1000',  icon:'👑', name:'1000問突破',    desc:'1000問解答'},
+  {id:'q3000',  icon:'🦋', name:'全問制覇',      desc:'3000問以上解答'},
+  {id:'str3',   icon:'🔥', name:'3日連続',       desc:'3日連続で学習'},
+  {id:'str7',   icon:'⭐', name:'1週間連続',     desc:'7日連続で学習'},
+  {id:'str30',  icon:'💎', name:'1ヶ月連続',     desc:'30日連続で学習'},
+  {id:'acc80',  icon:'📚', name:'正答率80%',      desc:'50問以上で正答率80%以上'},
+  {id:'acc90',  icon:'🎯', name:'正答率90%',      desc:'50問以上で正答率90%以上'},
+  {id:'cov25',  icon:'🗺️', name:'探索者',        desc:'カバー率25%達成'},
+  {id:'cov50',  icon:'⚡', name:'折り返し地点',   desc:'カバー率50%達成'},
+  {id:'cov100', icon:'🌟', name:'全問制覇率100%', desc:'全問解答'},
+  {id:'bm10',   icon:'🔖', name:'熱心な学習者',  desc:'ブックマーク10問以上'},
+  {id:'weak0',  icon:'💪', name:'苦手克服',       desc:'苦手問題を10問克服'},
+];
+let earnedBadges=JSON.parse(localStorage.getItem('np_badges')||'[]');
+function checkAchievements(){
+  const answered=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
+  const correct=Object.values(history).reduce((s,h)=>s+h.correct,0);
+  const rate=answered?correct/answered:0;
+  const covered=Object.keys(history).length;
+  const streak=streakData.streak||0;
+  const bmCount=Object.keys(bookmarks).length;
+  const masteredWeak=Object.keys(history).filter(id=>history[id].wrong>0&&history[id].correct>history[id].wrong).length;
+  const checks={
+    first: covered>=1,
+    q50:   answered>=50,
+    q100:  answered>=100,
+    q500:  answered>=500,
+    q1000: answered>=1000,
+    q3000: answered>=3000,
+    str3:  streak>=3,
+    str7:  streak>=7,
+    str30: streak>=30,
+    acc80: answered>=50&&rate>=0.8,
+    acc90: answered>=50&&rate>=0.9,
+    cov25: covered>=Math.round(QUESTIONS.length*0.25),
+    cov50: covered>=Math.round(QUESTIONS.length*0.5),
+    cov100:covered>=QUESTIONS.length,
+    bm10:  bmCount>=10,
+    weak0: masteredWeak>=10,
+  };
+  let newEarned=false;
+  ACHIEVEMENTS.forEach(a=>{
+    if(checks[a.id]&&!earnedBadges.includes(a.id)){
+      earnedBadges.push(a.id);newEarned=true;
+      showToast(a.icon+' バッジ解除：'+a.name);
+    }
+  });
+  if(newEarned) localStorage.setItem('np_badges',JSON.stringify(earnedBadges));
+}
+let toastTimer=null;
+function showToast(msg){
+  const old=document.getElementById('achieveToast');
+  if(old) old.remove();
+  clearTimeout(toastTimer);
+  const el=document.createElement('div');
+  el.id='achieveToast';el.className='toast';el.textContent=msg;
+  document.body.appendChild(el);
+  toastTimer=setTimeout(()=>el.remove(),3000);
 }
 // 今日の間違い・1日目標
 let todayWrong = JSON.parse(localStorage.getItem('np_today_wrong')||'{"date":"","ids":[]}');
@@ -647,6 +727,7 @@ function initModeButtons(){
   const stars3Btn=`<button class="mode-btn" onclick="startQuiz('stars3')" style="border-color:rgba(217,197,178,0.5);background:rgba(255,248,220,0.9)"><div class="mode-icon">★★★</div><div class="mode-title">頻出問題20問</div><div class="mode-desc">最重要の必出問題</div></button>`;
   const tw=todayWrong.ids.length;
   const todayWrongBtn=tw>0?`<button class="mode-btn" onclick="startQuiz('today_wrong')" style="border-color:rgba(248,113,113,0.4);background:rgba(255,235,235,0.9)"><div class="mode-icon">🔄</div><div class="mode-title">今日の復習(${tw}問)</div><div class="mode-desc">今日間違えた問題</div></button>`:'';
+  const timeAtkBtn=`<button class="mode-btn" onclick="startQuiz('timeatk')" style="border-color:rgba(234,179,8,0.4);background:rgba(254,249,195,0.9)"><div class="mode-icon">⏱</div><div class="mode-title">タイムアタック</div><div class="mode-desc">1問30秒×10問</div></button>`;
   if(currentCategory==='必修'){
     mg.innerHTML=`
       <button class="mode-btn" onclick="startQuiz('random')"><div class="mode-icon">🎲</div><div class="mode-title">ランダム5問</div><div class="mode-desc">まずここから</div></button>
@@ -654,6 +735,7 @@ function initModeButtons(){
       <button class="mode-btn" onclick="startQuiz('weak')"><div class="mode-icon">💪</div><div class="mode-title">苦手強化</div><div class="mode-desc">間違えた問題</div></button>
       ${unreadBtn}
       ${stars3Btn}
+      ${timeAtkBtn}
       ${todayWrongBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">100問一気</div><div class="mode-desc">本番形式</div></button>
       <button class="mode-btn" onclick="startQuiz('hisshu')" style="border-color:rgba(217,197,178,0.5);background:rgba(237,224,212,0.9);grid-column:1/-1"><div class="mode-icon">⭐</div><div class="mode-title">必修50問 本番形式</div><div class="mode-desc">合格ライン80%（40/50問）で合否判定</div></button>
@@ -666,6 +748,7 @@ function initModeButtons(){
       <button class="mode-btn" onclick="startQuiz('weak')"><div class="mode-icon">💪</div><div class="mode-title">苦手強化</div><div class="mode-desc">間違えた問題</div></button>
       ${unreadBtn}
       ${stars3Btn}
+      ${timeAtkBtn}
       ${todayWrongBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">100問一気</div><div class="mode-desc">本番形式</div></button>
       <button class="mode-btn" onclick="startQuiz('ippan50')" style="border-color:rgba(217,197,178,0.5);background:rgba(237,224,212,0.9);grid-column:1/-1"><div class="mode-icon">📚</div><div class="mode-title">一般問題 50問演習</div><div class="mode-desc">11分野からバランスよく出題</div></button>
@@ -678,6 +761,7 @@ function initModeButtons(){
       <button class="mode-btn" onclick="startQuiz('weak')"><div class="mode-icon">💪</div><div class="mode-title">苦手強化</div><div class="mode-desc">間違えた問題</div></button>
       ${unreadBtn}
       ${stars3Btn}
+      ${timeAtkBtn}
       ${todayWrongBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">全問一気</div><div class="mode-desc">本番形式</div></button>
       <button class="mode-btn" onclick="startJokyoMode()" style="border-color:rgba(5,150,105,0.5);background:rgba(230,255,245,0.9);grid-column:1/-1"><div class="mode-icon">📋</div><div class="mode-title">状況設定 専用モード</div><div class="mode-desc">事例を1問ずつ、丁寧に解く</div></button>
@@ -717,6 +801,12 @@ function startQuiz(mode){
     pool=shuffle(todayWrong.ids.map(id=>QUESTIONS.find(x=>x.id===id)).filter(Boolean));
     if(!pool.length){alert('今日間違えた問題はまだありません！\n素晴らしいです！');return;}
   }
+  else if(mode==='timeatk'){
+    pool=shuffle([...catQ]).slice(0,10);
+    session={pool,idx:0,correct:0,wrong:0,mode:'timeatk',timeLimit:30};
+    showQuiz();
+    return;
+  }
   else if(mode==='mock'){
     // 本番模擬試験: 必修50問 + 一般60問 + 状況設定15問 = 125問
     const hisshu=shuffle([...QUESTIONS.filter(q=>q.category==='必修')]).slice(0,50);
@@ -745,19 +835,68 @@ function showQuiz(){
   renderQuestion();
 }
 
+let timerInterval=null;
+function clearQuizTimer(){clearInterval(timerInterval);timerInterval=null;}
+function startQuizTimer(){
+  clearQuizTimer();
+  if(session.mode!=='timeatk') return;
+  let remain=session.timeLimit;
+  const updateTimer=()=>{
+    const fill=document.getElementById('timerFill');
+    const cnt=document.getElementById('timerCnt');
+    if(!fill||!cnt){clearQuizTimer();return;}
+    const pct=Math.round(remain/session.timeLimit*100);
+    fill.style.width=pct+'%';
+    fill.className='timer-fill'+(remain<=8?' warn':'');
+    cnt.textContent=remain+'秒';
+    if(remain<=0){clearQuizTimer();autoAnswerTimeout();}
+    remain--;
+  };
+  updateTimer();
+  timerInterval=setInterval(updateTimer,1000);
+}
+function autoAnswerTimeout(){
+  // タイムアウト時は不正解扱いにして次へ
+  const q=session.pool[session.idx];
+  if(!history[q.id]) history[q.id]={correct:0,wrong:0};
+  history[q.id].wrong++;
+  if(!todayWrong.ids.includes(q.id))todayWrong.ids.push(q.id);
+  saveTodayWrong();save();updateDailyStats();
+  Object.keys(q.choices).forEach(k=>{
+    const btn=document.getElementById('ch'+k);
+    if(!btn) return;
+    if(k===q.answer) btn.classList.add('correct');
+    btn.disabled=true;
+  });
+  const choices=document.querySelector('.choices');
+  if(choices){
+    const res=document.createElement('div');
+    res.className='result-area wrong';
+    res.innerHTML='<div class="result-label">⏰ 時間切れ！</div><div class="explanation">'+q.explanation+'</div>';
+    choices.after(res);
+    const nb=document.createElement('button');nb.className='next-btn';
+    const isLast=session.idx>=session.pool.length-1;
+    nb.textContent=isLast?'結果を見る →':'次の問題 →';
+    nb.onclick=isLast?finishQuiz:nextQ;
+    res.after(nb);
+  }
+}
 function renderQuestion(){
+  clearQuizTimer();
   resetMiniChat();
   const qa=document.getElementById('quizArea');
   const q=session.pool[session.idx];
   const total=session.pool.length;
   const pct=Math.round(session.idx/total*100);
+  const isTime=session.mode==='timeatk';
   qa.innerHTML=`
     <div class="card" style="animation:fadein .3s ease">
       <div class="quiz-header">
-        <button class="back-btn" onclick="backHome()">← 戻る</button>
+        <button class="back-btn" onclick="clearQuizTimer();backHome()">← 戻る</button>
         <div class="q-progress"><div class="q-bar" style="width:${pct}%"></div></div>
-        <div class="q-count">${session.idx+1}/${total}</div>
+        <div class="q-count">${isTime?'⏱ ':''}${session.idx+1}/${total}</div>
       </div>
+      ${isTime?`<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div class="timer-count" id="timerCnt">${session.timeLimit}秒</div>`:''}
       <div class="q-field" style="display:flex;justify-content:space-between;align-items:center">${q.category} ▸ ${q.field}<span style="color:#D9C5B2;font-size:12px;letter-spacing:1px">${'★'.repeat(q.stars||1)+'☆'.repeat(3-(q.stars||1))}</span></div>
       <div class="q-text">${q.question}</div>
       <div class="choices">
@@ -767,9 +906,11 @@ function renderQuestion(){
           </button>`).join('')}
       </div>
     </div>`;
+  if(isTime) startQuizTimer();
 }
 
 function answer(key){
+  clearQuizTimer();
   const q=session.pool[session.idx];
   const correct=key===q.answer;
   if(!history[q.id]) history[q.id]={correct:0,wrong:0};
@@ -779,6 +920,7 @@ function answer(key){
   updateScoreBadge();
   updateDailyStats();
   renderGoalBar();
+  checkAchievements();
   if(session.mode==='mock'&&correct){
     if(q.category==='必修') session.hisshuCorrect=(session.hisshuCorrect||0)+1;
     else if(q.category==='一般') session.ippanCorrect=(session.ippanCorrect||0)+1;
@@ -860,7 +1002,7 @@ function startWeakFromHere(){
   session={pool,idx:0,correct:0,wrong:0,mode:'weak'};
   renderQuestion();
 }
-function nextQ(){session.idx++;renderQuestion();}
+function nextQ(){clearQuizTimer();session.idx++;renderQuestion();}
 
 function finishQuiz(){
   const qa=document.getElementById('quizArea');
@@ -1160,7 +1302,15 @@ function renderStats(){
       <div class="cat-stat-header">▸ 分野別正答率（苦手順）</div>
       ${fieldStats.map(x=>fieldBar(x.f)).join('')}
     </div>`:'<div style="color:#5A5450;font-size:13px;margin-top:16px">問題を解くと分野別データが表示されます</div>'}
-    <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');history={};streakData={lastDate:'',streak:0};weeklyData={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:20px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>`;
+    <div style="text-align:left;margin-top:16px">
+      <div class="cat-stat-header">▸ バッジコレクション（${earnedBadges.length}/${ACHIEVEMENTS.length}）</div>
+      <div class="badge-grid">${ACHIEVEMENTS.map(a=>`
+        <div class="badge-item ${earnedBadges.includes(a.id)?'earned':'locked'}" title="${a.desc}">
+          <span class="badge-icon">${a.icon}</span>
+          <span class="badge-name">${a.name}</span>
+        </div>`).join('')}</div>
+    </div>
+    <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:20px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>`;
 }
 
 
