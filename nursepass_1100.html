@@ -1147,6 +1147,59 @@ function exportCSV(){
   URL.revokeObjectURL(url);
   showToast(`CSVエクスポート完了（${attempted.length}問）`);
 }
+// 学習リマインダー（ブラウザ通知API）
+function setupReminder(){
+  const current=localStorage.getItem('np_reminder')||'';
+  const time=prompt('毎日の学習リマインダー時刻を入力してください（例: 20:00）\n空欄でリマインダーを解除します',current);
+  if(time===null) return;
+  if(!time.trim()){
+    localStorage.removeItem('np_reminder');
+    showToast('リマインダーを解除しました');
+    const btn=document.getElementById('reminderBtn');
+    if(btn) btn.textContent='🔔 学習リマインダー';
+    return;
+  }
+  if(!/^\d{1,2}:\d{2}$/.test(time.trim())){alert('時刻はHH:MM形式で入力してください（例: 20:00）');return;}
+  if(Notification.permission==='denied'){alert('ブラウザの通知が拒否されています。ブラウザ設定から通知を許可してください。');return;}
+  Notification.requestPermission().then(perm=>{
+    if(perm==='granted'){
+      localStorage.setItem('np_reminder',time.trim());
+      showToast(`🔔 毎日 ${time.trim()} に学習リマインダーを設定しました`);
+      const btn=document.getElementById('reminderBtn');
+      if(btn) btn.textContent=`🔔 ${time.trim()} リマインダー設定済み`;
+      scheduleReminderCheck();
+    } else {
+      alert('通知の許可が必要です。ブラウザの設定から許可してください。');
+    }
+  });
+}
+function scheduleReminderCheck(){
+  const reminderTime=localStorage.getItem('np_reminder');
+  if(!reminderTime||Notification.permission!=='granted') return;
+  const [h,m]=reminderTime.split(':').map(Number);
+  const now=new Date();
+  const target=new Date();
+  target.setHours(h,m,0,0);
+  if(target<=now) target.setDate(target.getDate()+1);
+  const delay=target-now;
+  setTimeout(()=>{
+    const todayStudied=(weeklyData[todayKey]||0)>0;
+    if(!todayStudied){
+      new Notification('📚 NursePass学習リマインダー',{
+        body:`今日はまだ問題を解いていません。${dailyGoal}問の目標に向けて頑張りましょう！`,
+        icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="26" font-size="28">📚</text></svg>'
+      });
+    }
+    scheduleReminderCheck();
+  },Math.min(delay, 2147483647));
+}
+// Run reminder check on load
+(function(){
+  if(Notification.permission==='granted'&&localStorage.getItem('np_reminder')){
+    scheduleReminderCheck();
+  }
+})();
+
 function importData(){
   const input=document.createElement('input');
   input.type='file';input.accept='.json';
@@ -1714,7 +1767,7 @@ const FLASH_CARDS = [
   {cat:'精神看護',q:'摂食障害（神経性やせ症）で優先される身体管理',a:'体重・電解質（低K血症）・心電図（QT延長）・骨密度・血圧・体温の管理',sub:'再栄養症候群（リフィーディング症候群）に注意。急激な栄養補充は禁忌'},
 ];
 
-let flashState = {cat:'すべて', idx:0, flipped:false};
+let flashState = {cat:'すべて', idx:0, flipped:false, onlyAgain:false};
 const FLASH_CATS = ['すべて','検査値','薬物副作用','看護技術','感染管理','疾患・病態','周手術期','母性・小児','老年・在宅','精神看護'];
 
 function showFlashCards(){
@@ -1734,7 +1787,15 @@ function getFlashPool(){
     const kw=flashState.search.toLowerCase();
     pool=pool.filter(c=>(c.q+c.a+(c.sub||'')).toLowerCase().includes(kw));
   }
+  if(flashState.onlyAgain){
+    pool=pool.filter(c=>flashProgress[c.q]==='again'||!flashProgress[c.q]);
+  }
   return pool;
+}
+function toggleFlashAgainMode(){
+  flashState.onlyAgain=!flashState.onlyAgain;
+  flashState.idx=0;flashState.flipped=false;
+  renderFlash();
 }
 
 function renderFlash(){
@@ -1749,7 +1810,10 @@ function renderFlash(){
     <div class="flash-header">
       <button class="back-btn" onclick="endFlash()">← 戻る</button>
       <div style="font-size:13px;font-weight:700;color:#6B5040">暗記カード</div>
-      <div style="font-size:11px;color:#8A7060">${idx+1} / ${pool.length}</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button onclick="toggleFlashAgainMode()" style="padding:3px 8px;background:${flashState.onlyAgain?'rgba(248,113,113,0.2)':'rgba(240,232,222,0.8)'};border:1px solid rgba(217,197,178,0.5);border-radius:12px;font-size:10px;font-weight:700;color:${flashState.onlyAgain?'#dc2626':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">${flashState.onlyAgain?'🔴苦手のみ':'🔄苦手特訓'}</button>
+        <div style="font-size:11px;color:#8A7060">${idx+1} / ${pool.length}</div>
+      </div>
     </div>
     <div style="padding:6px 12px;border-bottom:1px solid rgba(85,80,77,0.08)">
       <div style="display:flex;align-items:center;gap:6px;background:rgba(240,232,222,0.6);border:1px solid rgba(184,160,144,0.3);border-radius:10px;padding:5px 10px">
@@ -2780,6 +2844,42 @@ function drillOne(id){
   showQuiz();
 }
 
+// SRS 今後7日間の復習予定グラフ
+function renderSrsForecast(){
+  const forecast=[];
+  for(let i=0;i<7;i++){
+    const d=new Date();d.setDate(d.getDate()+i);
+    const k=d.toISOString().slice(0,10);
+    const cnt=Object.values(srsData).filter(s=>s.due===k).length;
+    const dow=['日','月','火','水','木','金','土'][d.getDay()];
+    forecast.push({k,cnt,dow,label:i===0?'今日':i===1?'明日':`${dow}`});
+  }
+  const max=Math.max(...forecast.map(f=>f.cnt),1);
+  const total7=forecast.reduce((s,f)=>s+f.cnt,0);
+  if(!total7) return `<div style="margin:12px 0;padding:12px 14px;background:rgba(240,232,222,0.5);border:1.5px solid rgba(217,197,178,0.35);border-radius:14px">
+    <div style="font-size:12px;font-weight:700;color:#B8907A;margin-bottom:4px">🧠 SRS 復習予定（7日間）</div>
+    <div style="font-size:11px;color:#8A6A50">今後7日間の予定復習問題はありません。新しい問題を解いてSRSを活用しましょう！</div>
+  </div>`;
+  const bars=forecast.map((f,i)=>{
+    const h=Math.max(4,Math.round(f.cnt/max*48));
+    const color=i===0?'rgba(184,144,122,0.8)':f.cnt>0?'rgba(184,144,122,0.5)':'rgba(237,224,212,0.4)';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">
+      <div style="font-size:9px;font-weight:700;color:${f.cnt>0?'#B8907A':'#ccc'}">${f.cnt||''}</div>
+      <div style="width:100%;max-width:32px;height:48px;display:flex;align-items:flex-end">
+        <div style="width:100%;height:${h}px;background:${color};border-radius:4px 4px 0 0"></div>
+      </div>
+      <div style="font-size:9px;color:${i===0?'#B8907A':'#aaa'};font-weight:${i===0?'700':'400'}">${f.label}</div>
+    </div>`;
+  }).join('');
+  return `<div style="margin:12px 0;padding:12px 14px;background:rgba(240,232,222,0.5);border:1.5px solid rgba(217,197,178,0.35);border-radius:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:#B8907A">🧠 SRS 復習予定（7日間）</div>
+      <div style="font-size:10px;color:#8A6A50">計 ${total7}問</div>
+    </div>
+    <div style="display:flex;gap:4px;align-items:flex-end">${bars}</div>
+  </div>`;
+}
+
 // 学習ペース分析カード
 function renderPaceAnalysis(){
   // 直近7日間の平均問題数/日
@@ -3356,8 +3456,10 @@ function renderStats(){
       <button onclick="exportData()" style="padding:7px 14px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📤 JSONエクスポート</button>
       <button onclick="exportCSV()" style="padding:7px 14px;background:rgba(22,163,74,0.1);color:#15803d;border:1.5px solid rgba(22,163,74,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📊 CSVエクスポート</button>
       <button onclick="importData()" style="padding:7px 14px;background:rgba(74,222,128,0.1);color:#166534;border:1.5px solid rgba(74,222,128,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📥 データをインポート</button>
+      <button onclick="setupReminder()" style="padding:7px 14px;background:rgba(245,158,11,0.1);color:#b45309;border:1.5px solid rgba(245,158,11,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif" id="reminderBtn">🔔 ${localStorage.getItem('np_reminder')?'リマインダー設定済み':'学習リマインダー'}</button>
     </div>
     <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');localStorage.removeItem('np_mock_history');localStorage.removeItem('np_flash_progress');localStorage.removeItem('np_srs');localStorage.removeItem('np_daily');localStorage.removeItem('np_memos');localStorage.removeItem('np_best');localStorage.removeItem('np_daily_acc');localStorage.removeItem('np_wrong_choices');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];mockHistory=[];flashProgress={};srsData={};dailyChallenge=null;memoData={};bestScores={};dailyAccuracy={};wrongChoices={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:12px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>
+    ${renderSrsForecast()}
     ${renderPaceAnalysis()}
     ${renderTopMissed()}
     `;
