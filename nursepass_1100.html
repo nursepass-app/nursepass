@@ -2079,8 +2079,21 @@ function renderFlash(){
       <button class="flash-nav-btn" style="flex:1;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.4);color:#166534" onclick="flashKnown()">覚えた ✓ <span style="font-size:9px;opacity:0.6">[K]</span></button>
       <button class="flash-nav-btn" style="flex:1;background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.4);color:#991b1b" onclick="flashAgain()">もう一度 <span style="font-size:9px;opacity:0.6">[R]</span></button>
     </div>
-    <div style="padding:0 16px 12px;font-size:10px;text-align:center;color:#8A7060">覚えた: ${Object.values(flashProgress).filter(v=>v==='known').length} / ${FLASH_CARDS.length}枚${customCards.length?` | マイカード: ${customCards.length}枚`:''} <span style="margin-left:6px;opacity:0.6">スペース:めくる ←→:移動</span>
+    <div style="padding:0 16px 6px;font-size:10px;text-align:center;color:#8A7060">覚えた: ${Object.values(flashProgress).filter(v=>v==='known').length} / ${FLASH_CARDS.length}枚${customCards.length?` | マイカード: ${customCards.length}枚`:''} <span style="margin-left:6px;opacity:0.6">スペース:めくる ←→:移動</span>
       <button onclick="resetFlashProgress()" style="margin-left:8px;padding:2px 8px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:8px;font-size:10px;color:#dc2626;cursor:pointer;font-family:'Noto Sans JP',sans-serif">進捗リセット</button>
+    </div>
+    <div style="padding:0 16px 12px">
+      <div onclick="const d=document.getElementById('flashCatProgress');d.style.display=d.style.display==='none'?'block':'none'" style="font-size:10px;color:#8A7060;cursor:pointer;text-align:center;padding:4px">📊 カテゴリ別進捗を見る ▾</div>
+      <div id="flashCatProgress" style="display:none;margin-top:4px">
+        ${FLASH_CATS.filter(c=>c!=='すべて'&&c!=='マイカード').map(cat=>{
+          const total=FLASH_CARDS.filter(c=>c.cat===cat).length;
+          if(!total) return '';
+          const known=FLASH_CARDS.filter(c=>c.cat===cat&&flashProgress[c.q]==='known').length;
+          const pct=Math.round(known/total*100);
+          return `<div style="margin-bottom:4px"><div style="display:flex;justify-content:space-between;font-size:10px;color:#6B5040;margin-bottom:2px"><span>${cat}</span><span style="font-weight:700;color:${pct>=80?'#16a34a':pct>=50?'#D9A060':'#8A7060'}">${known}/${total}</span></div><div style="height:4px;background:rgba(237,224,212,0.6);border-radius:4px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${pct>=80?'#4ade80':pct>=50?'#D9A060':'#D9C5B2'};border-radius:4px;transition:.4s"></div></div></div>`;
+        }).join('')}
+        ${customCards.length?`<div style="margin-top:4px;font-size:10px;color:#7c3aed">📝 マイカード: ${customCards.length}枚</div>`:''}
+      </div>
     </div>
   </div>`;
 }
@@ -2386,6 +2399,19 @@ function resumeSession(){
 let mockElapsedInterval=null;
 function showQuiz(){
   sessionStartTime=Date.now();
+  // 連続学習60分休憩アラート
+  if(window._breakAlertTimer) clearTimeout(window._breakAlertTimer);
+  window._breakAlertTimer=setTimeout(()=>{
+    const qa=document.getElementById('quizArea');
+    if(!qa||qa.style.display==='none') return;
+    const el=document.createElement('div');
+    el.id='breakAlert';
+    el.style.cssText='position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,rgba(245,239,232,0.97),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.6);border-radius:14px;padding:10px 16px;font-size:12px;color:#4A3828;font-family:"Noto Sans JP",sans-serif;font-weight:600;text-align:center;z-index:8000;box-shadow:0 4px 16px rgba(184,144,122,0.2);cursor:pointer;max-width:260px;animation:fadein .4s ease';
+    el.innerHTML='☕ 60分経ちました。少し休憩しませんか？<br><span style="font-size:10px;font-weight:400;color:#8A7060">タップで閉じる</span>';
+    el.onclick=()=>el.remove();
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),8000);
+  },60*60*1000);
   document.getElementById('tabHome').style.display='none';
   document.getElementById('tabWeak').style.display='none';
   document.getElementById('tabStats').style.display='none';
@@ -2909,6 +2935,8 @@ function backHome(force){
     }
   }
   if(autoAdvanceTimer){clearInterval(autoAdvanceTimer);autoAdvanceTimer=null;}
+  if(window._breakAlertTimer){clearTimeout(window._breakAlertTimer);window._breakAlertTimer=null;}
+  document.getElementById('breakAlert')?.remove();
   recordStudyTime();
   stopTts();
   document.getElementById('quizArea').style.display='none';
@@ -3308,6 +3336,37 @@ function renderFieldRanking(){
         <div style="font-size:10px;font-weight:700;color:#dc2626;margin-bottom:4px">📌 苦手分野</div>
         ${bot3.map((r,i)=>row(r,i,false)).join('')}
       </div>
+    </div>
+  </div>`;
+}
+// 曜日別正答率グラフ
+function renderDowChart(){
+  const DOW=['日','月','火','水','木','金','土'];
+  const stats=Array(7).fill(null).map(()=>({c:0,t:0}));
+  // Walk through dailyAccuracy to accumulate by day-of-week
+  Object.entries(dailyAccuracy).forEach(([dt,da])=>{
+    if(!da||da.total<3) return;
+    const dow=new Date(dt).getDay();
+    stats[dow].c+=da.correct;stats[dow].t+=da.total;
+  });
+  const hasData=stats.some(s=>s.t>0);
+  if(!hasData) return '';
+  const bars=stats.map((s,i)=>{
+    if(!s.t) return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px"><div style="width:16px;height:2px;background:rgba(184,160,144,0.2);border-radius:2px"></div><div style="font-size:9px;color:#B0A090">${DOW[i]}</div></div>`;
+    const pct=Math.round(s.c/s.t*100);
+    const h=Math.round((pct/100)*52);
+    const col=pct>=80?'rgba(74,222,128,0.8)':pct>=60?'rgba(251,191,36,0.8)':'rgba(248,113,113,0.75)';
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px" title="${DOW[i]}曜日: ${pct}% (${s.t}問)">
+      <div style="font-size:8px;color:#8A7060;font-variant-numeric:tabular-nums">${pct}</div>
+      <div style="width:16px;height:${h}px;background:${col};border-radius:3px 3px 0 0;min-height:2px"></div>
+      <div style="font-size:9px;color:#8A7060">${DOW[i]}</div>
+    </div>`;
+  });
+  return `<div style="margin-bottom:14px;padding:12px 14px;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(235,225,210,0.85));border:1.5px solid rgba(217,197,178,0.4);border-radius:14px">
+    <div style="font-size:11px;font-weight:700;color:#B8907A;margin-bottom:8px">📆 曜日別正答率</div>
+    <div style="position:relative;height:72px;display:flex;align-items:flex-end;gap:2px;padding-bottom:16px">
+      <div style="position:absolute;bottom:${16+Math.round(0.8*52)}px;left:0;right:0;border-top:1px dashed rgba(239,68,68,0.35)"></div>
+      ${bars.join('')}
     </div>
   </div>`;
 }
@@ -3966,6 +4025,7 @@ function renderStats(){
     </div>
     <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');localStorage.removeItem('np_mock_history');localStorage.removeItem('np_flash_progress');localStorage.removeItem('np_srs');localStorage.removeItem('np_daily');localStorage.removeItem('np_memos');localStorage.removeItem('np_best');localStorage.removeItem('np_daily_acc');localStorage.removeItem('np_wrong_choices');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];mockHistory=[];flashProgress={};srsData={};dailyChallenge=null;memoData={};bestScores={};dailyAccuracy={};wrongChoices={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:12px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>
     ${renderMockHistoryChart()}
+    ${renderDowChart()}
     ${renderSrsForecast()}
     ${renderPaceAnalysis()}
     ${renderTopMissed()}
