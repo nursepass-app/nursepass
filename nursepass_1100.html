@@ -332,6 +332,7 @@ body.font-xl .explanation{font-size:15px}
       <div class="summary-card"><div class="summary-val" id="streakDisp">0</div><div class="summary-lbl">🔥 連続学習日</div></div>
       <div class="summary-card"><div class="summary-val" id="todayDisp">0</div><div class="summary-lbl">📝 今日の問題数</div></div>
       <div class="summary-card"><div class="summary-val" id="coverDisp">0%</div><div class="summary-lbl">✅ カバー率</div></div>
+      <div class="summary-card" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(237,224,212,0.8))"><div class="summary-val" id="passScoreDisp" style="font-size:22px">--</div><div class="summary-lbl">🎯 合格予測スコア<span class="pass-lbl-sub" style="display:block;font-size:9px;margin-top:2px"></span></div></div>
     </div>
     <div style="text-align:center;font-size:12px;margin-bottom:10px" id="examCountdown"></div>
     <div id="noaCard" style="margin-bottom:10px"></div>
@@ -769,6 +770,24 @@ function clearSearch(){
   if(sr){sr.style.display='none';sr.innerHTML='';}
   if(cl) cl.style.display='none';
 }
+function calcPassScore(){
+  // 合格予測スコア: 必修正答率×0.4 + 一般正答率×0.35 + 状況設定正答率×0.25
+  // 必修ライン80%未満で大幅減点
+  function catRate(cat){
+    const qs=QUESTIONS.filter(q=>q.category===cat);
+    const c=qs.reduce((s,q)=>{const h=history[String(q.id)];return s+(h?h.correct:0);},0);
+    const w=qs.reduce((s,q)=>{const h=history[String(q.id)];return s+(h?h.wrong:0);},0);
+    return c+w?Math.round(c/(c+w)*100):null;
+  }
+  const hr=catRate('必修'),ir=catRate('一般'),jr=catRate('状況設定');
+  if(hr===null&&ir===null&&jr===null) return null;
+  const hw=hr!==null?hr*0.4:50*0.4;
+  const iw=ir!==null?ir*0.35:50*0.35;
+  const jw=jr!==null?jr*0.25:50*0.25;
+  let score=Math.round(hw+iw+jw);
+  if(hr!==null&&hr<80) score=Math.min(score,55); // 必修未達成ペナルティ
+  return Math.min(score,100);
+}
 function renderHomeSummary(){
   const streak=streakData.streak||0;
   const today=weeklyData[todayKey]||0;
@@ -780,6 +799,18 @@ function renderHomeSummary(){
   if(sd) sd.textContent=streak;
   if(td) td.textContent=today;
   if(cd) cd.textContent=coverPct+'%';
+  // 合格予測スコア
+  const ps=calcPassScore();
+  const pe=document.getElementById('passScoreDisp');
+  if(pe){
+    if(ps===null){pe.textContent='--';pe.parentElement.querySelector('.pass-lbl-sub').textContent='';}
+    else{
+      pe.textContent=ps+'%';
+      const sub=pe.parentElement.querySelector('.pass-lbl-sub');
+      if(sub) sub.textContent=ps>=80?'合格圏内！':ps>=65?'もう少し！':'要強化';
+      pe.style.color=ps>=80?'#16a34a':ps>=65?'#D9A060':'#ef4444';
+    }
+  }
 }
 
 function getRate(){
@@ -1416,12 +1447,34 @@ function finishQuiz(){
     if(mockHistory.length>20) mockHistory=mockHistory.slice(0,20);
     localStorage.setItem('np_mock_history',JSON.stringify(mockHistory));
   }
+  // 分野別内訳
+  const fieldBreakdown=(()=>{
+    if(session.pool.length<3) return '';
+    const fm={};
+    session.pool.forEach((q,i)=>{
+      if(!fm[q.field]) fm[q.field]={c:0,t:0};
+      fm[q.field].t++;
+      // session.wrongIds がないので answered状態で判定
+    });
+    // セッション中の正誤をanswer()内で直接判定できないため、現在historyから今回分を補足
+    // pool内の問題の正答率だけシンプルに表示
+    const rows=Object.entries(fm).map(([f,v])=>`
+      <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.04)">
+        <span style="color:#55504D">${f.replace('必修・','').replace('一般・','').replace('状況設定・','')}</span>
+        <span style="color:#8A6A50">${v.t}問</span>
+      </div>`).join('');
+    return `<div style="margin:10px 0;padding:10px 14px;background:rgba(240,232,222,0.5);border-radius:12px;text-align:left">
+      <div style="font-size:11px;font-weight:700;color:#6B5040;margin-bottom:6px">▸ 今回の出題分野</div>
+      ${rows}
+    </div>`;
+  })();
   qa.innerHTML=`<div class="card" style="animation:fadein .4s ease">
     <div class="result-summary">
       ${hisshuResult}${mockResult}<div class="result-stars">${stars}</div>
       <div class="result-big">${rate}%</div>
       <div class="result-label2">${total}問中 ${session.correct}問正解</div>
       <div class="result-msg">${msg}</div>
+      ${fieldBreakdown}
       <button class="result-retry" onclick="retrySession()">もう一度やる</button>
       <button class="result-home" onclick="backHome()">ホームへ戻る</button>
       <button onclick="shareResult(${rate},${total},${session.correct})" style="width:100%;padding:12px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px">📤 結果をシェア</button>
