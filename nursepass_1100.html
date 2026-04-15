@@ -360,6 +360,7 @@ body.font-xl .explanation{font-size:15px}
     <div id="pomodoroWidget" style="margin-bottom:10px"></div>
     <div id="todayPlanCard" style="margin-bottom:10px"></div>
     <div id="questionOfDayCard" style="margin-bottom:10px"></div>
+    <div id="miniReviewCard" style="margin-bottom:10px"></div>
     <div class="search-wrap">
       <span style="font-size:16px;color:#aaa">🔍</span>
       <input class="search-input" id="searchInput" placeholder="キーワード検索 / #123でID直接検索" oninput="onSearchInput(this.value)" autocomplete="off">
@@ -619,6 +620,8 @@ let wrongChoices=JSON.parse(localStorage.getItem('np_wrong_choices')||'{}');
 let srsData=JSON.parse(localStorage.getItem('np_srs')||'{}');
 // 難問フラグ: Set of question IDs flagged as "難しかった"
 let flaggedIds=new Set(JSON.parse(localStorage.getItem('np_flags')||'[]'));
+// コンボ最高記録
+let bestCombo=parseInt(localStorage.getItem('np_best_combo')||'0');
 // バイブレーション（触覚フィードバック）
 let hapticEnabled=localStorage.getItem('np_haptic')!=='0';
 function toggleHaptic(){
@@ -1212,6 +1215,52 @@ function renderTodayPlan(){
       </button>`).join('')}
     </div>
   </div>`;
+}
+let _miniQ=null;
+function renderMiniReview(answered){
+  const el=document.getElementById('miniReviewCard');
+  if(!el) return;
+  // Pick a random wrong question if not already picked
+  const pool=Object.keys(history).filter(id=>{const h=history[id];return h&&h.wrong>0&&!isMastered(id);}).map(id=>QUESTIONS.find(q=>q.id==id)).filter(Boolean);
+  if(!pool.length){el.innerHTML='';return;}
+  if(!_miniQ||answered) _miniQ=pool[Math.floor(Math.random()*pool.length)];
+  const q=_miniQ;
+  const alreadyAnswered=el.dataset.answered==='1';
+  if(alreadyAnswered&&!answered){return;}
+  el.dataset.answered='';
+  el.innerHTML=`<div style="padding:10px 14px;background:rgba(240,232,222,0.6);border:1.5px solid rgba(217,197,178,0.4);border-radius:14px">
+    <div style="font-size:10px;font-weight:700;color:#B8907A;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+      <span>⚡ ミニレビュー（過去の間違え問題）</span>
+      <button onclick="_miniQ=null;renderMiniReview(true)" style="font-size:9px;padding:2px 7px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:8px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">別の問題</button>
+    </div>
+    <div style="font-size:12px;color:#4A3828;font-weight:600;line-height:1.5;margin-bottom:8px">${q.question}</div>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      ${Object.entries(q.choices).map(([k,v])=>`<button id="mrBtn_${k}" onclick="answerMiniReview('${k}','${q.id}')" style="text-align:left;padding:6px 10px;background:rgba(255,255,255,0.7);border:1px solid rgba(217,197,178,0.35);border-radius:8px;font-size:11px;color:#4A3828;cursor:pointer;font-family:'Noto Sans JP',sans-serif"><span style="font-weight:700;color:#B8907A;margin-right:6px">${k}.</span>${v}</button>`).join('')}
+    </div>
+  </div>`;
+}
+function answerMiniReview(key,qid){
+  const el=document.getElementById('miniReviewCard');
+  if(!el) return;
+  const q=QUESTIONS.find(x=>x.id==qid);
+  if(!q) return;
+  const correct=key===q.answer;
+  // Color the buttons
+  Object.keys(q.choices).forEach(k=>{
+    const btn=document.getElementById('mrBtn_'+k);
+    if(!btn) return;
+    btn.disabled=true;
+    if(k===q.answer) btn.style.background=correct&&k===key?'rgba(74,222,128,0.3)':'rgba(74,222,128,0.2)';
+    else if(k===key) btn.style.background='rgba(248,113,113,0.25)';
+    btn.style.borderColor=k===q.answer?'rgba(74,222,128,0.5)':k===key?'rgba(239,68,68,0.4)':'rgba(217,197,178,0.2)';
+  });
+  // Show result + explanation
+  const resDiv=document.createElement('div');
+  resDiv.style.cssText='margin-top:8px;font-size:11px;line-height:1.6';
+  resDiv.innerHTML=`<div style="font-weight:700;color:${correct?'#16a34a':'#dc2626'};margin-bottom:4px">${correct?'✓ 正解！':'✗ 不正解 — 正解は '+q.answer+'. '+q.choices[q.answer]}</div><div style="color:#5A5050;padding:6px 8px;background:rgba(255,255,255,0.6);border-radius:8px">${q.explanation.slice(0,120)}…</div><button onclick="_miniQ=null;renderMiniReview(true)" style="margin-top:6px;width:100%;padding:6px;background:rgba(217,197,178,0.3);border:1px solid rgba(217,197,178,0.4);border-radius:8px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif">→ 次の問題</button>`;
+  el.querySelector('div').appendChild(resDiv);
+  el.dataset.answered='1';
+  haptic(correct);playAnswerSound(correct);
 }
 function renderNoaCard(){
   const el=document.getElementById('noaCard');
@@ -2908,6 +2957,7 @@ function answer(key){
   if(correct){
     session.correct++;
     session.combo=(session.combo||0)+1;
+    if(session.combo>bestCombo){bestCombo=session.combo;localStorage.setItem('np_best_combo',bestCombo);}
     const milestones=[3,5,10,15,20];
     if(milestones.includes(session.combo)) setTimeout(()=>{showToast(`🔥 ${session.combo}連続正解！コンボ継続中！`);if(session.combo>=5)launchConfetti();},100);
   } else {
@@ -3868,6 +3918,38 @@ function renderMockHistoryChart(){
   </div>`;
 }
 // 分野別強弱ランキング
+// 自己記録ボード
+function renderPersonalRecords(){
+  const answered=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
+  if(answered<10) return '';
+  // Best single-day
+  const bestDay=Object.entries(weeklyData).sort((a,b)=>b[1]-a[1])[0];
+  // Best accuracy day (min 10 questions)
+  const bestAccDay=Object.entries(dailyAccuracy).filter(([,da])=>da.total>=10).sort((a,b)=>{return (b[1].correct/b[1].total)-(a[1].correct/a[1].total);})[0];
+  const bestAcc=bestAccDay?Math.round(bestAccDay[1].correct/bestAccDay[1].total*100):null;
+  // Total study days
+  const studyDays=Object.values(weeklyData).filter(v=>v>0).length;
+  // Mastered count
+  const masteredCnt=Object.values(history).filter(h=>h.correct>=3&&h.correct>h.wrong).length;
+  const records=[
+    {icon:'🔥',label:'最長コンボ',val:bestCombo?bestCombo+'連続正解':'--',color:bestCombo>=10?'#16a34a':bestCombo>=5?'#D9A060':'#6B5040'},
+    {icon:'📅',label:'最多解答日',val:bestDay?bestDay[1]+'問':'--',color:'#B8907A'},
+    {icon:'🎯',label:'最高正答率',val:bestAcc!==null?bestAcc+'%':'--',color:bestAcc>=90?'#16a34a':bestAcc>=80?'#D9A060':'#6B5040'},
+    {icon:'✅',label:'克服済み',val:masteredCnt+'問',color:masteredCnt>=100?'#7c3aed':masteredCnt>=50?'#16a34a':'#B8907A'},
+    {icon:'📆',label:'累計学習日数',val:studyDays+'日',color:'#B8907A'},
+    {icon:'📊',label:'累計解答数',val:answered+'問',color:answered>=1000?'#7c3aed':'#B8907A'},
+  ];
+  return `<div style="margin-bottom:14px;padding:12px 14px;background:rgba(245,239,232,0.85);border:1.5px solid rgba(217,197,178,0.4);border-radius:14px">
+    <div style="font-size:11px;font-weight:700;color:#B8907A;margin-bottom:8px">🏅 自己記録ボード</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px">
+      ${records.map(r=>`<div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.6);border-radius:10px;border:1px solid rgba(217,197,178,0.3)">
+        <div style="font-size:14px;margin-bottom:2px">${r.icon}</div>
+        <div style="font-size:13px;font-weight:700;color:${r.color}">${r.val}</div>
+        <div style="font-size:9px;color:#8A6A50;margin-top:2px">${r.label}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
 function renderFieldRanking(){
   const fieldStats={};
   QUESTIONS.forEach(q=>{
@@ -4846,6 +4928,7 @@ function renderStats(){
     ${renderSpeedRanking()}
     ${renderTopMissed()}
     ${renderFieldRanking()}
+    ${renderPersonalRecords()}
     ${renderAccTrend()}
     <div style="margin:12px 0;padding:12px 14px;background:rgba(240,232,222,0.5);border:1.5px solid rgba(217,197,178,0.35);border-radius:14px;text-align:center">
       <div style="font-size:12px;font-weight:700;color:#B8907A;margin-bottom:8px">🏅 学習実績証明書</div>
@@ -5747,7 +5830,7 @@ updateScoreBadge();
 initDailyMessage();
 renderHomeSummary();
 renderExamCountdown();
-renderGoalBar();renderNoaCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();
+renderGoalBar();renderNoaCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();
 showResumeBanner();
 initPomodoro();
 renderTodayPlan();
