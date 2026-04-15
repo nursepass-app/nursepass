@@ -767,7 +767,7 @@ function renderGoalBar(){
   _lastGoalDone=done;
   el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
     <span style="font-size:11px;color:#8A6A50;font-weight:600">📌 今日の目標 <span style="cursor:pointer;text-decoration:underline" onclick="setDailyGoal()">${dailyGoal}問</span></span>
-    <span style="font-size:11px;color:${done?'#16a34a':'#B8907A'};font-weight:700">${today}/${dailyGoal}問 ${done?'✓ 達成！':''}</span>
+    <span style="font-size:11px;color:${done?'#16a34a':'#B8907A'};font-weight:700">${today}/${dailyGoal}問 ${done?'✓ 達成！':today>0?`あと${dailyGoal-today}問`:''}</span>
   </div>
   <div style="height:6px;background:rgba(237,224,212,0.4);border-radius:10px;overflow:hidden">
     <div style="width:${pct}%;height:100%;background:${done?'linear-gradient(90deg,#4ade80,#16a34a)':'linear-gradient(90deg,#D9C5B2,#B8A090)'};border-radius:10px;transition:.5s"></div>
@@ -1650,7 +1650,7 @@ function answer(key){
     </div>
   </div>
   <div style="font-size:12px;color:${correct?'#166534':'#B8A090'};font-weight:600;margin:4px 0 6px;padding:4px 8px;background:${correct?'rgba(74,222,128,0.08)':'rgba(217,197,178,0.08)'};border-radius:8px">${nmsg}</div>
-  ${wrongAns}${correctAns}<div class="explanation">${q.explanation}</div>
+  ${wrongAns}${correctAns}<div class="explanation" style="position:relative">${q.explanation}<button onclick="navigator.clipboard.writeText('Q: '+this.closest('.explanation').textContent.trim()).then(()=>showToast('解説をコピーしました'))" style="position:absolute;top:4px;right:4px;padding:2px 6px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.15);border-radius:6px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif" title="解説をコピー">📋</button></div>
   ${(()=>{const h=history[q.id];if(!h||h.correct+h.wrong<1) return '';const tot=h.correct+h.wrong;const acc=Math.round(h.correct/tot*100);const srs=srsData[q.id];const accColor=acc>=80?'#16a34a':acc>=60?'#D9A060':'#ef4444';return `<div style="margin-top:6px;padding:4px 10px;background:rgba(237,224,212,0.2);border-radius:8px;font-size:10px;color:#8A6A50;display:flex;gap:10px;align-items:center">この問題: <strong style="color:${accColor}">${acc}%</strong>正答 (${tot}回挑戦)${srs?` · 次の復習: ${srs.due<=todayKey?'今日！':`${Math.max(1,Math.ceil((new Date(srs.due)-new Date())/86400000))}日後`}`:''}</div>`;})()}
   ${hasMemo?`<div style="margin-top:8px;padding:8px 10px;background:rgba(217,185,80,0.1);border-left:3px solid #D9A060;border-radius:6px;font-size:12px;color:#5A4420">📝 <strong>マイメモ：</strong>${memoData[q.id]}</div>`:''}
   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
