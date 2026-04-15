@@ -849,6 +849,60 @@ function renderExamCountdown(){
 
 function save(){localStorage.setItem('np_history',JSON.stringify(history))}
 
+function exportData(){
+  const data={
+    version:1,date:todayKey,
+    np_history:history,np_streak:streakData,np_weekly:weeklyData,
+    np_badges:earnedBadges,np_bookmarks:bookmarks,np_goal:dailyGoal,
+    np_memos:memoData,np_best:bestScores,np_daily_acc:dailyAccuracy,
+    np_wrong_choices:wrongChoices,np_srs:srsData,np_examdate:examDate,
+    np_mock_history:mockHistory,np_flash_progress:flashProgress
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`nursepass_backup_${todayKey}.json`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('データをエクスポートしました');
+}
+function importData(){
+  const input=document.createElement('input');
+  input.type='file';input.accept='.json';
+  input.onchange=e=>{
+    const file=e.target.files[0];
+    if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!data.version||!data.np_history) throw new Error('invalid');
+        if(!confirm(`${data.date||'不明'}のバックアップを復元しますか？\n現在のデータは上書きされます。`)) return;
+        if(data.np_history) {history=data.np_history;localStorage.setItem('np_history',JSON.stringify(history));}
+        if(data.np_streak) {streakData=data.np_streak;localStorage.setItem('np_streak',JSON.stringify(streakData));}
+        if(data.np_weekly) {weeklyData=data.np_weekly;localStorage.setItem('np_weekly',JSON.stringify(weeklyData));}
+        if(data.np_badges) {earnedBadges=data.np_badges;localStorage.setItem('np_badges',JSON.stringify(earnedBadges));}
+        if(data.np_bookmarks) {bookmarks=data.np_bookmarks;localStorage.setItem('np_bookmarks',JSON.stringify(bookmarks));}
+        if(data.np_goal) {dailyGoal=data.np_goal;localStorage.setItem('np_goal',data.np_goal);}
+        if(data.np_memos) {memoData=data.np_memos;localStorage.setItem('np_memos',JSON.stringify(memoData));}
+        if(data.np_best) {bestScores=data.np_best;localStorage.setItem('np_best',JSON.stringify(bestScores));}
+        if(data.np_daily_acc) {dailyAccuracy=data.np_daily_acc;localStorage.setItem('np_daily_acc',JSON.stringify(dailyAccuracy));}
+        if(data.np_wrong_choices) {wrongChoices=data.np_wrong_choices;localStorage.setItem('np_wrong_choices',JSON.stringify(wrongChoices));}
+        if(data.np_srs) {srsData=data.np_srs;localStorage.setItem('np_srs',JSON.stringify(srsData));}
+        if(data.np_examdate) {examDate=data.np_examdate;localStorage.setItem('np_examdate',examDate);}
+        if(data.np_mock_history) {mockHistory=data.np_mock_history;localStorage.setItem('np_mock_history',JSON.stringify(mockHistory));}
+        if(data.np_flash_progress) {flashProgress=data.np_flash_progress;localStorage.setItem('np_flash_progress',JSON.stringify(flashProgress));}
+        updateScoreBadge();renderStats();renderHomeSummary();renderGoalBar();renderNoaCard();renderExamCountdown();
+        showToast('データを復元しました！');
+      } catch(err){
+        alert('ファイルの読み込みに失敗しました。\nNursePassのバックアップファイルを選択してください。');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
 function updateDailyStats(){
   weeklyData[todayKey]=(weeklyData[todayKey]||0)+1;
   // 過去75日分保持（ヒートマップ70日表示に対応）
@@ -2212,7 +2266,11 @@ function renderStats(){
         </div>
       </div>`;
     })()}
-    <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');localStorage.removeItem('np_mock_history');localStorage.removeItem('np_flash_progress');localStorage.removeItem('np_srs');localStorage.removeItem('np_daily');localStorage.removeItem('np_memos');localStorage.removeItem('np_best');localStorage.removeItem('np_daily_acc');localStorage.removeItem('np_wrong_choices');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];mockHistory=[];flashProgress={};srsData={};dailyChallenge=null;memoData={};bestScores={};dailyAccuracy={};wrongChoices={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:20px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>`;
+    <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+      <button onclick="exportData()" style="padding:7px 14px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📤 データをエクスポート</button>
+      <button onclick="importData()" style="padding:7px 14px;background:rgba(74,222,128,0.1);color:#166534;border:1.5px solid rgba(74,222,128,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📥 データをインポート</button>
+    </div>
+    <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');localStorage.removeItem('np_mock_history');localStorage.removeItem('np_flash_progress');localStorage.removeItem('np_srs');localStorage.removeItem('np_daily');localStorage.removeItem('np_memos');localStorage.removeItem('np_best');localStorage.removeItem('np_daily_acc');localStorage.removeItem('np_wrong_choices');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];mockHistory=[];flashProgress={};srsData={};dailyChallenge=null;memoData={};bestScores={};dailyAccuracy={};wrongChoices={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:12px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>`;
 }
 
 
