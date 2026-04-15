@@ -552,6 +552,8 @@ let dailyAccuracy=JSON.parse(localStorage.getItem('np_daily_acc')||'{}');
 let wrongChoices=JSON.parse(localStorage.getItem('np_wrong_choices')||'{}');
 // SRS: {id: {due:'YYYY-MM-DD', interval:1, easeFactor:2.5}}
 let srsData=JSON.parse(localStorage.getItem('np_srs')||'{}');
+// 難問フラグ: Set of question IDs flagged as "難しかった"
+let flaggedIds=new Set(JSON.parse(localStorage.getItem('np_flags')||'[]'));
 // デイリーチャレンジ: {date:'YYYY-MM-DD', correct:0, total:0, done:false}
 let dailyChallenge=JSON.parse(localStorage.getItem('np_daily')||'null');
 function seededRand(seed){let x=Math.sin(seed+1)*10000;return x-Math.floor(x);}
@@ -637,6 +639,24 @@ function srsUpdate(id, correct){
 }
 function getSrsDueIds(){
   return Object.keys(srsData).filter(id=>srsData[id].due<=todayKey).map(Number);
+}
+function flagQuestion(id){
+  const btn=document.getElementById('flagBtn_'+id);
+  if(flaggedIds.has(id)){
+    flaggedIds.delete(id);
+    if(btn){btn.textContent='🤔 難しかった';btn.style.background='rgba(240,232,222,0.8)';btn.style.color='#8A6A50';}
+    showToast('フラグを解除しました');
+  } else {
+    flaggedIds.add(id);
+    if(btn){btn.textContent='🔖 フラグ済み';btn.style.background='rgba(239,68,68,0.12)';btn.style.color='#dc2626';}
+    // Short-interval SRS entry so this question comes back sooner
+    const s=srsData[id]||{interval:1,easeFactor:2.5,due:todayKey};
+    const due=new Date(todayKey);due.setDate(due.getDate()+1);
+    srsData[id]={interval:1,easeFactor:Math.max(1.3,s.easeFactor-0.15),due:due.toISOString().slice(0,10)};
+    localStorage.setItem('np_srs',JSON.stringify(srsData));
+    showToast('難問フラグを設定。明日SRS復習に追加されます');
+  }
+  localStorage.setItem('np_flags',JSON.stringify([...flaggedIds]));
 }
 function checkAchievements(){
   const answered=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
@@ -1695,6 +1715,7 @@ function answer(key){
   })()}
   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
     ${window.speechSynthesis?`<button class="tts-btn" onclick="speakText('${(q.question+' 正解は'+q.choices[q.answer]+' 解説: '+q.explanation).replace(/'/g,'&apos;')}')">🔊 読み上げ</button>`:''}
+    <button id="flagBtn_${q.id}" onclick="flagQuestion(${q.id})" style="padding:5px 10px;background:${flaggedIds.has(q.id)?'rgba(239,68,68,0.12)':'rgba(240,232,222,0.8)'};color:${flaggedIds.has(q.id)?'#dc2626':'#8A6A50'};border:1px solid rgba(85,80,77,0.2);border-radius:16px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">${flaggedIds.has(q.id)?'🔖 フラグ済み':'🤔 難しかった'}</button>
   </div>
   `;
   choices.after(res);
@@ -2217,7 +2238,49 @@ function renderStats(){
       ${tips.slice(0,2).map(t=>`<div style="font-size:12px;color:#4A3828;line-height:1.6;margin-bottom:4px;padding-left:8px;border-left:2px solid #D9C5B2">${t}</div>`).join('')}
     </div>`;
   })();
+  // 今週のまとめカード
+  const weekSummaryHtml=(()=>{
+    if(!weekTotal7&&!prevWeek7) return '';
+    // Accuracy this week vs last week from dailyAccuracy
+    const getDayKey=(offset)=>{const d=new Date();d.setDate(d.getDate()-offset);return d.toISOString().slice(0,10);};
+    let wkCorrect=0,wkTotal=0,prevCorrect=0,prevTotal=0,wkMins=0,wkDays=0;
+    for(let i=0;i<7;i++){const k=getDayKey(i);const da=dailyAccuracy[k]||{};wkCorrect+=(da.correct||0);wkTotal+=(da.total||0);wkMins+=(da.mins||0);if((da.total||0)>0)wkDays++;}
+    for(let i=7;i<14;i++){const k=getDayKey(i);const da=dailyAccuracy[k]||{};prevCorrect+=(da.correct||0);prevTotal+=(da.total||0);}
+    const wkAcc=wkTotal?Math.round(wkCorrect/wkTotal*100):null;
+    const prevAcc=prevTotal?Math.round(prevCorrect/prevTotal*100):null;
+    const accDiff=wkAcc!==null&&prevAcc!==null?wkAcc-prevAcc:null;
+    const accArrow=accDiff===null?'':(accDiff>0?`<span style="color:#16a34a;font-size:10px;font-weight:700">▲${accDiff}%</span>`:(accDiff<0?`<span style="color:#dc2626;font-size:10px;font-weight:700">▼${Math.abs(accDiff)}%</span>`:`<span style="color:#8A6A50;font-size:10px">→</span>`));
+    const qDiff=weekTotal7-prevWeek7;
+    const qArrow=qDiff>0?`<span style="color:#16a34a;font-size:10px;font-weight:700">▲${qDiff}</span>`:(qDiff<0?`<span style="color:#dc2626;font-size:10px;font-weight:700">▼${Math.abs(qDiff)}</span>`:`<span style="color:#8A6A50;font-size:10px">→</span>`);
+    const timeStr=wkMins>=60?`${Math.floor(wkMins/60)}h${wkMins%60?wkMins%60+'m':''}`:(wkMins?`${wkMins}m`:'--');
+    return `<div style="margin-bottom:14px;padding:12px 14px;background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(235,225,212,0.9));border:1.5px solid rgba(217,197,178,0.5);border-radius:14px;text-align:left">
+      <div style="font-size:11px;font-weight:700;color:#B8907A;margin-bottom:10px">📅 今週のまとめ（過去7日間）</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.5);border-radius:10px">
+          <div style="font-size:18px;font-weight:700;color:#B8907A;line-height:1">${weekTotal7}</div>
+          <div style="font-size:9px;color:#8A6A50;margin-top:3px">解いた問題</div>
+          <div style="margin-top:3px">${qArrow}</div>
+        </div>
+        <div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.5);border-radius:10px">
+          <div style="font-size:18px;font-weight:700;color:${wkAcc!==null?(wkAcc>=80?'#16a34a':wkAcc>=60?'#D9A060':'#ef4444'):'#aaa'};line-height:1">${wkAcc!==null?wkAcc+'%':'--'}</div>
+          <div style="font-size:9px;color:#8A6A50;margin-top:3px">正答率</div>
+          <div style="margin-top:3px">${accArrow}</div>
+        </div>
+        <div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.5);border-radius:10px">
+          <div style="font-size:18px;font-weight:700;color:#B8907A;line-height:1">${wkDays}</div>
+          <div style="font-size:9px;color:#8A6A50;margin-top:3px">学習日数</div>
+          <div style="font-size:9px;color:#8A6A50;margin-top:3px">/ 7日</div>
+        </div>
+        <div style="text-align:center;padding:8px 4px;background:rgba(255,255,255,0.5);border-radius:10px">
+          <div style="font-size:18px;font-weight:700;color:#B8907A;line-height:1">${timeStr}</div>
+          <div style="font-size:9px;color:#8A6A50;margin-top:3px">学習時間</div>
+          <div style="font-size:9px;color:transparent;margin-top:3px">.</div>
+        </div>
+      </div>
+    </div>`;
+  })();
   sc.innerHTML=`
+    ${weekSummaryHtml}
     ${analysisHtml}
     <div class="result-big">${rate}%</div>
     <div class="result-label2">解答${answered}問 / 学習済み${total}問（カバー率${coverPct2}%）</div>
