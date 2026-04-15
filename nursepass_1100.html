@@ -350,7 +350,7 @@ body.font-xl .explanation{font-size:15px}
       <div class="summary-card" onclick="showStreakDetail()"><div class="summary-val" id="streakDisp">0</div><div class="summary-lbl">🔥 連続学習日<span id="bestStreakLbl" style="display:block;font-size:9px;color:#aaa;margin-top:1px"></span></div></div>
       <div class="summary-card"><div class="summary-val" id="todayDisp">0</div><div class="summary-lbl">📝 今日の問題数</div></div>
       <div class="summary-card"><div class="summary-val" id="coverDisp">0%</div><div class="summary-lbl">✅ カバー率</div></div>
-      <div class="summary-card"><div class="summary-val" id="studyTimeDisp" style="font-size:16px">0分</div><div class="summary-lbl">⏱ 今日の学習時間</div></div>
+      <div class="summary-card"><div class="summary-val" id="studyTimeDisp" style="font-size:16px">0分</div><div class="summary-lbl">⏱ 今日の学習時間<span id="accDeltaDisp" style="display:block;margin-top:2px"></span></div></div>
       <div class="summary-card" onclick="showPassScoreDetail()" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(237,224,212,0.8));cursor:pointer"><div class="summary-val" id="passScoreDisp" style="font-size:22px">--</div><div class="summary-lbl">🎯 合格予測スコア<span class="pass-lbl-sub" style="display:block;font-size:9px;margin-top:2px"></span></div><div id="passScoreBreakdown" style="display:none;margin-top:8px;text-align:left;font-size:10px"></div></div>
     </div>
     <div style="text-align:center;font-size:12px;margin-bottom:10px" id="examCountdown"></div>
@@ -1529,6 +1529,27 @@ function updateDailyStats(){
   }
   localStorage.setItem('np_weekly',JSON.stringify(weeklyData));
   localStorage.setItem('np_streak',JSON.stringify(streakData));
+  // 週次目標達成お祝い（初回到達のみ）
+  if(weeklyGoal>0){
+    const wkeys2=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);wkeys2.push(d.toISOString().slice(0,10));}
+    const wkTotal2=wkeys2.reduce((s,k)=>s+(weeklyData[k]||0),0);
+    const prevTotal=wkTotal2-1; // before this question
+    if(wkTotal2>=weeklyGoal&&prevTotal<weeklyGoal){
+      setTimeout(()=>{showToast(`🎉 週間目標${weeklyGoal}問を達成！今週も頑張ったね！`);launchConfetti();launchConfetti();},400);
+    }
+  }
+  // カバー率節目のお祝い
+  const covered2=Object.keys(history).length;
+  const coverPct2=Math.round(covered2/QUESTIONS.length*100);
+  const prevCoverPct=Math.round((covered2-1)/QUESTIONS.length*100);
+  const milestonesPct=[25,50,75,100];
+  milestonesPct.forEach(m=>{
+    if(coverPct2>=m&&prevCoverPct<m){
+      const icons={25:'🗺️',50:'⚡',75:'🌟',100:'👑'};
+      const msgs={25:'全問題の1/4制覇！',50:'折り返し地点突破！',75:'残り25%！もうすぐ全問制覇！',100:'全問題制覇！完全制覇おめでとう！！'};
+      setTimeout(()=>{showToast(`${icons[m]} カバー率${m}%達成！${msgs[m]}`);launchConfetti();if(m>=50)launchConfetti();},700);
+    }
+  });
   renderHomeSummary();
   pulseSummaryCard('todayDisp');
 }
@@ -1952,6 +1973,23 @@ function renderHomeSummary(){
   if(cd) cd.textContent=coverPct+'%';
   const tm=document.getElementById('studyTimeDisp');
   if(tm){const mins=(dailyAccuracy[todayKey]&&dailyAccuracy[todayKey].mins)||0;tm.textContent=mins>=60?`${Math.floor(mins/60)}時間${mins%60}分`:mins+'分';}
+  // 今日 vs 昨日 正答率デルタ
+  const deltaEl=document.getElementById('accDeltaDisp');
+  if(deltaEl){
+    const yKey2=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);})();
+    const todayAcc=dailyAccuracy[todayKey];
+    const yesterdayAcc=dailyAccuracy[yKey2];
+    if(todayAcc&&todayAcc.total>=3&&yesterdayAcc&&yesterdayAcc.total>=3){
+      const todayRate=Math.round(todayAcc.correct/todayAcc.total*100);
+      const yestRate=Math.round(yesterdayAcc.correct/yesterdayAcc.total*100);
+      const delta=todayRate-yestRate;
+      const sign=delta>0?'+':'';
+      const col=delta>0?'#16a34a':delta<0?'#dc2626':'#8A6A50';
+      deltaEl.innerHTML=`<span style="font-size:10px;color:${col};font-weight:700">${sign}${delta}% vs 昨日</span>`;
+    } else {
+      deltaEl.innerHTML='';
+    }
+  }
   // 合格予測スコア
   const ps=calcPassScore();
   const pe=document.getElementById('passScoreDisp');
@@ -2817,8 +2855,13 @@ function answer(key){
   const q=session.pool[session.idx];
   const correct=key===q.answer;
   if(!history[q.id]) history[q.id]={correct:0,wrong:0};
+  const prevH={...history[q.id]};
   if(correct) history[q.id].correct++;
   else {history[q.id].wrong++;if(!todayWrong.ids.includes(q.id))todayWrong.ids.push(q.id);saveTodayWrong();}
+  // 苦手問題克服お祝い（以前に間違えた問題が3回正解に到達）
+  if(correct&&prevH.wrong>=2&&prevH.correct===2&&history[q.id].correct===3){
+    setTimeout(()=>{showToast('✨ 苦手問題を克服！この問題はもう大丈夫です！');},300);
+  }
   srsUpdate(q.id, correct);
   // 最近の回答を記録
   recentAnswers.unshift({id:q.id,correct,ts:Date.now(),field:q.field.replace('必修・','').replace('一般・','').replace('状況設定・',''),chosen:key,ans:q.answer});
