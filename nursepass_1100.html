@@ -391,6 +391,7 @@ body.font-xl .explanation{font-size:15px}
         <button class="chip" id="weakFilter状況設定" onclick="setWeakFilter('状況設定')">状況設定</button>
         <button class="chip" id="weakFilterbookmark" onclick="setWeakFilter('bookmark')" style="margin-left:4px">🔖 ブックマーク</button>
         <button class="chip" id="weakFiltermemo" onclick="setWeakFilter('memo')">📝 メモ</button>
+        <button class="chip" id="weakFilterbrowse" onclick="setWeakFilter('browse')" style="margin-left:4px">📋 全問</button>
       </div>
       <div style="padding:0 16px 8px">
         <input type="search" id="weakSearchInput" placeholder="🔍 キーワードで問題を検索..." oninput="onWeakSearch(this.value)"
@@ -1415,6 +1416,31 @@ const FLASH_CARDS = [
   {cat:'精神看護',q:'双極性障害の気分安定薬3種',a:'炭酸リチウム・バルプロ酸（デパケン）・ラモトリジン（ラミクタール）',sub:'リチウム：中毒に注意（0.6〜1.2mEq/L）。腎機能・甲状腺モニタリング'},
   {cat:'精神看護',q:'自殺リスクの直接的評価で必ず確認すること',a:'①自殺念慮の有無②計画（手段・時期）③既往の自殺企図④保護因子',sub:'聞いても自殺を誘発しない。安全確保→精神科医へ報告が最優先'},
   {cat:'精神看護',q:'ACT（包括的地域生活支援プログラム）の特徴',a:'重症精神障害者への24時間・多職種チームによる地域生活支援',sub:'入院を減らし地域移行を促進。訪問中心で生活全般を支援'},
+  // 輸液・栄養管理
+  {cat:'看護技術',q:'生理食塩水（0.9% NaCl）の電解質組成',a:'Na⁺ 154mEq/L、Cl⁻ 154mEq/L、浸透圧308mOsm/L',sub:'等張液。大量投与で高Cl性代謝性アシドーシスに注意'},
+  {cat:'看護技術',q:'5%ブドウ糖液の特徴',a:'浸透圧278mOsm/L（等張）。体内でブドウ糖代謝後は自由水となる',sub:'電解質を含まない。低Na血症・体液過剰に注意。維持液として不適切'},
+  {cat:'看護技術',q:'輸液ポンプ・シリンジポンプ使用時の注意点',a:'①流量・薬剤の二重確認②アラーム設定③閉塞・空気混入の確認④定期的な回路交換',sub:'シリンジポンプは微量投与・循環作動薬に使用。エラー音への迅速対応が必要'},
+  {cat:'看護技術',q:'NRS（栄養リスクスクリーニング2002）の適応',a:'入院患者の栄養スクリーニングに使用。スコア≥3で栄養サポートを検討',sub:'MUST（外来・地域）、MNA（高齢者専用）と使い分ける'},
+  // 追加検査値
+  {cat:'検査値',q:'動脈血ガス（ABG）正常値',a:'pH 7.35〜7.45、PaO₂ 80〜100mmHg、PaCO₂ 35〜45mmHg、HCO₃⁻ 22〜26mEq/L',sub:'pH<7.35=アシドーシス　pH>7.45=アルカローシス'},
+  {cat:'検査値',q:'CRP（C反応性蛋白）正常値と臨床的意義',a:'正常: 0.3mg/dL以下　感染・炎症・組織壊死で上昇',sub:'急性期タンパク。WBCと合わせて感染の重症度を評価。ウイルス感染では上昇しにくい'},
+  {cat:'検査値',q:'プロカルシトニン（PCT）の臨床的意義',a:'細菌性敗血症のバイオマーカー。0.5ng/mL以上で細菌感染を強く示唆',sub:'ウイルス感染では上昇しにくい。抗菌薬治療効果の指標にも使用'},
+  {cat:'検査値',q:'BNP（脳性ナトリウム利尿ペプチド）の基準値',a:'18.4pg/mL以下（NT-proBNP: 125pg/mL以下）',sub:'心不全マーカー。心室壁ストレス上昇で分泌。>100pg/mLで心不全を強く示唆'},
+  // 追加看護技術
+  {cat:'看護技術',q:'SBAR（エスバー）コミュニケーションツールの構成',a:'S:状況（Situation）B:背景（Background）A:アセスメント（Assessment）R:提案（Recommendation）',sub:'医療安全のための標準的申し送りフォーマット。緊急時報告に特に有効'},
+  {cat:'看護技術',q:'体位変換の標準的な実施間隔',a:'2時間ごと（褥瘡予防ガイドライン）',sub:'エアマットレス使用時は4時間ごとも許容。骨突出部（仙骨・踵骨・大転子）を重点的に観察'},
+  {cat:'看護技術',q:'経口薬の粉砕禁忌の薬剤',a:'腸溶錠・徐放錠・舌下錠・口腔内崩壊錠（OD錠）・カプセル剤の一部',sub:'粉砕すると薬効喪失・副作用増大・局所刺激のリスク。薬剤師に必ず確認'},
+  // 追加疾患・病態
+  {cat:'疾患・病態',q:'敗血症（Sepsis-3定義）の診断基準',a:'感染症＋SOFAスコア2点以上の急上昇（臓器障害）',sub:'敗血症性ショック=敗血症＋昇圧薬使用後もMAP<65mmHg＋乳酸>2mmol/L'},
+  {cat:'疾患・病態',q:'肺血栓塞栓症（PTE）の典型症状と診断',a:'突然の胸痛・呼吸困難・頻脈・SpO₂低下・D-ダイマー上昇',sub:'DVT（深部静脈血栓症）が主な原因。造影CT（CTPA）が確定診断。ヘパリン投与'},
+  {cat:'疾患・病態',q:'SIADH（抗利尿ホルモン不適切分泌症候群）の特徴',a:'低Na血症（希釈性）・尿浸透圧上昇・尿Na上昇・浮腫なし',sub:'肺癌（小細胞癌）・頭蓋内疾患・薬剤（SSRIなど）が原因。水制限が基本治療'},
+  {cat:'疾患・病態',q:'横紋筋融解症の3主徴と注意すべき合併症',a:'①筋肉痛②筋力低下③褐色尿（ミオグロビン尿）→急性腎障害（AKI）',sub:'原因: 外傷・過激な運動・スタチン系薬・感染症など。大量補液が治療の基本'},
+  // 追加老年・在宅
+  {cat:'老年・在宅',q:'高齢者の薬物動態の特徴（吸収・分布・代謝・排泄）',a:'吸収: 変化少　分布: 脂溶性薬物↑　代謝: 肝機能低下→半減期延長　排泄: 腎機能低下→蓄積',sub:'腎排泄型薬物（アミノグリコシド・ジゴキシンなど）の過剰投与に特に注意'},
+  {cat:'老年・在宅',q:'老老介護・認認介護への看護介入',a:'①介護負担の定期的評価②レスパイトケアの活用③地域包括支援センターへの相談④サービス利用調整',sub:'介護者自身の健康状態も観察。虐待のリスクアセスメントも必要'},
+  // 追加精神看護
+  {cat:'精神看護',q:'解離性障害（転換性障害）の看護のポイント',a:'①症状の否定をしない②ストレス因子の特定と支持③身体症状への過度な関心を避ける④心理療法との連携',sub:'身体的原因がないことの確認後、心理社会的アプローチが中心'},
+  {cat:'精神看護',q:'摂食障害（神経性やせ症）で優先される身体管理',a:'体重・電解質（低K血症）・心電図（QT延長）・骨密度・血圧・体温の管理',sub:'再栄養症候群（リフィーディング症候群）に注意。急激な栄養補充は禁忌'},
 ];
 
 let flashState = {cat:'すべて', idx:0, flipped:false};
@@ -2060,24 +2086,35 @@ function finishQuiz(){
     if(mockHistory.length>20) mockHistory=mockHistory.slice(0,20);
     localStorage.setItem('np_mock_history',JSON.stringify(mockHistory));
   }
-  // 分野別内訳
+  // 分野別内訳（正誤付き）
   const fieldBreakdown=(()=>{
     if(session.pool.length<3) return '';
+    const wrongSet=new Set(session.wrongIds||[]);
     const fm={};
-    session.pool.forEach((q,i)=>{
-      if(!fm[q.field]) fm[q.field]={c:0,t:0};
-      fm[q.field].t++;
-      // session.wrongIds がないので answered状態で判定
+    session.pool.forEach(q=>{
+      if(!fm[q.field]) fm[q.field]={c:0,w:0};
+      if(wrongSet.has(q.id)) fm[q.field].w++;
+      else fm[q.field].c++;
     });
-    // セッション中の正誤をanswer()内で直接判定できないため、現在historyから今回分を補足
-    // pool内の問題の正答率だけシンプルに表示
-    const rows=Object.entries(fm).map(([f,v])=>`
-      <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.04)">
-        <span style="color:#55504D">${f.replace('必修・','').replace('一般・','').replace('状況設定・','')}</span>
-        <span style="color:#8A6A50">${v.t}問</span>
-      </div>`).join('');
+    const entries=Object.entries(fm).sort((a,b)=>{const ra=a[1].c/(a[1].c+a[1].w),rb=b[1].c/(b[1].c+b[1].w);return ra-rb;});
+    if(entries.length<2) return '';
+    const rows=entries.map(([f,v])=>{
+      const t=v.c+v.w;
+      const acc=Math.round(v.c/t*100);
+      const color=acc>=80?'#16a34a':acc>=50?'#D9A060':'#ef4444';
+      const barW=Math.round(v.c/t*100);
+      return `<div style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">
+          <span style="color:#55504D">${f.replace('必修・','').replace('一般・','').replace('状況設定・','')}</span>
+          <span style="color:${color};font-weight:700">${v.c}/${t}問 ${acc}%</span>
+        </div>
+        <div style="height:4px;background:rgba(237,224,212,0.4);border-radius:4px;overflow:hidden">
+          <div style="width:${barW}%;height:100%;background:${color};border-radius:4px"></div>
+        </div>
+      </div>`;
+    }).join('');
     return `<div style="margin:10px 0;padding:10px 14px;background:rgba(240,232,222,0.5);border-radius:12px;text-align:left">
-      <div style="font-size:11px;font-weight:700;color:#6B5040;margin-bottom:6px">▸ 今回の出題分野</div>
+      <div style="font-size:11px;font-weight:700;color:#6B5040;margin-bottom:8px">▸ 分野別の成績</div>
       ${rows}
     </div>`;
   })();
@@ -2226,7 +2263,7 @@ function setWeakSort(s){
 }
 function setWeakFilter(f){
   weakFilter=f;
-  ['all','必修','一般','状況設定','bookmark','memo'].forEach(k=>{
+  ['all','必修','一般','状況設定','bookmark','memo','browse'].forEach(k=>{
     const btn=document.getElementById('weakFilter'+(k==='all'?'All':k));
     if(btn) btn.classList.toggle('selected',k===f);
   });
@@ -2298,6 +2335,53 @@ function renderWeak(){
         <button onclick="event.stopPropagation();openMemo(${q.id})" style="margin-top:4px;padding:2px 8px;background:none;border:1px solid rgba(217,160,96,0.3);border-radius:6px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">✏️ 編集</button>
       </div>`;
     }).join('');
+    return;
+  }
+  if(weakFilter==='browse'){
+    // 全問ブラウズ: field selector + status filter
+    let browseField=wl.dataset.browseField||'';
+    let browseStatus=wl.dataset.browseStatus||'all';
+    let pool=QUESTIONS;
+    if(browseField) pool=pool.filter(q=>q.field===browseField||q.field.includes(browseField));
+    if(browseStatus==='wrong') pool=pool.filter(q=>{const h=history[String(q.id)];return h&&h.wrong>0;});
+    else if(browseStatus==='unread') pool=pool.filter(q=>!history[String(q.id)]);
+    else if(browseStatus==='mastered') pool=pool.filter(q=>{const h=history[String(q.id)];return h&&h.correct>h.wrong;});
+    const total=pool.length;
+    if(sb) sb.innerHTML=`全問ブラウズ <strong style="color:#B8907A">${total}</strong>問`;
+    if(wb) wb.style.display='none';
+    const BPAGE=30;
+    let bCount=parseInt(wl.dataset.browseCount||BPAGE);
+    const prevKey=wl.dataset.browseKey||'';
+    const curKey=browseField+browseStatus;
+    if(prevKey!==curKey){bCount=BPAGE;wl.dataset.browseKey=curKey;}
+    wl.dataset.browseCount=bCount;
+    const uniqueFields=[...new Set(QUESTIONS.map(q=>q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')))].sort();
+    const fieldOptions=`<option value="">分野: すべて</option>${uniqueFields.map(f=>`<option value="${f}" ${browseField===f?'selected':''}>${f}</option>`).join('')}`;
+    const statusBtns=['all','unread','wrong','mastered'].map(s=>{
+      const labels={all:'すべて',unread:'未解答',wrong:'苦手',mastered:'克服済み'};
+      return `<button onclick="document.getElementById('weakList').dataset.browseStatus='${s}';renderWeak()" style="padding:3px 8px;font-size:10px;font-family:'Noto Sans JP',sans-serif;border-radius:8px;cursor:pointer;border:1px solid rgba(85,80,77,0.2);background:${browseStatus===s?'rgba(184,144,122,0.3)':'rgba(240,232,222,0.5)'};color:${browseStatus===s?'#6B5040':'#8A6A50'}">${labels[s]}</button>`;
+    }).join('');
+    wl.innerHTML=`<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+      <select onchange="document.getElementById('weakList').dataset.browseField=this.value;renderWeak()" style="padding:4px 8px;border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:11px;font-family:'Noto Sans JP',sans-serif;background:rgba(240,232,222,0.8);color:#55504D">${fieldOptions}</select>
+      ${statusBtns}
+    </div>`+pool.slice(0,bCount).map(q=>{
+      const h=history[String(q.id)];
+      const isMastered=h&&h.correct>h.wrong;
+      const statusLabel=!h?'<span style="color:#aaa;font-size:9px">未解答</span>':isMastered?'<span style="color:#16a34a;font-size:9px;font-weight:700">✓克服</span>':`<span style="color:#ef4444;font-size:9px">✗${h.wrong}回</span>`;
+      const bm=bookmarks[q.id]?'🔖 ':'';
+      const flag=flaggedIds.has(q.id)?'🔖':'';
+      return `<div class="weak-item" onclick="drillOne(${q.id})" style="${isMastered?'border-color:rgba(74,222,128,0.25)':''}">
+        <div class="weak-q">${bm}${q.question}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><div class="weak-meta">${q.category} ▸ ${q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')}</div>${statusLabel}</div>
+      </div>`;
+    }).join('');
+    if(total>bCount){
+      const more=document.createElement('button');
+      more.style.cssText='width:100%;margin-top:6px;padding:10px;background:rgba(240,232,222,.5);border:1px solid rgba(85,80,77,.15);border-radius:10px;font-size:12px;font-weight:700;color:#6B5040;cursor:pointer;font-family:"Noto Sans JP",sans-serif';
+      more.textContent=`さらに${Math.min(BPAGE,total-bCount)}問（残り${total-bCount}問）`;
+      more.onclick=()=>{wl.dataset.browseCount=bCount+BPAGE;renderWeak();};
+      wl.appendChild(more);
+    }
     return;
   }
   let weakIds=allWeak;
