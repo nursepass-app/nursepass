@@ -334,6 +334,7 @@ body.font-xl .explanation{font-size:15px}
       <div class="summary-card"><div class="summary-val" id="coverDisp">0%</div><div class="summary-lbl">✅ カバー率</div></div>
     </div>
     <div style="text-align:center;font-size:12px;margin-bottom:10px" id="examCountdown"></div>
+    <div id="noaCard" style="margin-bottom:10px"></div>
     <div style="background:rgba(255,255,255,0.85);border:1px solid rgba(85,80,77,0.15);border-radius:14px;padding:10px 14px;margin-bottom:10px" id="goalBar"></div>
     <div class="search-wrap">
       <span style="font-size:16px;color:#aaa">🔍</span>
@@ -527,7 +528,7 @@ function setDailyGoal(){
   const v=prompt('1日の目標問題数を設定してください（5〜100）',dailyGoal);
   const n=parseInt(v);
   if(!n||n<5||n>100){return;}
-  dailyGoal=n;localStorage.setItem('np_goal',n);renderGoalBar();
+  dailyGoal=n;localStorage.setItem('np_goal',n);renderGoalBar();renderNoaCard();
 }
 function renderGoalBar(){
   const el=document.getElementById('goalBar');
@@ -541,6 +542,48 @@ function renderGoalBar(){
   </div>
   <div style="height:6px;background:rgba(237,224,212,0.4);border-radius:10px;overflow:hidden">
     <div style="width:${pct}%;height:100%;background:${done?'linear-gradient(90deg,#4ade80,#16a34a)':'linear-gradient(90deg,#D9C5B2,#B8A090)'};border-radius:10px;transition:.5s"></div>
+  </div>`;
+}
+function renderNoaCard(){
+  const el=document.getElementById('noaCard');
+  if(!el) return;
+  const today=weeklyData[todayKey]||0;
+  const streak=streakData.streak||0;
+  const total=Object.keys(history).length;
+  const answered=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
+  const correct=Object.values(history).reduce((s,h)=>s+h.correct,0);
+  const rate=answered?Math.round(correct/answered*100):null;
+  const days=getExamDays();
+  const weakCount=Object.keys(history).filter(id=>{const h=history[id];return h.wrong>h.correct;}).length;
+  // 状況に応じたメッセージを選ぶ
+  let msg='', icon='🌸';
+  if(today===0 && streak===0){
+    const msgs=['今日はどこから始めようか。どんな小さな一歩でも、のあはついているよ。','準備できたら、いつでも声をかけて。一緒に国試の道を歩こうね。','どの分野から始めてもいいよ。まずは5問、軽い気持ちで。'];
+    msg=msgs[new Date().getDate()%msgs.length]; icon='🌸';
+  } else if(today===0 && streak>=1){
+    msg=`${streak}日連続でよく頑張ってるね。今日も少しだけ一緒にやってみようか。`; icon='✨';
+  } else if(today>=dailyGoal){
+    msg=`今日の目標${dailyGoal}問、もうクリアしてる！すごいよ。この調子で積み重ねていこうね。`; icon='💯';
+  } else if(streak>=7){
+    msg=`${streak}日連続学習、本当にすごい。継続できる人が合格に近い。のあも誇らしいよ。`; icon='🔥';
+  } else if(weakCount>=10){
+    msg=`苦手問題が${weakCount}問あるね。今日はその中から1つだけ、解き直してみようか。`; icon='💪';
+  } else if(rate!==null && rate>=80){
+    msg=`正答率${rate}%、すごく伸びてるね。本番でも自信を持って。のあが応援してるよ。`; icon='⭐';
+  } else if(days!==null && days<=30){
+    msg=`試験まで${days}日。焦らなくて大丈夫。今日できることをひとつひとつ丁寧に。`; icon='🎯';
+  } else if(total>=500){
+    msg=`もう${total}問も学習済み。カバー率${Math.round(total/QUESTIONS.length*100)}%達成。積み上げた努力は本番で必ず活きるよ。`; icon='🏆';
+  } else {
+    const msgs=['今日も一緒に頑張ろうね。どんな小さな進歩も、のあはちゃんと見てるよ。','着実に積み上げてるね。その努力、絶対に報われるから。','今日も来てくれてよかった。一問一問、確実に前進しているよ。'];
+    msg=msgs[new Date().getDate()%msgs.length]; icon='🌟';
+  }
+  el.innerHTML=`<div style="background:linear-gradient(135deg,rgba(245,239,232,0.92),rgba(237,224,212,0.85));border:1.5px solid rgba(217,197,178,0.45);border-radius:16px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start">
+    <div style="font-size:22px;flex-shrink:0;margin-top:1px">${icon}</div>
+    <div>
+      <div style="font-size:10px;font-weight:700;color:#B8907A;letter-spacing:.8px;margin-bottom:4px">のあ先生より</div>
+      <div style="font-size:13px;color:#4A3828;line-height:1.7;font-weight:500">${msg}</div>
+    </div>
   </div>`;
 }
 // ダークモード & フォントサイズ
@@ -587,9 +630,9 @@ function save(){localStorage.setItem('np_history',JSON.stringify(history))}
 
 function updateDailyStats(){
   weeklyData[todayKey]=(weeklyData[todayKey]||0)+1;
-  // 過去14日分だけ保持
+  // 過去75日分保持（ヒートマップ70日表示に対応）
   const wkeys=Object.keys(weeklyData).sort();
-  while(wkeys.length>14){delete weeklyData[wkeys.shift()];}
+  while(wkeys.length>75){delete weeklyData[wkeys.shift()];}
   // ストリーク更新
   if(streakData.lastDate!==todayKey){
     const yest=new Date();yest.setDate(yest.getDate()-1);
@@ -924,7 +967,7 @@ function endFlash(){
   });
   renderHomeSummary();
   renderExamCountdown();
-  renderGoalBar();
+  renderGoalBar();renderNoaCard();
   initModeButtons();
 }
 
@@ -1130,7 +1173,7 @@ function answer(key){
   save();
   updateScoreBadge();
   updateDailyStats();
-  renderGoalBar();
+  renderGoalBar();renderNoaCard();
   checkAchievements();
   if(session.mode==='mock'&&correct){
     if(q.category==='必修') session.hisshuCorrect=(session.hisshuCorrect||0)+1;
@@ -1363,7 +1406,7 @@ function backHome(){
   });
   renderHomeSummary();
   renderExamCountdown();
-  renderGoalBar();
+  renderGoalBar();renderNoaCard();
   initModeButtons();
 }
 
@@ -2418,7 +2461,7 @@ updateScoreBadge();
 initDailyMessage();
 renderHomeSummary();
 renderExamCountdown();
-renderGoalBar();
+renderGoalBar();renderNoaCard();
 </script>
 </body>
 </html>
