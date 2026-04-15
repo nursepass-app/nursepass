@@ -388,6 +388,10 @@ body.font-xl .explanation{font-size:15px}
         <button class="chip" id="weakFilter状況設定" onclick="setWeakFilter('状況設定')">状況設定</button>
         <button class="chip" id="weakFilterbookmark" onclick="setWeakFilter('bookmark')" style="margin-left:4px">🔖 ブックマーク</button>
       </div>
+      <div style="padding:0 16px 8px">
+        <input type="search" id="weakSearchInput" placeholder="🔍 キーワードで問題を検索..." oninput="onWeakSearch(this.value)"
+          style="width:100%;box-sizing:border-box;padding:8px 12px;border:1.5px solid rgba(85,80,77,0.2);border-radius:10px;background:rgba(255,252,248,0.8);font-size:13px;font-family:'Noto Sans JP',sans-serif;color:#4A3828;outline:none">
+      </div>
       <div id="weakSummaryBar" style="padding:0 16px 8px;font-size:11px;color:#8A6A50"></div>
       <div class="weak-list" id="weakList"></div>
     </div>
@@ -1792,6 +1796,7 @@ function backHome(){
 
 // WEAK LIST
 let weakFilter='all';
+let weakSearchText='';
 function setWeakFilter(f){
   weakFilter=f;
   ['all','必修','一般','状況設定','bookmark'].forEach(k=>{
@@ -1800,10 +1805,38 @@ function setWeakFilter(f){
   });
   renderWeak();
 }
+function onWeakSearch(val){
+  weakSearchText=val.trim();
+  renderWeak();
+}
 function renderWeak(){
   const wl=document.getElementById('weakList');
   const sb=document.getElementById('weakSummaryBar');
   const wb=document.getElementById('weakDrillBtn');
+  // 検索モード
+  if(weakSearchText){
+    const kw=weakSearchText.toLowerCase();
+    const results=QUESTIONS.filter(q=>
+      q.question.toLowerCase().includes(kw)||
+      Object.values(q.choices).some(v=>v.toLowerCase().includes(kw))||
+      q.explanation.toLowerCase().includes(kw)||
+      q.field.toLowerCase().includes(kw)
+    ).slice(0,30);
+    if(sb) sb.innerHTML=`検索結果: <strong style="color:#B8907A">${results.length}</strong>件${results.length===30?' (上位30件)':''}`;
+    if(wb) wb.style.display='none';
+    if(!results.length){wl.innerHTML=`<div class="empty">「${weakSearchText}」に一致する問題は見つかりませんでした。</div>`;return;}
+    wl.innerHTML=results.map(q=>{
+      const h=history[String(q.id)];
+      const bm=bookmarks[q.id]?'🔖 ':'';
+      const statusColor=!h?'#8A6A50':h.correct>h.wrong?'#16a34a':'#dc2626';
+      const status=!h?'未解答':h.correct>h.wrong?`✓ 正答率${Math.round(h.correct/(h.correct+h.wrong)*100)}%`:`✗ 正答率${Math.round(h.correct/(h.correct+h.wrong)*100)}%`;
+      return `<div class="weak-item" onclick="drillOne(${q.id})">
+        <div class="weak-q">${bm}${q.question}</div>
+        <div class="weak-meta">${q.category} ▸ ${q.field} ▸ <span style="color:${statusColor};font-weight:600">${status}</span></div>
+      </div>`;
+    }).join('');
+    return;
+  }
   const allWeak=Object.keys(history).filter(id=>history[id].wrong>0);
   const mastered=allWeak.filter(id=>history[id].correct>history[id].wrong).length;
   const bmCount=Object.keys(bookmarks).length;
