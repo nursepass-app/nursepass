@@ -2579,6 +2579,7 @@ function autoAnswerTimeout(){
 function renderQuestion(){
   clearQuizTimer();
   resetMiniChat();
+  hintLevel=0;
   questionStartTime=Date.now();
   const qa=document.getElementById('quizArea');
   const q=session.pool[session.idx];
@@ -2612,7 +2613,7 @@ function answer(key){
   const elapsedMs=questionStartTime?Date.now()-questionStartTime:0;
   if(!session.answerLog) session.answerLog=[];
   const elapsedSec=Math.round(elapsedMs/100)/10;
-  if(questionStartTime&&elapsedMs>500&&elapsedMs<120000){recordAnswerTime(session.pool[session.idx].id,elapsedMs);}
+  if(questionStartTime&&elapsedMs>500&&elapsedMs<120000){recordAnswerTime(session.pool[session.idx].id,elapsedMs);if(!session.sessionTimes)session.sessionTimes=[];session.sessionTimes.push(elapsedMs);}
   const q=session.pool[session.idx];
   const correct=key===q.answer;
   if(!history[q.id]) history[q.id]={correct:0,wrong:0};
@@ -2887,11 +2888,29 @@ function finishQuiz(){
       ${rows}
     </div>`;
   })();
+  // 解答速度サマリー
+  const speedSummary=(()=>{
+    const times=(session.sessionTimes||[]).filter(t=>t>500&&t<300000);
+    if(times.length<3) return '';
+    const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length/1000);
+    const fastest=Math.round(Math.min(...times)/1000);
+    const slowest=Math.round(Math.max(...times)/1000);
+    const label=avg<=5?'⚡ 超高速':avg<=10?'🚀 速い':avg<=20?'📖 標準':'🐢 じっくり';
+    const color=avg<=5?'#16a34a':avg<=10?'#2563eb':avg<=20?'#D9A060':'#dc2626';
+    return `<div style="display:flex;justify-content:center;gap:12px;margin:6px 0 2px;padding:8px 14px;background:rgba(240,232,222,0.45);border-radius:10px;text-align:center">
+      <div><div style="font-size:15px;font-weight:700;color:${color}">${label}</div><div style="font-size:9px;color:#8A6A50">解答ペース</div></div>
+      <div style="width:1px;background:rgba(85,80,77,0.15)"></div>
+      <div><div style="font-size:14px;font-weight:700;color:#5A3E30">${avg}秒</div><div style="font-size:9px;color:#8A6A50">平均</div></div>
+      <div><div style="font-size:14px;font-weight:700;color:#16a34a">${fastest}秒</div><div style="font-size:9px;color:#8A6A50">最速</div></div>
+      <div><div style="font-size:14px;font-weight:700;color:#dc2626">${slowest}秒</div><div style="font-size:9px;color:#8A6A50">最遅</div></div>
+    </div>`;
+  })();
   qa.innerHTML=`<div class="card" style="animation:fadein .4s ease">
     <div class="result-summary">
       ${hisshuResult}${mockResult}<div class="result-stars">${stars}</div>
       <div class="result-big">${rate}%</div>
       <div class="result-label2">${total}問中 ${session.correct}問正解</div>
+      ${speedSummary}
       ${(()=>{const log=session.answerLog||[];if(log.length<2)return'';const squares=log.map((v,i)=>`<span title="${i+1}問目: ${v?'正解':'不正解'}" style="display:inline-block;width:${log.length>30?'8px':'11px'};height:${log.length>30?'8px':'11px'};background:${v?'rgba(74,222,128,0.75)':'rgba(248,113,113,0.75)'};border-radius:2px;margin:1px"></span>`).join('');const streak=log.reduce((s,v)=>{if(!v){s.cur=0;}else{s.cur++;s.max=Math.max(s.max,s.cur);}return s;},{cur:0,max:0}).max;return`<div style="margin:8px 0 4px;padding:8px 12px;background:rgba(240,232,222,0.4);border-radius:10px"><div style="font-size:9px;color:#8A6A50;margin-bottom:4px;display:flex;justify-content:space-between"><span>回答タイムライン</span><span style="color:#16a34a">最長連続正解: ${streak}問</span></div><div style="display:flex;flex-wrap:wrap;gap:1px">${squares}</div></div>`;})()}
       <div class="result-msg">${msg}</div>
       ${fieldBreakdown}
@@ -3075,13 +3094,26 @@ function shareQuestion(id){
     navigator.clipboard.writeText(text).then(()=>showToast('問題をクリップボードにコピーしました'));
   }
 }
+let hintLevel=0;
 function showHint(){
   if(!session||session.idx>=session.pool.length) return;
   const q=session.pool[session.idx];
-  const hint=q.explanation.slice(0,45)+'…';
   const area=document.getElementById('hintArea');
   if(!area) return;
-  area.innerHTML=`<div style="padding:6px 10px;background:rgba(254,243,199,0.7);border:1px solid rgba(234,179,8,0.3);border-radius:10px;font-size:11px;color:#78350f;line-height:1.5">💡 ${hint}</div>`;
+  hintLevel=(hintLevel+1)%3;
+  if(hintLevel===1){
+    const hint=q.explanation.slice(0,50)+'…';
+    area.innerHTML=`<div style="padding:6px 10px;background:rgba(254,243,199,0.7);border:1px solid rgba(234,179,8,0.3);border-radius:10px;font-size:11px;color:#78350f;line-height:1.5">💡 ${hint}<button onclick="showHint()" style="margin-left:8px;padding:1px 7px;background:rgba(234,179,8,0.15);border:1px solid rgba(234,179,8,0.4);border-radius:8px;font-size:10px;color:#78350f;cursor:pointer;font-family:'Noto Sans JP',sans-serif">もっと見る</button></div>`;
+  } else if(hintLevel===2){
+    const hint2=q.explanation.slice(0,100)+'…';
+    const answerHint=`正解の選択肢は「${q.choices[q.answer].slice(0,20)}...」から始まります`;
+    area.innerHTML=`<div style="padding:6px 10px;background:rgba(254,230,138,0.6);border:1px solid rgba(234,179,8,0.4);border-radius:10px;font-size:11px;color:#78350f;line-height:1.5">💡 ${hint2}<br><span style="font-size:10px;opacity:0.8">🔑 ${answerHint}</span><button onclick="showHint()" style="margin-left:8px;padding:1px 7px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:8px;font-size:10px;color:#dc2626;cursor:pointer;font-family:'Noto Sans JP',sans-serif">答えを見る</button></div>`;
+  } else {
+    // Level 3: Show the answer
+    area.innerHTML=`<div style="padding:6px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;font-size:11px;color:#991b1b;line-height:1.5">🔑 正解: <strong>${q.answer}. ${q.choices[q.answer]}</strong><button onclick="showHint()" style="margin-left:8px;padding:1px 7px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">閉じる</button></div>`;
+  }
+  const btn=document.getElementById('hintBtn');
+  if(btn) btn.style.display='none';
 }
 function showStreakDetail(){
   const cur=streakData.streak||0;
@@ -3698,6 +3730,40 @@ function renderPaceAnalysis(){
   </div>`;
 }
 
+// 回答時間ランキング
+function renderSpeedRanking(){
+  const entries=Object.entries(answerTimes)
+    .map(([id,times])=>({id:Number(id),avg:Math.round(times.reduce((a,b)=>a+b,0)/times.length)}))
+    .filter(e=>{const h=history[e.id];return h&&h.correct>0;});
+  if(entries.length<3) return '';
+  const fast=[...entries].sort((a,b)=>a.avg-b.avg).slice(0,5);
+  const slow=[...entries].sort((a,b)=>b.avg-a.avg).slice(0,5);
+  const fmt=ms=>ms>=60000?Math.floor(ms/60000)+'分'+Math.round((ms%60000)/1000)+'秒':Math.round(ms/1000)+'秒';
+  const row=(e,icon)=>{
+    const q=QUESTIONS.find(x=>x.id===e.id);
+    if(!q) return '';
+    const label=q.question.slice(0,22)+(q.question.length>22?'…':'');
+    return `<div style="display:flex;align-items:center;gap:6px;padding:5px 6px;background:rgba(255,255,255,0.55);border-radius:8px;margin-bottom:4px">
+      <span style="font-size:13px">${icon}</span>
+      <span style="flex:1;font-size:10px;color:#5A3E30;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${label}</span>
+      <span style="font-size:11px;font-weight:700;color:#B8907A;white-space:nowrap">${fmt(e.avg)}</span>
+    </div>`;
+  };
+  return `<div style="margin:12px 0;padding:12px 14px;background:rgba(240,232,222,0.5);border:1.5px solid rgba(217,197,178,0.35);border-radius:14px">
+    <div style="font-size:12px;font-weight:700;color:#B8907A;margin-bottom:8px">⚡ 回答速度ランキング（正解問題）</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <div style="font-size:10px;color:#16a34a;font-weight:700;margin-bottom:5px">🚀 速い TOP5</div>
+        ${fast.map(e=>row(e,'🟢')).join('')}
+      </div>
+      <div>
+        <div style="font-size:10px;color:#dc2626;font-weight:700;margin-bottom:5px">🐢 遅い TOP5</div>
+        ${slow.map(e=>row(e,'🔴')).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
 // 最多ミス問題トップ10
 function renderTopMissed(){
   const missed=Object.entries(history)
@@ -4265,6 +4331,7 @@ function renderStats(){
     ${renderDowChart()}
     ${renderSrsForecast()}
     ${renderPaceAnalysis()}
+    ${renderSpeedRanking()}
     ${renderTopMissed()}
     ${renderFieldRanking()}
     ${renderAccTrend()}
