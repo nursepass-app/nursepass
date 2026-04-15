@@ -1502,18 +1502,42 @@ function renderStats(){
 
   // 週間グラフ
   const weekDays=[];
-  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);const dn=['日','月','火','水','木','金','土'][d.getDay()];weekDays.push({k,dn,cnt:weeklyData[k]||0});}
-  const maxCnt=Math.max(...weekDays.map(d=>d.cnt),1);
-  const weekTotal=weekDays.reduce((s,d)=>s+d.cnt,0);
+  // 10週間ヒートマップ（70日分）
+  const heatDays=[];
+  for(let i=69;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=d.toISOString().slice(0,10);heatDays.push({k,cnt:weeklyData[k]||0,dow:d.getDay()});}
+  const heatMax=Math.max(...heatDays.map(d=>d.cnt),1);
+  function heatColor(cnt){
+    if(!cnt) return 'rgba(237,224,212,0.25)';
+    const r=cnt/heatMax;
+    if(r<0.25) return 'rgba(217,197,178,0.5)';
+    if(r<0.5)  return 'rgba(184,160,144,0.7)';
+    if(r<0.75) return 'rgba(150,120,96,0.85)';
+    return '#8A6050';
+  }
+  // pad front so row 0 = 日曜日
+  const padCells=heatDays[0].dow;
+  const allCells=[...Array(padCells).fill(null),...heatDays];
+  const cols=Math.ceil(allCells.length/7);
+  const weekTotal7=heatDays.slice(-7).reduce((s,d)=>s+d.cnt,0);
+  const monthTotal=heatDays.slice(-30).reduce((s,d)=>s+d.cnt,0);
+  const dayLabels=['日','月','火','水','木','金','土'];
+  const gridCells=allCells.map(d=>{
+    if(!d) return `<div style="width:10px;height:10px"></div>`;
+    const isToday=d.k===todayKey;
+    return `<div title="${d.k}: ${d.cnt}問" style="width:10px;height:10px;border-radius:2px;background:${heatColor(d.cnt)};${isToday?'outline:2px solid #B8A090;outline-offset:1px':''}"></div>`;
+  }).join('');
   const weekChart=`<div style="margin-top:16px;text-align:left">
-    <div class="cat-stat-header">▸ 今週の学習数（合計${weekTotal}問）</div>
-    <div class="week-chart">
-      ${weekDays.map(d=>`<div class="week-bar-wrap">
-        <div class="week-bar" style="height:${Math.round(d.cnt/maxCnt*46)+2}px;background:${d.k===todayKey?'linear-gradient(180deg,#D9C5B2,#B8A090)':'rgba(217,197,178,0.45)'}"></div>
-        <div class="week-lbl">${d.dn}</div>
-      </div>`).join('')}
+    <div class="cat-stat-header" style="display:flex;justify-content:space-between">
+      <span>▸ 学習カレンダー（70日間）</span>
+      <span style="font-size:10px;color:#8A6A50;font-weight:400">🔥 連続${streakData.streak||0}日</span>
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:#8A6A50;margin-top:4px"><span>🔥 連続${streakData.streak||0}日</span><span>今日: ${weeklyData[todayKey]||0}問</span></div>
+    <div style="display:flex;gap:3px;margin:8px 0 4px">
+      ${dayLabels.map(l=>`<div style="font-size:8px;color:#8A7060;width:10px;text-align:center">${l}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,10px);gap:3px">${gridCells}</div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#8A6A50;margin-top:6px">
+      <span>今週: ${weekTotal7}問</span><span>今月: ${monthTotal}問</span><span>今日: ${weeklyData[todayKey]||0}問</span>
+    </div>
   </div>`;
   const coverPct2=Math.round(total/QUESTIONS.length*100);
 
