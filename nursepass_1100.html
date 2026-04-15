@@ -327,10 +327,10 @@ body.font-xl .explanation{font-size:15px}
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('home')">ホーム</button>
-    <button class="tab" onclick="switchTab('weak')">苦手</button>
-    <button class="tab" onclick="switchTab('stats')">記録</button>
-    <button class="tab" onclick="switchTab('noa')" style="color:#8A6A50;font-weight:700">ヒカリ</button>
+    <button class="tab active" onclick="switchTab('home')" id="tabBtnHome">ホーム</button>
+    <button class="tab" onclick="switchTab('weak')" id="tabBtnWeak">苦手</button>
+    <button class="tab" onclick="switchTab('stats')" id="tabBtnStats">記録</button>
+    <button class="tab" onclick="switchTab('noa')" style="color:#8A6A50;font-weight:700" id="tabBtnNoa">ヒカリ</button>
   </div>
 
   <div id="tabHome">
@@ -633,10 +633,30 @@ function toggleAutoAdvance(){
 let dailyChallenge=JSON.parse(localStorage.getItem('np_daily')||'null');
 function seededRand(seed){let x=Math.sin(seed+1)*10000;return x-Math.floor(x);}
 function shareResult(rate, total, correct){
-  const stars=rate>=90?'★★★':rate>=70?'★★':'★';
+  const stars=rate>=90?'🌟🌟🌟':rate>=70?'🌟🌟':'🌟';
   const streak=streakData.streak||0;
-  const mode={'random':'ランダム','field':'分野別','weak':'苦手強化','hisshu':'必修50問','ippan50':'一般50問','timeatk':'タイムアタック','mock':'模擬試験','daily':'デイリーチャレンジ','srs':'SRS復習','allcat':'100問一気'}[session.mode]||'演習';
-  const text=`📚 NursePass 学習記録\n${new Date().toLocaleDateString('ja-JP')}\n\n${mode}：${correct}/${total}問正解\n正答率：${rate}% ${stars}\n🔥 連続学習：${streak}日\n\n#NursePass #看護師国家試験 #看護学生`;
+  const modeLabel={'random':'ランダム','field':'分野別','weak':'苦手強化','hisshu':'必修50問','ippan50':'一般50問','timeatk':'タイムアタック','mock':'模擬試験','daily':'デイリーチャレンジ','srs':'SRS復習','allcat':'100問一気','lastmin':'試験直前','bookmark':'ブックマーク演習'}[session.mode]||'演習';
+  const bar=Array(10).fill('░').map((_,i)=>i<Math.round(rate/10)?'█':'░').join('');
+  const todayTotal=weeklyData[todayKey]||0;
+  const answered=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
+  const text=[
+    '╔════════════════════╗',
+    '║  📚 NursePass 学習記録  ║',
+    '╚════════════════════╝',
+    '',
+    `📅 ${new Date().toLocaleDateString('ja-JP')} ／ ${modeLabel}`,
+    '',
+    `正答率：${bar} ${rate}%`,
+    `正解数：${correct}問 ／ ${total}問`,
+    `${rate>=80?'✅ 合格ライン突破！':'📌 合格ライン80%まであと'+(80-rate)+'%'}`,
+    '',
+    `🔥 連続学習：${streak}日`,
+    `📊 今日の累計：${todayTotal}問`,
+    `📖 累計解答：${answered}問`,
+    '',
+    '#NursePass #看護師国家試験 #看護学生',
+    'https://yunoa091224.github.io/nursepass/'
+  ].join('\n');
   if(navigator.share){
     navigator.share({title:'NursePass 学習記録',text}).catch(()=>{});
   } else {
@@ -887,6 +907,34 @@ function setDailyGoal(){
   dailyGoal=n;localStorage.setItem('np_goal',n);renderGoalBar();renderNoaCard();
 }
 let _lastGoalDone=false;
+function updateTabBadges(){
+  const today=weeklyData[todayKey]||0;
+  const goalDone=today>=dailyGoal;
+  const homeBtn=document.getElementById('tabBtnHome');
+  if(homeBtn){
+    // Show progress count if goal set and not done; show ✓ if done
+    const badge=homeBtn.querySelector('.tab-badge');
+    if(dailyGoal>0&&!goalDone){
+      if(!badge){const b=document.createElement('span');b.className='tab-badge';b.style.cssText='display:inline-block;background:rgba(184,90,60,0.85);color:#fff;font-size:8px;font-weight:700;border-radius:8px;padding:0 4px;margin-left:3px;min-width:14px;text-align:center;vertical-align:middle;line-height:14px';homeBtn.appendChild(b);}
+      homeBtn.querySelector('.tab-badge').textContent=today+'/'+dailyGoal;
+    } else if(goalDone&&dailyGoal>0){
+      if(!badge){const b=document.createElement('span');b.className='tab-badge';b.style.cssText='display:inline-block;background:rgba(22,163,74,0.85);color:#fff;font-size:8px;font-weight:700;border-radius:8px;padding:0 4px;margin-left:3px;vertical-align:middle;line-height:14px';homeBtn.appendChild(b);}
+      homeBtn.querySelector('.tab-badge').textContent='✓';
+    } else {
+      badge?.remove();
+    }
+  }
+  // Weak tab: show count of unmastered wrong
+  const weakBtn=document.getElementById('tabBtnWeak');
+  if(weakBtn){
+    const weakCount=Object.keys(history).filter(id=>{const h=history[id];return h.wrong>0&&h.correct<=h.wrong;}).length;
+    const wb=weakBtn.querySelector('.tab-badge');
+    if(weakCount>0){
+      if(!wb){const b=document.createElement('span');b.className='tab-badge';b.style.cssText='display:inline-block;background:rgba(220,38,38,0.8);color:#fff;font-size:8px;font-weight:700;border-radius:8px;padding:0 4px;margin-left:3px;min-width:14px;text-align:center;vertical-align:middle;line-height:14px';weakBtn.appendChild(b);}
+      weakBtn.querySelector('.tab-badge').textContent=weakCount>99?'99+':weakCount;
+    } else {wb?.remove();}
+  }
+}
 function renderGoalBar(){
   const el=document.getElementById('goalBar');
   if(!el) return;
@@ -896,6 +944,7 @@ function renderGoalBar(){
   // 初めて達成した瞬間に紙吹雪
   if(done&&!_lastGoalDone){launchConfetti();showToast('🎉 今日の目標達成！素晴らしい！');}
   _lastGoalDone=done;
+  updateTabBadges();
   const r=22,circ=2*Math.PI*r,dash=Math.round(pct/100*circ);
   const ringColor=done?'#16a34a':'#B8907A';
   el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
@@ -3288,6 +3337,34 @@ async function requestNoaAnalysis(){
   }
   btn.disabled=false;btn.textContent='🌸 のあ先生に分析してもらう';
 }
+// 5大分野強度マップ
+function renderStrengthMap(){
+  const TARGET_FIELDS=['成人看護','老年看護','小児看護','母性看護','精神看護'];
+  const stats=TARGET_FIELDS.map(f=>{
+    const qs=Object.entries(history).filter(([id,h])=>{const q=QUESTIONS.find(x=>x.id===Number(id));return q&&q.field.includes(f);});
+    if(qs.length<3) return {f,acc:null,t:0};
+    const c=qs.reduce((s,[,h])=>s+h.correct,0);
+    const t=qs.reduce((s,[,h])=>s+h.correct+h.wrong,0);
+    return {f,acc:Math.round(c/t*100),t};
+  }).filter(s=>s.acc!==null);
+  if(stats.length<2) return '';
+  const rows=stats.map(s=>{
+    const bars=Math.round(s.acc/10);
+    const bar='█'.repeat(bars)+'░'.repeat(10-bars);
+    const col=s.acc>=80?'#16a34a':s.acc>=60?'#D9A060':'#dc2626';
+    return `<div style="margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+        <span style="color:#4A3828">${s.f.replace('看護','')}</span>
+        <span style="font-weight:700;color:${col}">${s.acc}%</span>
+      </div>
+      <div style="font-family:monospace;font-size:11px;color:${col};letter-spacing:1px">${bar}</div>
+    </div>`;
+  });
+  return `<div style="margin-bottom:14px;padding:12px 14px;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(235,225,210,0.85));border:1.5px solid rgba(217,197,178,0.4);border-radius:14px">
+    <div style="font-size:11px;font-weight:700;color:#B8907A;margin-bottom:10px">⚡ 5大看護分野 強度マップ</div>
+    ${rows.join('')}
+  </div>`;
+}
 // 最近の回答タイムライン
 function renderRecentHistory(){
   if(!recentAnswers||recentAnswers.length<3) return '';
@@ -4067,6 +4144,7 @@ function renderStats(){
       <div id="noaAnalysisOutput" style="display:none;margin-top:8px;padding:12px 14px;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(237,224,212,0.85));border:1.5px solid rgba(217,197,178,0.4);border-radius:12px"></div>
     </div>
     <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');localStorage.removeItem('np_mock_history');localStorage.removeItem('np_flash_progress');localStorage.removeItem('np_srs');localStorage.removeItem('np_daily');localStorage.removeItem('np_memos');localStorage.removeItem('np_best');localStorage.removeItem('np_daily_acc');localStorage.removeItem('np_wrong_choices');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];mockHistory=[];flashProgress={};srsData={};dailyChallenge=null;memoData={};bestScores={};dailyAccuracy={};wrongChoices={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:12px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>
+    ${renderStrengthMap()}
     ${renderRecentHistory()}
     ${renderMockHistoryChart()}
     ${renderDowChart()}
