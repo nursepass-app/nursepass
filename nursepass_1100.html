@@ -744,7 +744,7 @@ function saveBestScore(mode, rate, correct, total){
   localStorage.setItem('np_daily_acc',JSON.stringify(dailyAccuracy));
 }
 function getModeLabel(mode){
-  return{random:'ランダム',field:'分野別',weak:'苦手強化',hisshu:'必修50問',ippan50:'一般50問',timeatk:'タイムアタック',mock:'模擬試験',daily:'デイリー',srs:'SRS復習',allcat:'100問一気',drill:'1問解説'}[mode]||mode;
+  return{random:'ランダム',field:'分野別',weak:'苦手強化',hisshu:'必修50問',ippan50:'一般50問',timeatk:'タイムアタック',mock:'模擬試験',daily:'デイリー',srs:'SRS復習',allcat:'100問一気',drill:'1問解説',lastmin:'試験直前'}[mode]||mode;
 }
 // 今日の間違い・1日目標
 let todayWrong = JSON.parse(localStorage.getItem('np_today_wrong')||'{"date":"","ids":[]}');
@@ -1359,6 +1359,7 @@ function initModeButtons(){
       ${todayWrongBtn}\n      ${srsBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">100問一気</div><div class="mode-desc">本番形式</div></button>
       <button class="mode-btn" onclick="startQuiz('hisshu')" style="border-color:rgba(217,197,178,0.5);background:rgba(237,224,212,0.9);grid-column:1/-1"><div class="mode-icon">⭐</div><div class="mode-title">必修50問 本番形式</div><div class="mode-desc">合格ライン80%（40/50問）で合否判定</div></button>
+      <button class="mode-btn" onclick="startQuiz('lastmin')" style="border-color:rgba(239,68,68,0.4);background:linear-gradient(135deg,rgba(254,226,226,0.9),rgba(255,215,215,0.85));grid-column:1/-1"><div class="mode-icon">🚨</div><div class="mode-title">試験直前モード</div><div class="mode-desc">未克服の頻出問題＋SRS期限問題を最大30問</div></button>
       <button class="mode-btn" onclick="showFlashCards()" style="border-color:rgba(184,160,144,0.5);background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(237,224,212,0.9));grid-column:1/-1"><div class="mode-icon">🃏</div><div class="mode-title">暗記カード</div><div class="mode-desc">検査値・薬物・看護技術など76枚</div></button>
       <button class="cal-home-btn" onclick="showCalModal()">📅 学習予定をGoogleカレンダーに追加</button>`;
   }
@@ -1373,6 +1374,7 @@ function initModeButtons(){
       ${todayWrongBtn}\n      ${srsBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">100問一気</div><div class="mode-desc">本番形式</div></button>
       <button class="mode-btn" onclick="startQuiz('ippan50')" style="border-color:rgba(217,197,178,0.5);background:rgba(237,224,212,0.9);grid-column:1/-1"><div class="mode-icon">📚</div><div class="mode-title">一般問題 50問演習</div><div class="mode-desc">11分野からバランスよく出題</div></button>
+      <button class="mode-btn" onclick="startQuiz('lastmin')" style="border-color:rgba(239,68,68,0.4);background:linear-gradient(135deg,rgba(254,226,226,0.9),rgba(255,215,215,0.85));grid-column:1/-1"><div class="mode-icon">🚨</div><div class="mode-title">試験直前モード</div><div class="mode-desc">未克服の頻出問題＋SRS期限問題を最大30問</div></button>
       <button class="mode-btn" onclick="showFlashCards()" style="border-color:rgba(184,160,144,0.5);background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(237,224,212,0.9));grid-column:1/-1"><div class="mode-icon">🃏</div><div class="mode-title">暗記カード</div><div class="mode-desc">検査値・薬物・看護技術など76枚</div></button>
       <button class="cal-home-btn" onclick="showCalModal()">📅 学習予定をGoogleカレンダーに追加</button>`;
   }
@@ -1387,6 +1389,7 @@ function initModeButtons(){
       ${todayWrongBtn}\n      ${srsBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">全問一気</div><div class="mode-desc">本番形式</div></button>
       <button class="mode-btn" onclick="startJokyoMode()" style="border-color:rgba(5,150,105,0.5);background:rgba(230,255,245,0.9);grid-column:1/-1"><div class="mode-icon">📋</div><div class="mode-title">状況設定 専用モード</div><div class="mode-desc">事例を1問ずつ、丁寧に解く</div></button>
+      <button class="mode-btn" onclick="startQuiz('lastmin')" style="border-color:rgba(239,68,68,0.4);background:linear-gradient(135deg,rgba(254,226,226,0.9),rgba(255,215,215,0.85));grid-column:1/-1"><div class="mode-icon">🚨</div><div class="mode-title">試験直前モード</div><div class="mode-desc">未克服の頻出問題＋SRS期限問題を最大30問</div></button>
       <button class="mode-btn" onclick="showFlashCards()" style="border-color:rgba(184,160,144,0.5);background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(237,224,212,0.9));grid-column:1/-1"><div class="mode-icon">🃏</div><div class="mode-title">暗記カード</div><div class="mode-desc">検査値・薬物・看護技術など76枚</div></button>
       <button class="cal-home-btn" onclick="showCalModal()">📅 学習予定をGoogleカレンダーに追加</button>`;
   }
@@ -1453,6 +1456,19 @@ function startQuiz(mode){
     pool=[...hisshu,...ippan,...jokyo];
     if(!pool.length){alert('問題がありません。');return;}
     session={pool,idx:0,correct:0,wrong:0,mode:'mock',hisshuCorrect:0,ippanCorrect:0,jokyoCorrect:0,hisshuTotal:hisshu.length,ippanTotal:ippan.length,jokyoTotal:jokyo.length};
+    showQuiz();
+    return;
+  }
+  else if(mode==='lastmin'){
+    // 試験直前モード: 未克服の高頻出問題 + SRS期限 + 未解答★★★
+    const dueIds=new Set(getSrsDueIds());
+    const wrongUnmastered=Object.keys(history).filter(id=>{const h=history[id];return h.wrong>0&&h.correct<=h.wrong;}).map(Number);
+    const stars3wrong=QUESTIONS.filter(q=>q.stars>=3&&wrongUnmastered.includes(q.id));
+    const srsPool=QUESTIONS.filter(q=>dueIds.has(q.id)&&!stars3wrong.find(x=>x.id===q.id));
+    const unreadStars3=QUESTIONS.filter(q=>q.stars>=3&&!history[String(q.id)]);
+    pool=shuffle([...stars3wrong,...srsPool,...unreadStars3]).slice(0,30);
+    if(!pool.length){alert('直前対策問題はありません。\nよく解いている証拠です！模擬試験に挑戦しましょう。');return;}
+    session={pool,idx:0,correct:0,wrong:0,mode:'lastmin'};
     showQuiz();
     return;
   }
