@@ -323,6 +323,7 @@ body.font-xl .explanation{font-size:15px}
       <button onclick="toggleDark()" id="darkBtn" title="ダークモード" style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;border-radius:8px;transition:.15s">🌙</button>
       <button onclick="cycleFontSize()" id="fontBtn" title="文字サイズ" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;line-height:1;border-radius:8px;border:1px solid rgba(85,80,77,0.25);color:#5A5450;font-family:'Noto Sans JP',sans-serif">A</button>
       <button onclick="toggleHaptic()" id="hapticBtn" title="バイブレーション" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;border-radius:8px;opacity:0.6">📳</button>
+      <button onclick="toggleSound()" class="sound-toggle-btn" title="サウンドOFF" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;border-radius:8px;opacity:0.7">🔔</button>
     </div>
   </div>
 
@@ -368,10 +369,16 @@ body.font-xl .explanation{font-size:15px}
     <div class="search-results" id="searchResults"></div>
     <div id="weakFieldQuick" style="margin-bottom:10px"></div>
     <div id="dailyBanner" style="margin-bottom:10px"></div>
-    <button onclick="startQuiz('mock')" style="width:100%;margin-bottom:12px;padding:14px 16px;background:linear-gradient(135deg,#6B5040,#8A6A50);color:white;border:none;border-radius:18px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 4px 16px rgba(107,80,64,0.3);display:flex;align-items:center;justify-content:center;gap:10px">
-      <span style="font-size:20px">📝</span>
-      <div style="text-align:left"><div>本番模擬試験</div><div style="font-size:11px;font-weight:400;opacity:0.85">必修50問＋一般60問＋状況設定15問＝125問</div></div>
-    </button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <button onclick="startQuiz('mock')" style="padding:14px 12px;background:linear-gradient(135deg,#6B5040,#8A6A50);color:white;border:none;border-radius:18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 4px 16px rgba(107,80,64,0.3);display:flex;align-items:center;justify-content:center;gap:8px">
+        <span style="font-size:18px">📝</span>
+        <div style="text-align:left"><div>本番模擬試験</div><div style="font-size:10px;font-weight:400;opacity:0.85">125問（120分）</div></div>
+      </button>
+      <button onclick="startQuiz('minimock')" style="padding:14px 12px;background:linear-gradient(135deg,#4A7A90,#5A8FAA);color:white;border:none;border-radius:18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 4px 16px rgba(74,122,144,0.3);display:flex;align-items:center;justify-content:center;gap:8px">
+        <span style="font-size:18px">⚡</span>
+        <div style="text-align:left"><div>ミニ模擬試験</div><div style="font-size:10px;font-weight:400;opacity:0.85">25問（30分）</div></div>
+      </button>
+    </div>
     <div class="card">
       <div class="sub-tabs">
         <button class="sub-tab active" data-cat="必修" onclick="selectCategory('必修')">必修<span class="cat-count" id="catCount必修"></span></button>
@@ -638,7 +645,7 @@ function seededRand(seed){let x=Math.sin(seed+1)*10000;return x-Math.floor(x);}
 function shareResult(rate, total, correct){
   const stars=rate>=90?'🌟🌟🌟':rate>=70?'🌟🌟':'🌟';
   const streak=streakData.streak||0;
-  const modeLabel={'random':'ランダム','field':'分野別','weak':'苦手強化','hisshu':'必修50問','ippan50':'一般50問','timeatk':'タイムアタック','mock':'模擬試験','daily':'デイリーチャレンジ','srs':'SRS復習','allcat':'100問一気','lastmin':'試験直前','bookmark':'ブックマーク演習','streak10':'10連続正解チャレンジ'}[session.mode]||'演習';
+  const modeLabel={'random':'ランダム','field':'分野別','weak':'苦手強化','hisshu':'必修50問','ippan50':'一般50問','timeatk':'タイムアタック','mock':'模擬試験','daily':'デイリーチャレンジ','srs':'SRS復習','allcat':'100問一気','lastmin':'試験直前','bookmark':'ブックマーク演習','streak10':'10連続正解チャレンジ','minimock':'ミニ模擬試験'}[session.mode]||'演習';
   const bar=Array(10).fill('░').map((_,i)=>i<Math.round(rate/10)?'█':'░').join('');
   const todayTotal=weeklyData[todayKey]||0;
   const answered=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
@@ -885,7 +892,7 @@ function saveBestScore(mode, rate, correct, total){
   localStorage.setItem('np_daily_acc',JSON.stringify(dailyAccuracy));
 }
 function getModeLabel(mode){
-  return{random:'ランダム',field:'分野別',weak:'苦手強化',hisshu:'必修50問',ippan50:'一般50問',timeatk:'タイムアタック',mock:'模擬試験',daily:'デイリー',srs:'SRS復習',allcat:'100問一気',drill:'1問解説',lastmin:'試験直前',flagged:'難問特訓',streak10:'10連続チャレンジ'}[mode]||mode;
+  return{random:'ランダム',field:'分野別',weak:'苦手強化',hisshu:'必修50問',ippan50:'一般50問',timeatk:'タイムアタック',mock:'模擬試験',daily:'デイリー',srs:'SRS復習',allcat:'100問一気',drill:'1問解説',lastmin:'試験直前',flagged:'難問特訓',streak10:'10連続チャレンジ',minimock:'ミニ模擬試験'}[mode]||mode;
 }
 // 今日の間違い・1日目標
 let todayWrong = JSON.parse(localStorage.getItem('np_today_wrong')||'{"date":"","ids":[]}');
@@ -1573,6 +1580,46 @@ function pomTick(){
     renderPomodoro();
   }
 }
+// ===== 正誤サウンドエフェクト =====
+let soundEnabled=localStorage.getItem('np_sound')!=='0';
+function toggleSound(){
+  soundEnabled=!soundEnabled;
+  localStorage.setItem('np_sound',soundEnabled?'1':'0');
+  showToast(soundEnabled?'🔔 サウンドON':'🔕 サウンドOFF');
+  updateSoundBtn();
+}
+function updateSoundBtn(){
+  document.querySelectorAll('.sound-toggle-btn').forEach(b=>{b.textContent=soundEnabled?'🔔':'🔕';b.title=soundEnabled?'サウンドOFF':'サウンドON';});
+}
+function playAnswerSound(correct){
+  if(!soundEnabled) return;
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    if(correct){
+      // 正解: 上昇する2音
+      [523,784].forEach((freq,i)=>{
+        const osc=ctx.createOscillator();const gain=ctx.createGain();
+        osc.connect(gain);gain.connect(ctx.destination);
+        osc.type='sine';osc.frequency.value=freq;
+        const t=ctx.currentTime+i*0.12;
+        gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(0.18,t+0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+        osc.start(t);osc.stop(t+0.25);
+      });
+    } else {
+      // 不正解: 低い2音下降
+      [330,220].forEach((freq,i)=>{
+        const osc=ctx.createOscillator();const gain=ctx.createGain();
+        osc.connect(gain);gain.connect(ctx.destination);
+        osc.type='triangle';osc.frequency.value=freq;
+        const t=ctx.currentTime+i*0.15;
+        gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(0.15,t+0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001,t+0.3);
+        osc.start(t);osc.stop(t+0.3);
+      });
+    }
+  }catch(e){}
+}
 function pomBeep(){
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
@@ -2246,6 +2293,7 @@ function renderFlash(){
     </div>
     <div class="flash-nav">
       <button class="flash-nav-btn" onclick="flashPrev()">← 前へ</button>
+      ${window.speechSynthesis?`<button onclick="speakText('${(flashState.flipped?(card.a+(card.sub?' '+card.sub:'')):card.q).replace(/'/g,'&apos;').replace(/\n/g,' ')}')" style="padding:4px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.3);border-radius:10px;font-size:11px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">🔊</button>`:''}
       <div class="flash-counter">${idx+1} / ${pool.length}</div>
       <button class="flash-nav-btn" onclick="flashNext()">次へ →</button>
     </div>
@@ -2473,14 +2521,16 @@ function startQuiz(mode){
     showQuiz();
     return;
   }
-  else if(mode==='mock'){
+  else if(mode==='mock'||mode==='minimock'){
     // 本番模擬試験: 必修50問 + 一般60問 + 状況設定15問 = 125問
-    const hisshu=shuffle([...QUESTIONS.filter(q=>q.category==='必修')]).slice(0,50);
-    const ippan=shuffle([...QUESTIONS.filter(q=>q.category==='一般')]).slice(0,60);
-    const jokyo=shuffle([...QUESTIONS.filter(q=>q.category==='状況設定')]).slice(0,15);
+    // ミニ模擬試験:  必修20問 + 一般3問 + 状況設定2問 = 25問
+    const isMini=mode==='minimock';
+    const hisshu=shuffle([...QUESTIONS.filter(q=>q.category==='必修')]).slice(0,isMini?20:50);
+    const ippan=shuffle([...QUESTIONS.filter(q=>q.category==='一般')]).slice(0,isMini?3:60);
+    const jokyo=shuffle([...QUESTIONS.filter(q=>q.category==='状況設定')]).slice(0,isMini?2:15);
     pool=[...hisshu,...ippan,...jokyo];
     if(!pool.length){alert('問題がありません。');return;}
-    session={pool,idx:0,correct:0,wrong:0,mode:'mock',hisshuCorrect:0,ippanCorrect:0,jokyoCorrect:0,hisshuTotal:hisshu.length,ippanTotal:ippan.length,jokyoTotal:jokyo.length};
+    session={pool,idx:0,correct:0,wrong:0,mode,hisshuCorrect:0,ippanCorrect:0,jokyoCorrect:0,hisshuTotal:hisshu.length,ippanTotal:ippan.length,jokyoTotal:jokyo.length,mockStartTime:Date.now()};
     showQuiz();
     return;
   }
@@ -2606,20 +2656,21 @@ function showQuiz(){
   const qa=document.getElementById('quizArea');
   qa.style.display='block';
   // Start elapsed timer for mock exam
-  if(session&&session.mode==='mock'){
+  if(session&&(session.mode==='mock'||session.mode==='minimock')){
     clearInterval(mockElapsedInterval);
-    session.mockStartTime=Date.now();
+    session.mockStartTime=session.mockStartTime||Date.now();
     mockElapsedInterval=setInterval(()=>{
       const el=document.getElementById('mockElapsed');
       if(!el){clearInterval(mockElapsedInterval);return;}
       const secs=Math.floor((Date.now()-session.mockStartTime)/1000);
       const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
       const timeStr=h>0?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-      // 本番試験は240分(14400秒)
+      // 本番試験は240分(14400秒)、ミニは30分(1800秒)
+      const timeLimit=session.mode==='minimock'?1800:14400;
       const pace=secs>0&&(session.idx||0)>0?Math.round(secs/(session.idx+1)):null;
       const paceStr=pace?` · ${pace}秒/問`:'';
       el.textContent=`⏱ ${timeStr}${paceStr}`;
-      el.style.color=secs>14400?'#dc2626':secs>10800?'#D9A060':'#8A6A50';
+      el.style.color=secs>timeLimit?'#dc2626':secs>timeLimit*0.75?'#D9A060':'#8A6A50';
     },1000);
   }
   renderQuestion();
@@ -2760,6 +2811,7 @@ function answer(key){
   }
   if(session.answerLog) session.answerLog.push(correct?1:0);
   haptic(correct);
+  playAnswerSound(correct);
   if(correct){
     session.correct++;
     session.combo=(session.combo||0)+1;
@@ -2959,7 +3011,7 @@ function finishQuiz(){
     hisshuResult = '<div style="margin:0 0 12px;padding:10px 14px;border-radius:12px;font-size:14px;font-weight:700;text-align:center;background:'+(passed?'rgba(74,222,128,0.15)':'rgba(248,113,113,0.1)')+';color:'+(passed?'#166534':'#991b1b')+'">必修合格ライン 80%（40問）'+(passed?'✓ 突破！':'✗ 未達成')+'</div>';
   }
   var mockResult = '';
-  if(session.mode==='mock'){
+  if(session.mode==='mock'||session.mode==='minimock'){
     const hPct=session.hisshuTotal?Math.round(session.hisshuCorrect/session.hisshuTotal*100):0;
     const iPct=session.ippanTotal?Math.round(session.ippanCorrect/session.ippanTotal*100):0;
     const jPct=session.jokyoTotal?Math.round(session.jokyoCorrect/session.jokyoTotal*100):0;
@@ -2986,7 +3038,7 @@ function finishQuiz(){
       ${pctRow('📚 一般',session.ippanCorrect,session.ippanTotal,iPct,60)}
       ${pctRow('📋 状況設定',session.jokyoCorrect,session.jokyoTotal,jPct,60)}
       <div style="text-align:center;margin-top:10px;font-size:13px;font-weight:700;color:${hPass?'#16a34a':'#991b1b'}">${hPass?'必修合格ライン✓ クリア！':'必修合格ライン✗ 未達成'}</div>
-      ${mockMins?`<div style="text-align:center;font-size:11px;color:#8A6A50;margin-top:6px">⏱ 所要時間: ${mockMins}分${mockMins<=120?' ✓ 本番ペース（目安120分/125問）':''}</div>`:''}
+      ${mockMins?`<div style="text-align:center;font-size:11px;color:#8A6A50;margin-top:6px">⏱ 所要時間: ${mockMins}分${session.mode==='minimock'?(mockMins<=30?' ✓ 目標30分以内':''):(mockMins<=120?' ✓ 本番ペース（目安120分/125問）':'')}</div>`:''}
     </div>`;
     // 模擬試験履歴を保存
     const mockMins=session.mockStartTime?Math.round((Date.now()-session.mockStartTime)/60000):null;
@@ -5429,7 +5481,7 @@ updateScoreBadge();
 initDailyMessage();
 renderHomeSummary();
 renderExamCountdown();
-renderGoalBar();renderNoaCard();renderDailyTip();renderDailyBanner();
+renderGoalBar();renderNoaCard();renderDailyTip();renderDailyBanner();updateSoundBtn();
 showResumeBanner();
 initPomodoro();
 renderTodayPlan();
