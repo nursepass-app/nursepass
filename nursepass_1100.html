@@ -952,7 +952,7 @@ function saveBestScore(mode, rate, correct, total){
   localStorage.setItem('np_daily_acc',JSON.stringify(dailyAccuracy));
 }
 function getModeLabel(mode){
-  return{random:'ランダム',field:'分野別',weak:'苦手強化',hisshu:'必修50問',ippan50:'一般50問',timeatk:'タイムアタック',mock:'模擬試験',daily:'デイリー',srs:'SRS復習',allcat:'100問一気',drill:'1問解説',lastmin:'試験直前',flagged:'難問特訓',streak10:'10連続チャレンジ',minimock:'ミニ模擬試験'}[mode]||mode;
+  return{random:'ランダム',field:'分野別',weak:'苦手強化',hisshu:'必修50問',ippan50:'一般50問',timeatk:'タイムアタック',mock:'模擬試験',daily:'デイリー',srs:'SRS復習',allcat:'100問一気',drill:'1問解説',lastmin:'試験直前',flagged:'難問特訓',streak10:'10連続チャレンジ',minimock:'ミニ模擬試験',stars3:'頻出★★★',stars2:'中頻出★★',adaptive:'アダプティブ'}[mode]||mode;
 }
 // 今日の間違い・1日目標
 let todayWrong = JSON.parse(localStorage.getItem('np_today_wrong')||'{"date":"","ids":[]}');
@@ -2722,6 +2722,7 @@ function initModeButtons(){
   const mg=document.getElementById('modeGrid');
   const unreadBtn=`<button class="mode-btn" onclick="startQuiz('unread')" style="border-color:rgba(85,80,77,0.2);background:rgba(255,255,255,0.85)"><div class="mode-icon">✨</div><div class="mode-title">未解答10問</div><div class="mode-desc">まだ解いてない問題</div></button>`;
   const stars3Btn=`<button class="mode-btn" onclick="startQuiz('stars3')" style="border-color:rgba(217,197,178,0.5);background:rgba(255,248,220,0.9)"><div class="mode-icon">★★★</div><div class="mode-title">頻出問題20問</div><div class="mode-desc">最重要の必出問題</div></button>`;
+  const stars2Btn=`<button class="mode-btn" onclick="startQuiz('stars2')" style="border-color:rgba(184,160,144,0.4);background:rgba(248,243,230,0.9)"><div class="mode-icon">★★</div><div class="mode-title">中頻出20問</div><div class="mode-desc">頻出度★★の問題を練習</div></button>`;
   const tw=todayWrong.ids.length;
   const todayWrongBtn=tw>0?`<button class="mode-btn" onclick="startQuiz('today_wrong')" style="border-color:rgba(248,113,113,0.4);background:rgba(255,235,235,0.9)"><div class="mode-icon">🔄</div><div class="mode-title">今日の復習(${tw}問)</div><div class="mode-desc">今日間違えた問題</div></button>`:'';
   const timeAtkBtn=`<button class="mode-btn" onclick="startQuiz('timeatk')" style="border-color:rgba(234,179,8,0.4);background:rgba(254,249,195,0.9)"><div class="mode-icon">⏱</div><div class="mode-title">タイムアタック</div><div class="mode-desc">1問30秒×10問</div></button>`;
@@ -2734,6 +2735,7 @@ function initModeButtons(){
       <button class="mode-btn" onclick="startQuiz('weak')"><div class="mode-icon">💪</div><div class="mode-title">苦手強化</div><div class="mode-desc">間違えた問題</div></button>
       ${unreadBtn}
       ${stars3Btn}
+      ${stars2Btn}
       ${timeAtkBtn}
       ${todayWrongBtn}\n      ${srsBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">100問一気</div><div class="mode-desc">本番形式</div></button>
@@ -2753,6 +2755,7 @@ function initModeButtons(){
       <button class="mode-btn" onclick="startQuiz('weak')"><div class="mode-icon">💪</div><div class="mode-title">苦手強化</div><div class="mode-desc">間違えた問題</div></button>
       ${unreadBtn}
       ${stars3Btn}
+      ${stars2Btn}
       ${timeAtkBtn}
       ${todayWrongBtn}\n      ${srsBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">100問一気</div><div class="mode-desc">本番形式</div></button>
@@ -2772,6 +2775,7 @@ function initModeButtons(){
       <button class="mode-btn" onclick="startQuiz('weak')"><div class="mode-icon">💪</div><div class="mode-title">苦手強化</div><div class="mode-desc">間違えた問題</div></button>
       ${unreadBtn}
       ${stars3Btn}
+      ${stars2Btn}
       ${timeAtkBtn}
       ${todayWrongBtn}\n      ${srsBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">全問一気</div><div class="mode-desc">本番形式</div></button>
@@ -2829,6 +2833,10 @@ function startQuiz(mode){
   else if(mode==='stars3'){
     pool=shuffle([...catQ].filter(q=>q.stars>=3)).slice(0,20);
     if(!pool.length){alert('このカテゴリに頻出★★★問題がありません。');return;}
+  }
+  else if(mode==='stars2'){
+    pool=shuffle(QUESTIONS.filter(q=>q.stars===2)).slice(0,20);
+    if(!pool.length){alert('★★問題が見つかりません。');return;}
   }
   else if(mode==='today_wrong'){
     pool=shuffle(todayWrong.ids.map(id=>QUESTIONS.find(x=>x.id===id)).filter(Boolean));
@@ -4240,6 +4248,75 @@ function renderPersonalRecords(){
     </div>
   </div>`;
 }
+// 難易度別（スター別）正答率
+function renderStarsDiffStats(){
+  const levels=[{s:3,label:'★★★ 最頻出'},{s:2,label:'★★ 頻出'},{s:1,label:'★ 標準'}];
+  const hasData=QUESTIONS.some(q=>history[String(q.id)]);
+  if(!hasData) return '';
+  const rows=levels.map(({s,label})=>{
+    const qs=QUESTIONS.filter(q=>q.stars===s);
+    const att=qs.filter(q=>history[String(q.id)]);
+    const c=att.reduce((sum,q)=>sum+(history[String(q.id)].correct||0),0);
+    const w=att.reduce((sum,q)=>sum+(history[String(q.id)].wrong||0),0);
+    const t=c+w;
+    const acc=t?Math.round(c/t*100):null;
+    const cov=Math.round(att.length/qs.length*100);
+    const mast=qs.filter(q=>isMastered(q.id)).length;
+    const accColor=acc===null?'#aaa':acc>=80?'#16a34a':acc>=60?'#D9A060':'#ef4444';
+    const barColor=acc===null?'rgba(217,197,178,0.4)':acc>=80?'rgba(74,222,128,0.6)':acc>=60?'rgba(217,185,80,0.6)':'rgba(248,113,113,0.5)';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+        <span style="font-weight:700;color:#55504D">${label} <span style="color:#aaa;font-weight:400">(${qs.length}問)</span></span>
+        <span style="display:flex;gap:8px">
+          <span style="color:${accColor};font-weight:700">${acc!==null?acc+'%':'未解答'}</span>
+          <span style="color:#8A6A50">カバー${cov}%</span>
+          <span style="color:#16a34a">克服${mast}</span>
+        </span>
+      </div>
+      <div style="display:flex;height:7px;border-radius:4px;overflow:hidden">
+        <div style="flex:${cov};background:${barColor};min-width:${att.length?2:0}px"></div>
+        <div style="flex:${100-cov};background:rgba(237,224,212,0.3)"></div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div style="margin-bottom:14px;padding:12px 14px;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(235,225,210,0.85));border:1.5px solid rgba(217,197,178,0.4);border-radius:14px">
+    <div style="font-size:11px;font-weight:700;color:#B8907A;margin-bottom:10px">⭐ 難易度別 正答率</div>
+    ${rows}
+  </div>`;
+}
+// 全問題マップ（ドットビジュアライゼーション）
+function renderQuestionsMap(){
+  const answered=Object.keys(history).length;
+  if(answered<10) return '';
+  const cols=42,rows=25,dotSz=6,gap=1,step=dotSz+gap;
+  const svgW=cols*step-gap,svgH=rows*step-gap;
+  const rects=QUESTIONS.map((q,i)=>{
+    const col=i%cols,row2=Math.floor(i/cols);
+    const hq=history[String(q.id)];
+    const mst=isMastered(q.id);
+    const fill=!hq?'rgba(217,197,178,0.28)':mst?'rgba(74,222,128,0.72)':hq.wrong>0?'rgba(248,113,113,0.68)':'rgba(59,130,246,0.52)';
+    return `<rect x="${col*step}" y="${row2*step}" width="${dotSz}" height="${dotSz}" fill="${fill}" rx="1"/>`;
+  }).join('');
+  const mastCt=QUESTIONS.filter(q=>isMastered(q.id)).length;
+  const wrongCt=QUESTIONS.filter(q=>!isMastered(q.id)&&history[String(q.id)]&&history[String(q.id)].wrong>0).length;
+  const seenCt=QUESTIONS.filter(q=>!isMastered(q.id)&&history[String(q.id)]&&!history[String(q.id)].wrong).length;
+  const unCt=QUESTIONS.length-mastCt-wrongCt-seenCt;
+  return `<div style="margin-bottom:14px;padding:12px 14px;background:rgba(240,232,222,0.5);border:1.5px solid rgba(217,197,178,0.35);border-radius:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:#B8907A">🗺 全問題マップ（${QUESTIONS.length}問）</div>
+      <div style="font-size:9px;color:#8A6A50">${Math.round(answered/QUESTIONS.length*100)}% 着手</div>
+    </div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="display:block;min-width:${svgW}px">${rects}</svg>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:7px;flex-wrap:wrap">
+      <span style="font-size:9px;color:#16a34a">■ 克服 ${mastCt}</span>
+      <span style="font-size:9px;color:#3b82f6">■ 正解のみ ${seenCt}</span>
+      <span style="font-size:9px;color:#ef4444">■ 要復習 ${wrongCt}</span>
+      <span style="font-size:9px;color:#B8A090">■ 未解答 ${unCt}</span>
+    </div>
+  </div>`;
+}
 function renderFieldRanking(){
   const fieldStats={};
   QUESTIONS.forEach(q=>{
@@ -5222,6 +5299,8 @@ function renderStats(){
     ${renderWrongChoicePattern()}
     ${renderSessionLog()}
     ${renderPersonalRecords()}
+    ${renderStarsDiffStats()}
+    ${renderQuestionsMap()}
     ${renderAccTrend()}
     <div style="margin:12px 0;padding:12px 14px;background:rgba(240,232,222,0.5);border:1.5px solid rgba(217,197,178,0.35);border-radius:14px;text-align:center">
       <div style="font-size:12px;font-weight:700;color:#B8907A;margin-bottom:8px">🏅 学習実績証明書</div>
