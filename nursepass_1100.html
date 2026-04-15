@@ -471,6 +471,8 @@ const ACHIEVEMENTS=[
   {id:'weak0',  icon:'💪', name:'苦手克服',       desc:'苦手問題を10問克服'},
 ];
 let earnedBadges=JSON.parse(localStorage.getItem('np_badges')||'[]');
+let mockHistory=JSON.parse(localStorage.getItem('np_mock_history')||'[]');
+let flashProgress=JSON.parse(localStorage.getItem('np_flash_progress')||'{}');
 function checkAchievements(){
   const answered=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
   const correct=Object.values(history).reduce((s,h)=>s+h.correct,0);
@@ -863,9 +865,10 @@ function renderFlash(){
       <button class="flash-nav-btn" onclick="flashNext()">次へ →</button>
     </div>
     <div style="display:flex;gap:8px;padding:0 16px 16px">
-      <button class="flash-nav-btn" style="flex:1;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.4);color:#166534" onclick="flashNext()">覚えた ✓</button>
-      <button class="flash-nav-btn" style="flex:1;background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.4);color:#991b1b" onclick="flashNext()">もう一度</button>
+      <button class="flash-nav-btn" style="flex:1;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.4);color:#166534" onclick="flashKnown()">覚えた ✓</button>
+      <button class="flash-nav-btn" style="flex:1;background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.4);color:#991b1b" onclick="flashAgain()">もう一度</button>
     </div>
+    <div style="padding:0 16px 12px;font-size:10px;text-align:center;color:#8A7060">覚えた: ${Object.values(flashProgress).filter(v=>v==='known').length} / ${FLASH_CARDS.length}枚</div>
   </div>`;
 }
 
@@ -894,6 +897,22 @@ function flashPrev(){
   flashState.idx=(flashState.idx-1+pool.length)%pool.length;
   flashState.flipped=false;
   renderFlash();
+}
+
+function flashKnown(){
+  const pool=getFlashPool();
+  const key=pool[flashState.idx].q;
+  flashProgress[key]='known';
+  localStorage.setItem('np_flash_progress',JSON.stringify(flashProgress));
+  flashNext();
+}
+
+function flashAgain(){
+  const pool=getFlashPool();
+  const key=pool[flashState.idx].q;
+  flashProgress[key]='again';
+  localStorage.setItem('np_flash_progress',JSON.stringify(flashProgress));
+  flashNext();
 }
 
 function endFlash(){
@@ -1234,6 +1253,10 @@ function finishQuiz(){
       ${pctRow('📋 状況設定',session.jokyoCorrect,session.jokyoTotal,jPct,60)}
       <div style="text-align:center;margin-top:10px;font-size:13px;font-weight:700;color:${hPass?'#16a34a':'#991b1b'}">${hPass?'必修合格ライン✓ クリア！':'必修合格ライン✗ 未達成'}</div>
     </div>`;
+    // 模擬試験履歴を保存
+    mockHistory.unshift({date:todayKey,rate,hPct,iPct,jPct,total,correct:session.correct,pass:hPass});
+    if(mockHistory.length>20) mockHistory=mockHistory.slice(0,20);
+    localStorage.setItem('np_mock_history',JSON.stringify(mockHistory));
   }
   qa.innerHTML=`<div class="card" style="animation:fadein .4s ease">
     <div class="result-summary">
@@ -1530,7 +1553,56 @@ function renderStats(){
           <span class="badge-name">${a.name}</span>
         </div>`).join('')}</div>
     </div>
-    <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:20px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>`;
+    ${(()=>{
+      if(!mockHistory.length) return '';
+      const rows=mockHistory.slice(0,10).map(r=>{
+        const passColor=r.pass?'#16a34a':'#991b1b';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:5px;background:rgba(240,232,222,0.5);border-radius:10px;border:1px solid rgba(85,80,77,0.12)">
+          <div style="font-size:10px;color:#8A6A50;min-width:60px">${r.date}</div>
+          <div style="flex:1">
+            <div style="display:flex;gap:6px;font-size:10px;color:#5A5450">
+              <span>必修 <b style="color:${r.hPct>=80?'#16a34a':'#ef4444'}">${r.hPct}%</b></span>
+              <span>一般 <b>${r.iPct}%</b></span>
+              <span>状況 <b>${r.jPct}%</b></span>
+            </div>
+          </div>
+          <div style="font-size:14px;font-weight:800;color:${passColor}">${r.rate}%</div>
+          <div style="font-size:10px;font-weight:700;color:${passColor};min-width:32px">${r.pass?'✓合格':'✗'}</div>
+        </div>`;
+      }).join('');
+      const trend=mockHistory.slice(0,5).reverse();
+      const maxR=Math.max(...trend.map(r=>r.rate),1);
+      const bars=trend.map(r=>`<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:2px">
+        <div style="font-size:9px;font-weight:700;color:${r.rate>=80?'#16a34a':'#8A6A50'}">${r.rate}%</div>
+        <div style="width:100%;background:rgba(237,224,212,.2);border-radius:4px;height:36px;display:flex;align-items:flex-end">
+          <div style="width:100%;height:${Math.round(r.rate/100*36)}px;background:${r.pass?'linear-gradient(180deg,#4ade80,#16a34a)':'linear-gradient(180deg,#D9C5B2,#B8A090)'};border-radius:4px"></div>
+        </div>
+        <div style="font-size:9px;color:#8A6A50">${r.date.slice(5)}</div>
+      </div>`).join('');
+      return `<div style="text-align:left;margin-top:12px">
+        <div class="cat-stat-header">▸ 模擬試験の記録（最近${Math.min(mockHistory.length,10)}回）</div>
+        ${trend.length>=2?`<div style="display:flex;gap:4px;margin-bottom:10px;padding:8px;background:rgba(240,232,222,0.4);border-radius:10px;align-items:flex-end">${bars}</div>`:''}
+        ${rows}
+      </div>`;
+    })()}
+    ${(()=>{
+      const knownCount=Object.values(flashProgress).filter(v=>v==='known').length;
+      if(!knownCount) return '';
+      return `<div style="text-align:left;margin-top:12px">
+        <div class="cat-stat-header">▸ 暗記カード進捗</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(240,232,222,0.5);border-radius:10px;border:1px solid rgba(85,80,77,0.12)">
+          <div style="font-size:22px">🃏</div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#6B5040">${knownCount} / ${FLASH_CARDS.length}枚 習得済み</div>
+            <div style="height:6px;background:rgba(237,224,212,.3);border-radius:6px;margin-top:5px;overflow:hidden">
+              <div style="width:${Math.round(knownCount/FLASH_CARDS.length*100)}%;height:100%;background:linear-gradient(90deg,#4ade80,#16a34a);border-radius:6px"></div>
+            </div>
+          </div>
+          <div style="font-size:16px;font-weight:800;color:#16a34a">${Math.round(knownCount/FLASH_CARDS.length*100)}%</div>
+        </div>
+      </div>`;
+    })()}
+    <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');localStorage.removeItem('np_mock_history');localStorage.removeItem('np_flash_progress');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];mockHistory=[];flashProgress={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:20px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>`;
 }
 
 
