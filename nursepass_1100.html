@@ -610,6 +610,7 @@ const ACHIEVEMENTS=[
 let earnedBadges=JSON.parse(localStorage.getItem('np_badges')||'[]');
 let mockHistory=JSON.parse(localStorage.getItem('np_mock_history')||'[]');
 let sessionLog=JSON.parse(localStorage.getItem('np_session_log')||'[]');
+let searchHistory=JSON.parse(localStorage.getItem('np_search_history')||'[]');
 let flashProgress=JSON.parse(localStorage.getItem('np_flash_progress')||'{}');
 let memoData=JSON.parse(localStorage.getItem('np_memos')||'{}');
 // モード別ベストスコア: {mode: {rate, correct, total, date}}
@@ -1942,6 +1943,22 @@ function onSearchInput(val){
   if(!val.trim()){if(sr){sr.style.display='none';sr.innerHTML='';}return;}
   searchTimer=setTimeout(()=>doSearch(val.trim()),200);
 }
+function saveSearchHistory(q){
+  if(!q||q.startsWith('#')) return;
+  searchHistory=searchHistory.filter(s=>s!==q);
+  searchHistory.unshift(q);
+  if(searchHistory.length>8) searchHistory=searchHistory.slice(0,8);
+  localStorage.setItem('np_search_history',JSON.stringify(searchHistory));
+  renderSearchHistoryChips();
+}
+function renderSearchHistoryChips(){
+  const el=document.getElementById('searchPresetChips');
+  if(!el) return;
+  if(!searchHistory.length){el.innerHTML='';return;}
+  el.innerHTML=`<span style="font-size:9px;color:#A09080;align-self:center">最近:</span>`
+    +searchHistory.slice(0,6).map(s=>`<button onclick="document.getElementById('searchInput').value='${s.replace(/'/g,'&apos;')}';doSearch('${s.replace(/'/g,'&apos;')}');document.getElementById('searchClear').style.display='block'" style="padding:3px 9px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:16px;font-size:10px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif">${s}</button>`).join('')
+    +`<button onclick="searchHistory=[];localStorage.removeItem('np_search_history');renderSearchHistoryChips()" style="padding:2px 6px;background:none;border:none;font-size:10px;color:#aaa;cursor:pointer;font-family:'Noto Sans JP',sans-serif">✕</button>`;
+}
 function doSearch(q){
   const sr=document.getElementById('searchResults');
   if(!sr) return;
@@ -1977,6 +1994,7 @@ function doSearch(q){
     </div>`;
   }).join('');
   sr.style.display='block';
+  saveSearchHistory(q);
 }
 function clearSearch(){
   const inp=document.getElementById('searchInput');
@@ -2028,8 +2046,22 @@ function showPassScoreDetail(){
       </div>
     </div>`;
   }).join('');
+  // 合格ライン到達シミュレーション
+  const simRows=cats.map(({label,cat,pass})=>{
+    const {rate,total,done}=catRate(cat);
+    if(rate===null||rate>=pass) return '';
+    const totalAns=done;
+    if(totalAns<5) return '';
+    // あとN問正解でライン突破: need correct/(correct+wrong+N) >= pass/100
+    // => N >= correct * 100/pass - (correct+wrong)
+    const c=QUESTIONS.filter(q=>q.category===cat).reduce((s,q)=>{const h=history[String(q.id)];return s+(h?h.correct:0);},0);
+    const w=QUESTIONS.filter(q=>q.category===cat).reduce((s,q)=>{const h=history[String(q.id)];return s+(h?h.wrong:0);},0);
+    const need=Math.ceil(c*100/pass-(c+w));
+    if(need<=0||need>200) return '';
+    return `<div style="font-size:10px;color:#b45309;margin-top:3px;padding:3px 6px;background:rgba(251,191,36,0.1);border-radius:6px">💡 ${label.replace('⭐ ','').replace('📚 ','').replace('📋 ','')}: あと<strong>${need}問正解</strong>で合格ライン${pass}%突破</div>`;
+  }).join('');
   el.style.display='block';
-  el.innerHTML=rows+`<div style="color:#8A6A50;font-size:9px;margin-top:4px;text-align:center">タップで閉じる · スコア = 必修×0.4+一般×0.35+状況×0.25</div>`;
+  el.innerHTML=rows+(simRows?`<div style="margin-top:6px">${simRows}</div>`:'')+`<div style="color:#8A6A50;font-size:9px;margin-top:4px;text-align:center">タップで閉じる · スコア = 必修×0.4+一般×0.35+状況×0.25</div>`;
 }
 function calcPassScore(){
   // 合格予測スコア: 必修正答率×0.4 + 一般正答率×0.35 + 状況設定正答率×0.25
@@ -4008,6 +4040,41 @@ function renderMockHistoryChart(){
   </div>`;
 }
 // 分野別強弱ランキング
+// 誤答選択肢の傾向分析
+function renderWrongChoicePattern(){
+  const allWrong=Object.values(wrongChoices);
+  if(allWrong.length<10) return '';
+  // Global tally per key
+  const tally={A:0,B:0,C:0,D:0};
+  allWrong.forEach(wc=>Object.entries(wc).forEach(([k,n])=>{if(tally[k]!==undefined)tally[k]+=n;}));
+  const totalWrong=Object.values(tally).reduce((s,v)=>s+v,0);
+  if(totalWrong<20) return '';
+  const maxV=Math.max(...Object.values(tally),1);
+  const keys=['A','B','C','D'];
+  const colors={A:'rgba(239,68,68,0.65)',B:'rgba(251,191,36,0.65)',C:'rgba(74,222,128,0.65)',D:'rgba(59,130,246,0.65)'};
+  const bars=keys.map(k=>{
+    const pct=Math.round(tally[k]/totalWrong*100);
+    const barH=Math.max(4,Math.round(tally[k]/maxV*52));
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-size:10px;color:#6B5040;font-weight:700">${tally[k]}</div>
+      <div style="height:52px;display:flex;align-items:flex-end">
+        <div style="width:22px;height:${barH}px;background:${colors[k]};border-radius:4px 4px 0 0"></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#4A3828">${k}</div>
+      <div style="font-size:9px;color:#8A6A50">${pct}%</div>
+    </div>`;
+  }).join('');
+  const worst=keys.reduce((a,b)=>tally[a]>tally[b]?a:b);
+  const best=keys.reduce((a,b)=>tally[a]<tally[b]?a:b);
+  return `<div style="margin-bottom:14px;padding:12px 14px;background:rgba(245,239,232,0.85);border:1.5px solid rgba(217,197,178,0.4);border-radius:14px">
+    <div style="font-size:11px;font-weight:700;color:#B8907A;margin-bottom:4px">🎯 誤答選択肢の傾向</div>
+    <div style="font-size:10px;color:#8A6A50;margin-bottom:8px">累計 ${totalWrong} 回の誤答 · 選択肢${worst}を最も多く誤選択（${Math.round(tally[worst]/totalWrong*100)}%）</div>
+    <div style="display:flex;gap:8px;align-items:flex-end">${bars}</div>
+    <div style="font-size:10px;color:#6B5040;margin-top:8px;padding:6px 8px;background:rgba(255,255,255,0.5);border-radius:8px">
+      📊 <strong>${worst}</strong>を誤選択しやすい傾向 · <strong>${best}</strong>が最も少ない（識別できている可能性）
+    </div>
+  </div>`;
+}
 // セッション履歴ログ
 function renderSessionLog(){
   if(sessionLog.length<3) return '';
@@ -5037,6 +5104,7 @@ function renderStats(){
     ${renderSpeedRanking()}
     ${renderTopMissed()}
     ${renderFieldRanking()}
+    ${renderWrongChoicePattern()}
     ${renderSessionLog()}
     ${renderPersonalRecords()}
     ${renderAccTrend()}
@@ -5940,7 +6008,7 @@ updateScoreBadge();
 initDailyMessage();
 renderHomeSummary();
 renderExamCountdown();
-renderGoalBar();renderNoaCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();
+renderGoalBar();renderNoaCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();renderSearchHistoryChips();
 showResumeBanner();
 initPomodoro();
 renderTodayPlan();
