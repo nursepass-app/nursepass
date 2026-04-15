@@ -388,6 +388,7 @@ body.font-xl .explanation{font-size:15px}
         <button class="chip" id="weakFilter一般" onclick="setWeakFilter('一般')">一般</button>
         <button class="chip" id="weakFilter状況設定" onclick="setWeakFilter('状況設定')">状況設定</button>
         <button class="chip" id="weakFilterbookmark" onclick="setWeakFilter('bookmark')" style="margin-left:4px">🔖 ブックマーク</button>
+        <button class="chip" id="weakFiltermemo" onclick="setWeakFilter('memo')">📝 メモ</button>
       </div>
       <div style="padding:0 16px 8px">
         <input type="search" id="weakSearchInput" placeholder="🔍 キーワードで問題を検索..." oninput="onWeakSearch(this.value)"
@@ -1885,7 +1886,7 @@ let weakFilter='all';
 let weakSearchText='';
 function setWeakFilter(f){
   weakFilter=f;
-  ['all','必修','一般','状況設定','bookmark'].forEach(k=>{
+  ['all','必修','一般','状況設定','bookmark','memo'].forEach(k=>{
     const btn=document.getElementById('weakFilter'+(k==='all'?'All':k));
     if(btn) btn.classList.toggle('selected',k===f);
   });
@@ -1937,6 +1938,24 @@ function renderWeak(){
       return `<div class="weak-item" onclick="drillOne(${q.id})">
         <div class="weak-q">🔖 ${q.question}</div>
         <div class="weak-meta">${q.category} ▸ ${q.field}${h?' ▸ 正解'+h.correct+'回 / 間違え'+h.wrong+'回':' ▸ 未解答'}</div>
+      </div>`;
+    }).join('');
+    return;
+  }
+  if(weakFilter==='memo'){
+    const memoIds=Object.keys(memoData);
+    if(sb) sb.innerHTML=`マイメモ <strong style="color:#B8907A">${memoIds.length}</strong>件`;
+    if(wb) wb.style.display='none';
+    if(!memoIds.length){wl.innerHTML='<div class="empty">メモした問題はないよ。<br>問題画面で📋を押してメモを追加できるよ！</div>';return;}
+    wl.innerHTML=memoIds.map(id=>{
+      const q=QUESTIONS.find(x=>x.id==id);
+      if(!q) return '';
+      const h=history[id];
+      return `<div class="weak-item" onclick="drillOne(${q.id})">
+        <div class="weak-q">📝 ${q.question}</div>
+        <div class="weak-meta">${q.category} ▸ ${q.field}${h?' ▸ 正解'+h.correct+'回 / 間違え'+h.wrong+'回':' ▸ 未解答'}</div>
+        <div style="margin-top:4px;font-size:11px;color:#5A4420;padding:4px 8px;background:rgba(217,185,80,0.08);border-radius:6px;border-left:2px solid #D9A060">${memoData[id]}</div>
+        <button onclick="event.stopPropagation();openMemo(${q.id})" style="margin-top:4px;padding:2px 8px;background:none;border:1px solid rgba(217,160,96,0.3);border-radius:6px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">✏️ 編集</button>
       </div>`;
     }).join('');
     return;
@@ -3122,6 +3141,24 @@ if(!localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen'
     const el=document.getElementById('catCount'+cat);
     if(el) el.textContent=n+'問';
   });
+})();
+// スワイプジェスチャー（モバイル対応）
+(function(){
+  let sx=0,sy=0;
+  document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+  document.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-sx;
+    const dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)<40||Math.abs(dy)>Math.abs(dx)) return; // 閾値40px、縦スクロールは無視
+    const qa=document.getElementById('quizArea');
+    if(!qa||qa.style.display==='none') return;
+    if(!session||!session.pool) return;
+    if(dx<-40){
+      // 左スワイプ → 次の問題（回答後のみ）
+      const chA=document.getElementById('chA');
+      if(chA&&chA.disabled){const nb=document.getElementById('nextBtn');if(nb) nb.click();}
+    }
+  },{passive:true});
 })();
 // キーボードショートカット
 document.addEventListener('keydown', function(e){
