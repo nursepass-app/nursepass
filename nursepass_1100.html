@@ -471,6 +471,8 @@ let history = JSON.parse(localStorage.getItem('np_history')||'{}');
 
 let streakData = JSON.parse(localStorage.getItem('np_streak')||'{"lastDate":"","streak":0}');
 let weeklyData = JSON.parse(localStorage.getItem('np_weekly')||'{}');
+// ストリーク保護（週1回フリーズ）: {usedWeek:'YYYY-Www', frozenDate:'YYYY-MM-DD'}
+let streakFreeze = JSON.parse(localStorage.getItem('np_streak_freeze')||'null');
 const todayKey = new Date().toISOString().slice(0,10);
 let bookmarks = JSON.parse(localStorage.getItem('np_bookmarks')||'{}');
 function saveBookmarks(){localStorage.setItem('np_bookmarks',JSON.stringify(bookmarks));}
@@ -958,6 +960,23 @@ function updateDailyStats(){
   pulseSummaryCard('todayDisp');
 }
 
+function useStreakFreeze(){
+  const weekNum=`${new Date().getFullYear()}-W${String(Math.ceil(new Date().getDate()/7)).padStart(2,'0')}`;
+  if(streakFreeze&&streakFreeze.usedWeek===weekNum){showToast('今週のフリーズはすでに使用済みです');return;}
+  // Apply freeze: treat today as studied without breaking streak
+  const yest=new Date();yest.setDate(yest.getDate()-1);
+  const yKey=yest.toISOString().slice(0,10);
+  // Extend streak as if yesterday was last date
+  if(streakData.lastDate!==todayKey){
+    streakData.lastDate=todayKey;
+    // Don't increment streak — just preserve it
+    localStorage.setItem('np_streak',JSON.stringify(streakData));
+  }
+  streakFreeze={usedWeek:weekNum,frozenDate:todayKey};
+  localStorage.setItem('np_streak_freeze',JSON.stringify(streakFreeze));
+  showToast(`🧊 ストリーク保護！連続${streakData.streak}日を維持しました`);
+  renderHomeSummary();
+}
 let searchTimer=null;
 function onSearchInput(val){
   clearTimeout(searchTimer);
@@ -1032,7 +1051,28 @@ function renderHomeSummary(){
   const sd=document.getElementById('streakDisp');
   const td=document.getElementById('todayDisp');
   const cd=document.getElementById('coverDisp');
-  if(sd) sd.textContent=streak;
+  if(sd){
+    sd.textContent=streak;
+    // Show freeze button if streak>0, today not yet studied, and freeze available this week
+    const yest=new Date();yest.setDate(yest.getDate()-1);
+    const yKey=yest.toISOString().slice(0,10);
+    const weekNum=`${new Date().getFullYear()}-W${String(Math.ceil(new Date().getDate()/7)).padStart(2,'0')}`;
+    const freezeUsedThisWeek=streakFreeze&&streakFreeze.usedWeek===weekNum;
+    const frozenToday=streakFreeze&&streakFreeze.frozenDate===todayKey;
+    const streakAtRisk=streak>0&&streakData.lastDate!==todayKey&&streakData.lastDate!==yKey;
+    // Show freeze chip: streak > 1, at risk or already frozen today, and not used this week yet
+    const fc=document.getElementById('freezeChip');
+    if(fc) fc.remove();
+    if(streak>1&&!freezeUsedThisWeek&&(streakAtRisk||frozenToday)){
+      const chip=document.createElement('div');
+      chip.id='freezeChip';
+      chip.style.cssText='margin-top:4px';
+      chip.innerHTML=frozenToday
+        ?`<span style="font-size:9px;color:#3b82f6;font-weight:700">🧊 フリーズ使用済み（今日）</span>`
+        :`<button onclick="useStreakFreeze()" style="font-size:9px;padding:3px 8px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1px solid rgba(59,130,246,0.25);border-radius:8px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">🧊 フリーズ使用（週1回）</button>`;
+      sd.parentElement.appendChild(chip);
+    }
+  }
   if(td) td.textContent=today;
   if(cd) cd.textContent=coverPct+'%';
   const tm=document.getElementById('studyTimeDisp');
@@ -1662,7 +1702,7 @@ function renderQuestion(){
         <div class="q-count">${isTime?'⏱ ':''}${session.idx+1}/${total}${session.combo>=3?`<span style="color:#f59e0b;font-size:10px;font-weight:700;margin-left:4px">🔥${session.combo}</span>`:''}</div>
       </div>
       ${isTime?`<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div class="timer-count" id="timerCnt">${session.timeLimit}秒</div>`:''}
-      <div class="q-field" style="display:flex;justify-content:space-between;align-items:center"><span>${q.category} ▸ ${q.field} <span style="color:#C0B0A0;font-size:9px">#${q.id}</span></span><span style="display:flex;align-items:center;gap:8px"><span style="color:#C0B0A0;font-size:9px;letter-spacing:0">A/B/C/D キー</span><span style="color:#D9C5B2;font-size:12px;letter-spacing:1px">${'★'.repeat(q.stars||1)+'☆'.repeat(3-(q.stars||1))}</span></span></div>
+      <div class="q-field" style="display:flex;justify-content:space-between;align-items:center"><span>${q.category} ▸ ${q.field} <span style="color:#C0B0A0;font-size:9px">#${q.id}</span></span><span style="display:flex;align-items:center;gap:8px">${!isTime&&total-session.idx>1?`<button onclick="skipQuestion()" style="padding:2px 8px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">スキップ↓</button>`:''}<span style="color:#C0B0A0;font-size:9px;letter-spacing:0">A/B/C/D キー</span><span style="color:#D9C5B2;font-size:12px;letter-spacing:1px">${'★'.repeat(q.stars||1)+'☆'.repeat(3-(q.stars||1))}</span></span></div>
       <div class="q-text">${q.question}</div>
       <div class="choices">
         ${Object.entries(q.choices).map(([k,v])=>`
@@ -1814,6 +1854,18 @@ function startWeakFromHere(){
   renderQuestion();
 }
 function nextQ(){clearQuizTimer();session.idx++;renderQuestion();}
+function skipQuestion(){
+  if(!session||session.mode==='timeatk') return;
+  const remaining=session.pool.length-session.idx;
+  if(remaining<=1) return;
+  // Move current question to end of remaining pool
+  const skipped=session.pool.splice(session.idx,1)[0];
+  session.pool.push(skipped);
+  if(!session.skippedIds) session.skippedIds=[];
+  if(!session.skippedIds.includes(skipped.id)) session.skippedIds.push(skipped.id);
+  showToast('この問題を後回しにしました');
+  renderQuestion();
+}
 
 function finishQuiz(){
   clearSessionSnapshot();
@@ -2610,18 +2662,34 @@ function renderStats(){
           <div style="font-size:10px;font-weight:700;color:${passColor};min-width:32px">${r.pass?'✓合格':'✗'}</div>
         </div>`;
       }).join('');
-      const trend=mockHistory.slice(0,5).reverse();
-      const maxR=Math.max(...trend.map(r=>r.rate),1);
-      const bars=trend.map(r=>`<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:2px">
-        <div style="font-size:9px;font-weight:700;color:${r.rate>=80?'#16a34a':'#8A6A50'}">${r.rate}%</div>
-        <div style="width:100%;background:rgba(237,224,212,.2);border-radius:4px;height:36px;display:flex;align-items:flex-end">
-          <div style="width:100%;height:${Math.round(r.rate/100*36)}px;background:${r.pass?'linear-gradient(180deg,#4ade80,#16a34a)':'linear-gradient(180deg,#D9C5B2,#B8A090)'};border-radius:4px"></div>
-        </div>
-        <div style="font-size:9px;color:#8A6A50">${r.date.slice(5)}</div>
-      </div>`).join('');
+      // SVG line chart for mock history
+      const chartData=mockHistory.slice(0,10).reverse();
+      const mockLineChart=(()=>{
+        if(chartData.length<2) return '';
+        const W=280,H=80,padL=28,padR=8,padT=8,padB=20;
+        const iW=W-padL-padR,iH=H-padT-padB;
+        const pts=chartData.map((r,i)=>({
+          x:padL+i*(iW/Math.max(chartData.length-1,1)),
+          y:padT+iH*(1-r.rate/100),
+          rate:r.rate,pass:r.pass,date:r.date.slice(5)
+        }));
+        const grids=[60,80,100].map(pct=>{
+          const y=padT+iH*(1-pct/100);
+          const isPass=pct===80;
+          return `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${isPass?'rgba(22,163,74,0.3)':'rgba(85,80,77,0.1)'}" stroke-width="${isPass?1.2:0.8}" stroke-dasharray="${isPass?'3,3':''}"/>
+            <text x="${padL-3}" y="${y+3}" text-anchor="end" font-size="7" fill="${isPass?'#16a34a':'#8A6A50'}">${pct}</text>`;
+        }).join('');
+        const passLabel=`<text x="${W-padR}" y="${padT+iH*(1-80/100)+3}" text-anchor="end" font-size="7" fill="rgba(22,163,74,0.6)">合格ライン</text>`;
+        const linePts=pts.map(p=>`${p.x},${p.y}`).join(' ');
+        const dots=pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="3" fill="${p.pass?'#16a34a':'#B8907A'}" stroke="white" stroke-width="1"/>`).join('');
+        const xLabels=pts.map((p,i)=>i%2===0?`<text x="${p.x}" y="${H-4}" text-anchor="middle" font-size="7" fill="#8A6A50">${p.date}</text>`:'').join('');
+        return `<div style="margin-bottom:10px;padding:8px;background:rgba(240,232,222,0.4);border-radius:10px">
+          <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px">${grids}${passLabel}<polyline points="${linePts}" fill="none" stroke="rgba(184,144,122,0.8)" stroke-width="2" stroke-linejoin="round"/>${dots}${xLabels}</svg>
+        </div>`;
+      })();
       return `<div style="text-align:left;margin-top:12px">
         <div class="cat-stat-header">▸ 模擬試験の記録（最近${Math.min(mockHistory.length,10)}回）</div>
-        ${trend.length>=2?`<div style="display:flex;gap:4px;margin-bottom:10px;padding:8px;background:rgba(240,232,222,0.4);border-radius:10px;align-items:flex-end">${bars}</div>`:''}
+        ${mockLineChart}
         ${rows}
       </div>`;
     })()}
