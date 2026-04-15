@@ -434,6 +434,13 @@ body.font-xl .explanation{font-size:15px}
           <button class="api-key-notice-btn" onclick="showApiKeyModal()">APIキーを設定する</button>
         </div>
         <div class="chat-history" id="chatHistory"></div>
+        <div style="padding:6px 12px 4px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid rgba(85,80,77,0.08)">
+          <button onclick="quickChat('今日どんな問題を勉強すればいい？')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">今日の学習アドバイス</button>
+          <button onclick="quickChat('今の苦手分野と克服法を教えて')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">苦手分野の克服法</button>
+          <button onclick="quickChat('試験が不安で緊張してる。励ましてほしい')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">不安・緊張をほぐして</button>
+          <button onclick="quickChat('看護師国試の効率的な勉強法を教えて')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">効率的な勉強法</button>
+          <button onclick="quickChat('今日の学習で気をつけることは何？')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">今日のポイント</button>
+        </div>
         <div class="chat-input-row">
           <textarea class="chat-input" id="chatInput" rows="1" placeholder="ヒカリに相談する..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
           <button class="chat-send-btn" id="chatSendBtn" onclick="sendChat()">送信</button>
@@ -544,6 +551,14 @@ const ACHIEVEMENTS=[
   {id:'cov100', icon:'🌟', name:'全問制覇率100%', desc:'全問解答'},
   {id:'bm10',   icon:'🔖', name:'熱心な学習者',  desc:'ブックマーク10問以上'},
   {id:'weak0',  icon:'💪', name:'苦手克服',       desc:'苦手問題を10問克服'},
+  {id:'mock1',  icon:'📝', name:'模擬試験合格',   desc:'模擬試験で必修80%以上を達成'},
+  {id:'flash20',icon:'🃏', name:'暗記カード名人', desc:'暗記カード20枚以上を習得'},
+  {id:'srs50',  icon:'🧠', name:'SRS継続者',      desc:'SRS復習を50問以上完了'},
+  {id:'combo10',icon:'🔥', name:'コンボマスター', desc:'10連続正解を達成'},
+  {id:'perfect',icon:'💯', name:'パーフェクト',   desc:'10問以上で全問正解'},
+  {id:'night',  icon:'🌙', name:'夜間学習者',     desc:'22時以降に学習'},
+  {id:'early',  icon:'🌅', name:'早朝学習者',     desc:'6時以前に学習'},
+  {id:'memo10', icon:'📝', name:'ノート魔',       desc:'10問以上にメモを記録'},
 ];
 let earnedBadges=JSON.parse(localStorage.getItem('np_badges')||'[]');
 let mockHistory=JSON.parse(localStorage.getItem('np_mock_history')||'[]');
@@ -688,9 +703,17 @@ function checkAchievements(){
     cov100:covered>=QUESTIONS.length,
     bm10:  bmCount>=10,
     weak0: masteredWeak>=10,
+    mock1: mockHistory.some(r=>r.pass),
+    flash20:Object.values(flashProgress).filter(v=>v==='known').length>=20,
+    srs50: Object.values(srsData).reduce((s,v)=>{return s+(v.interval>1?1:0);},0)>=50,
+    combo10:(session&&(session.combo||0)>=10)||earnedBadges.includes('combo10'),
+    perfect:(session&&session.correct>=(session.correct+session.wrong)&&(session.correct+session.wrong)>=10&&session.wrong===0)||earnedBadges.includes('perfect'),
+    night: new Date().getHours()>=22,
+    early: new Date().getHours()<6,
+    memo10:Object.keys(memoData).length>=10,
   };
   let newEarned=false;
-  const majorBadges=['q500','q1000','q3000','str7','str30','acc90','cov50','cov100'];
+  const majorBadges=['q500','q1000','q3000','str7','str30','acc90','cov50','cov100','mock1','perfect','flash20'];
   ACHIEVEMENTS.forEach(a=>{
     if(checks[a.id]&&!earnedBadges.includes(a.id)){
       earnedBadges.push(a.id);newEarned=true;
@@ -935,6 +958,39 @@ function exportData(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('データをエクスポートしました');
+}
+function exportCSV(){
+  const rows=[['ID','カテゴリ','分野','問題（先頭50字）','正解','誤答','正答率%','フラグ','ブックマーク','メモ']];
+  const attempted=Object.keys(history).map(id=>({id:Number(id),h:history[id]}));
+  attempted.sort((a,b)=>a.id-b.id);
+  attempted.forEach(({id,h})=>{
+    const q=QUESTIONS.find(x=>x.id===id);
+    if(!q) return;
+    const total=h.correct+h.wrong;
+    const rate=total?Math.round(h.correct/total*100):0;
+    const esc=(s)=>`"${String(s).replace(/"/g,'""')}"`;
+    rows.push([
+      id,
+      esc(q.category),
+      esc(q.field),
+      esc(q.question.slice(0,50)),
+      h.correct,
+      h.wrong,
+      rate,
+      flaggedIds.has(id)?'★':'',
+      bookmarks[id]?'🔖':'',
+      esc(memoData[id]||'')
+    ].join(','));
+  });
+  const bom='\uFEFF'; // UTF-8 BOM for Excel
+  const csv=bom+rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`nursepass_study_${todayKey}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`CSVエクスポート完了（${attempted.length}問）`);
 }
 function importData(){
   const input=document.createElement('input');
@@ -2809,12 +2865,18 @@ function renderStats(){
         const streak2=streakData.streak||0;
         const bmCount2=Object.keys(bookmarks).length;
         const mastered2=Object.keys(history).filter(id=>history[id].wrong>0&&history[id].correct>history[id].wrong).length;
+        const knownFlash2=Object.values(flashProgress).filter(v=>v==='known').length;
+        const srsVet2=Object.values(srsData).reduce((s,v)=>s+(v.interval>1?1:0),0);
         const progress={
           q50:[answered2,50],q100:[answered2,100],q500:[answered2,500],q1000:[answered2,1000],q3000:[answered2,3000],
           str3:[streak2,3],str7:[streak2,7],str30:[streak2,30],
           acc80:[Math.round(rate2*100),80],acc90:[Math.round(rate2*100),90],
           cov25:[covered2,Math.round(QUESTIONS.length*0.25)],cov50:[covered2,Math.round(QUESTIONS.length*0.5)],cov100:[covered2,QUESTIONS.length],
           bm10:[bmCount2,10],weak0:[mastered2,10],
+          mock1:[mockHistory.filter(r=>r.pass).length,1],
+          flash20:[knownFlash2,20],
+          srs50:[srsVet2,50],
+          memo10:[Object.keys(memoData).length,10],
         };
         return ACHIEVEMENTS.map(a=>{
           const earned=earnedBadges.includes(a.id);
@@ -2947,7 +3009,8 @@ function renderStats(){
       </div>`;
     })()}
     <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
-      <button onclick="exportData()" style="padding:7px 14px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📤 データをエクスポート</button>
+      <button onclick="exportData()" style="padding:7px 14px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📤 JSONエクスポート</button>
+      <button onclick="exportCSV()" style="padding:7px 14px;background:rgba(22,163,74,0.1);color:#15803d;border:1.5px solid rgba(22,163,74,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📊 CSVエクスポート</button>
       <button onclick="importData()" style="padding:7px 14px;background:rgba(74,222,128,0.1);color:#166534;border:1.5px solid rgba(74,222,128,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📥 データをインポート</button>
     </div>
     <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');localStorage.removeItem('np_mock_history');localStorage.removeItem('np_flash_progress');localStorage.removeItem('np_srs');localStorage.removeItem('np_daily');localStorage.removeItem('np_memos');localStorage.removeItem('np_best');localStorage.removeItem('np_daily_acc');localStorage.removeItem('np_wrong_choices');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];mockHistory=[];flashProgress={};srsData={};dailyChallenge=null;memoData={};bestScores={};dailyAccuracy={};wrongChoices={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:12px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>`;
@@ -3202,6 +3265,10 @@ function renderChat(){
     return '<div class="chat-row '+(isNoa?'noa-row':'user-row')+'">'+av+'<div class="chat-bubble">'+txt+'</div></div>';
   }).join('');
   el.scrollTop=el.scrollHeight;
+}
+function quickChat(text){
+  const input=document.getElementById('chatInput');
+  if(input){input.value=text;sendChat();}
 }
 async function sendChat(){
   const input=document.getElementById('chatInput');
