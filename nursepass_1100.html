@@ -1023,10 +1023,33 @@ const FLASH_CARDS = [
   {cat:'疾患・病態',q:'甲状腺機能亢進症（バセドウ病）の3主徴',a:'びまん性甲状腺腫・眼球突出・頻脈',sub:'TSH低下・FT3/FT4上昇。抗TSH受容体抗体陽性'},
   {cat:'疾患・病態',q:'クッシング症候群の特徴的な身体所見',a:'中心性肥満・満月様顔貌・水牛様脂肪沈着・紫色皮膚線条',sub:'コルチゾール過剰産生。血糖↑・骨粗鬆症・易感染'},
   {cat:'疾患・病態',q:'アナフィラキシーショックの第一選択薬と投与経路',a:'アドレナリン（エピネフリン）0.3mg 筋肉注射（大腿外側）',sub:'エピペン®。抗ヒスタミン薬やステロイドは補助的'},
+  // 周手術期
+  {cat:'周手術期',q:'術前の絶飲食の標準的な基準',a:'固形物：術前6時間〜、清澄液：術前2時間まで可',sub:'麻酔学会ガイドライン準拠。牛乳・果肉入りは固形物扱い'},
+  {cat:'周手術期',q:'術後の離床開始タイミング（一般的な目安）',a:'術後1〜2日目、バイタル安定後に医師の指示のもと開始',sub:'早期離床でDVT・肺塞栓・肺炎・腸管麻痺を予防'},
+  {cat:'周手術期',q:'術後の深部静脈血栓（DVT）予防の3本柱',a:'①弾性ストッキング ②間欠的空気圧迫法（フットポンプ）③早期離床',sub:'ヘパリン等の抗凝固療法は術後出血リスクと要バランス'},
+  {cat:'周手術期',q:'麻酔覚醒直後に最優先で観察する項目',a:'気道確保・呼吸（SpO₂/呼吸数）・循環（BP/HR）・意識レベル',sub:'舌根沈下・分泌物による気道閉塞に注意、体位は回復体位'},
+  {cat:'周手術期',q:'創傷治癒を促進する局所環境条件',a:'湿潤環境（モイストヒーリング）・血流良好・感染なし・異物なし',sub:'創を乾燥させると治癒遅延。ドレッシング材で湿潤を保持'},
+  // 母性・小児
+  {cat:'母性・小児',q:'正期産の定義',a:'妊娠37週0日〜41週6日での分娩',sub:'22〜36週6日=早産 ≥42週=過期産'},
+  {cat:'母性・小児',q:'子宮底長の測定と妊娠週数の目安',a:'妊娠月数（週数÷4）≒子宮底長(cm)の概算',sub:'妊娠20週≒20cm、28週≒28cm、36週≒36cm（個人差あり）'},
+  {cat:'母性・小児',q:'成熟新生児の正常値',a:'体重2,500〜4,000g、身長48〜52cm、頭囲33〜35cm',sub:'アプガースコア7点以上=正常　4〜6点=軽〜中等度仮死'},
+  {cat:'母性・小児',q:'乳児の体重増加の目安（月齢別）',a:'0〜3か月: 約30g/日　3〜6か月: 約20g/日　6〜12か月: 約10g/日',sub:'生後3〜4日に生理的体重減少（出生時の5〜10%）→10日で回復'},
+  {cat:'母性・小児',q:'小児の年齢別の正常呼吸数',a:'新生児 40〜50回　乳児 30〜40回　幼児 20〜30回　学童 15〜20回',sub:'年齢が上がるほど呼吸数は成人に近づく'},
+  {cat:'母性・小児',q:'川崎病の主要症状5つ（5日以上続く発熱を含む）',a:'①発熱②眼球結膜充血③口唇・口腔変化④発疹⑤頸部リンパ節腫脹＋BCG接種部位の発赤',sub:'合併症：冠動脈瘤。アスピリン+免疫グロブリン大量療法'},
+  // 老年・在宅
+  {cat:'老年・在宅',q:'フレイルの判定（Fried基準）',a:'5項目中3つ以上でフレイル：①体重減少②疲労感③歩行速度低下④握力低下⑤身体活動低下',sub:'1〜2項目=プレフレイル。サルコペニア（筋肉量減少）と合わせて評価'},
+  {cat:'老年・在宅',q:'認知症BPSD（行動・心理症状）の代表例',a:'幻覚・妄想・徘徊・攻撃性・睡眠障害・抑うつ・せん妄',sub:'中核症状（記憶・見当識障害など）とは区別する。ケアで改善可能'},
+  {cat:'老年・在宅',q:'在宅酸素療法（HOT）の適応基準',a:'安静時PaO₂≤55mmHg、または労作時・睡眠時に低下する場合',sub:'通常1〜2L/分。火気厳禁。外出時はポータブル機器を使用'},
+  {cat:'老年・在宅',q:'訪問看護で使用する主なアセスメントツール',a:'バーセルインデックス（ADL）・FIM・HDS-R（認知症）・ブレーデン（褥瘡）',sub:'バーセル100点=完全自立　FIM126点満点'},
+  // 精神看護
+  {cat:'精神看護',q:'統合失調症の代表的な抗精神病薬と副作用',a:'リスペリドン・オランザピン・クエチアピン　副作用：錐体外路症状・体重増加・高血糖',sub:'定型（クロルプロマジン等）→陽性症状に有効　非定型→陰性症状にも'},
+  {cat:'精神看護',q:'双極性障害の気分安定薬3種',a:'炭酸リチウム・バルプロ酸（デパケン）・ラモトリジン（ラミクタール）',sub:'リチウム：中毒に注意（0.6〜1.2mEq/L）。腎機能・甲状腺モニタリング'},
+  {cat:'精神看護',q:'自殺リスクの直接的評価で必ず確認すること',a:'①自殺念慮の有無②計画（手段・時期）③既往の自殺企図④保護因子',sub:'聞いても自殺を誘発しない。安全確保→精神科医へ報告が最優先'},
+  {cat:'精神看護',q:'ACT（包括的地域生活支援プログラム）の特徴',a:'重症精神障害者への24時間・多職種チームによる地域生活支援',sub:'入院を減らし地域移行を促進。訪問中心で生活全般を支援'},
 ];
 
 let flashState = {cat:'すべて', idx:0, flipped:false};
-const FLASH_CATS = ['すべて','検査値','薬物副作用','看護技術','感染管理','疾患・病態'];
+const FLASH_CATS = ['すべて','検査値','薬物副作用','看護技術','感染管理','疾患・病態','周手術期','母性・小児','老年・在宅','精神看護'];
 
 function showFlashCards(){
   document.getElementById('tabHome').style.display='none';
@@ -1162,7 +1185,7 @@ function initModeButtons(){
       ${todayWrongBtn}\n      ${srsBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">100問一気</div><div class="mode-desc">本番形式</div></button>
       <button class="mode-btn" onclick="startQuiz('hisshu')" style="border-color:rgba(217,197,178,0.5);background:rgba(237,224,212,0.9);grid-column:1/-1"><div class="mode-icon">⭐</div><div class="mode-title">必修50問 本番形式</div><div class="mode-desc">合格ライン80%（40/50問）で合否判定</div></button>
-      <button class="mode-btn" onclick="showFlashCards()" style="border-color:rgba(184,160,144,0.5);background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(237,224,212,0.9));grid-column:1/-1"><div class="mode-icon">🃏</div><div class="mode-title">暗記カード</div><div class="mode-desc">検査値・薬物・看護技術など60枚</div></button>
+      <button class="mode-btn" onclick="showFlashCards()" style="border-color:rgba(184,160,144,0.5);background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(237,224,212,0.9));grid-column:1/-1"><div class="mode-icon">🃏</div><div class="mode-title">暗記カード</div><div class="mode-desc">検査値・薬物・看護技術など76枚</div></button>
       <button class="cal-home-btn" onclick="showCalModal()">📅 学習予定をGoogleカレンダーに追加</button>`;
   }
   else if(currentCategory==='一般'){
@@ -1176,7 +1199,7 @@ function initModeButtons(){
       ${todayWrongBtn}\n      ${srsBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">100問一気</div><div class="mode-desc">本番形式</div></button>
       <button class="mode-btn" onclick="startQuiz('ippan50')" style="border-color:rgba(217,197,178,0.5);background:rgba(237,224,212,0.9);grid-column:1/-1"><div class="mode-icon">📚</div><div class="mode-title">一般問題 50問演習</div><div class="mode-desc">11分野からバランスよく出題</div></button>
-      <button class="mode-btn" onclick="showFlashCards()" style="border-color:rgba(184,160,144,0.5);background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(237,224,212,0.9));grid-column:1/-1"><div class="mode-icon">🃏</div><div class="mode-title">暗記カード</div><div class="mode-desc">検査値・薬物・看護技術など60枚</div></button>
+      <button class="mode-btn" onclick="showFlashCards()" style="border-color:rgba(184,160,144,0.5);background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(237,224,212,0.9));grid-column:1/-1"><div class="mode-icon">🃏</div><div class="mode-title">暗記カード</div><div class="mode-desc">検査値・薬物・看護技術など76枚</div></button>
       <button class="cal-home-btn" onclick="showCalModal()">📅 学習予定をGoogleカレンダーに追加</button>`;
   }
   else if(currentCategory==='状況設定'){
@@ -1190,7 +1213,7 @@ function initModeButtons(){
       ${todayWrongBtn}\n      ${srsBtn}
       <button class="mode-btn" onclick="startQuiz('allcat')"><div class="mode-icon">🏃</div><div class="mode-title">全問一気</div><div class="mode-desc">本番形式</div></button>
       <button class="mode-btn" onclick="startJokyoMode()" style="border-color:rgba(5,150,105,0.5);background:rgba(230,255,245,0.9);grid-column:1/-1"><div class="mode-icon">📋</div><div class="mode-title">状況設定 専用モード</div><div class="mode-desc">事例を1問ずつ、丁寧に解く</div></button>
-      <button class="mode-btn" onclick="showFlashCards()" style="border-color:rgba(184,160,144,0.5);background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(237,224,212,0.9));grid-column:1/-1"><div class="mode-icon">🃏</div><div class="mode-title">暗記カード</div><div class="mode-desc">検査値・薬物・看護技術など60枚</div></button>
+      <button class="mode-btn" onclick="showFlashCards()" style="border-color:rgba(184,160,144,0.5);background:linear-gradient(135deg,rgba(245,239,232,0.95),rgba(237,224,212,0.9));grid-column:1/-1"><div class="mode-icon">🃏</div><div class="mode-title">暗記カード</div><div class="mode-desc">検査値・薬物・看護技術など76枚</div></button>
       <button class="cal-home-btn" onclick="showCalModal()">📅 学習予定をGoogleカレンダーに追加</button>`;
   }
 }
