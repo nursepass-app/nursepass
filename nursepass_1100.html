@@ -1205,6 +1205,28 @@ function exportData(){
   URL.revokeObjectURL(url);
   showToast('データをエクスポートしました');
 }
+function exportMemos(){
+  const ids=Object.keys(memoData);
+  if(!ids.length){showToast('メモがありません');return;}
+  const lines=['=== NursePass メモ一括エクスポート ===','生成日時: '+new Date().toLocaleString('ja-JP'),'問題数: '+ids.length+'件','','---'];
+  ids.forEach(id=>{
+    const q=QUESTIONS.find(x=>x.id===Number(id));
+    if(!q) return;
+    lines.push('');
+    lines.push(`【${q.id}】${q.field} / ${q.category}`);
+    lines.push('問題: '+q.question);
+    lines.push('正解: ('+q.answer+') '+q.choices[q.answer]);
+    lines.push('メモ: '+memoData[id]);
+    lines.push('---');
+  });
+  const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`nursepass_memos_${todayKey}.txt`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`メモ ${ids.length}件をエクスポートしました`);
+}
 function exportCSV(){
   const rows=[['ID','カテゴリ','分野','問題（先頭50字）','正解','誤答','正答率%','フラグ','ブックマーク','メモ']];
   const attempted=Object.keys(history).map(id=>({id:Number(id),h:history[id]}));
@@ -1901,8 +1923,51 @@ const FLASH_CARDS = [
   {cat:'精神看護',q:'摂食障害（神経性やせ症）で優先される身体管理',a:'体重・電解質（低K血症）・心電図（QT延長）・骨密度・血圧・体温の管理',sub:'再栄養症候群（リフィーディング症候群）に注意。急激な栄養補充は禁忌'},
 ];
 
+// カスタムフラッシュカード
+let customCards = JSON.parse(localStorage.getItem('np_custom_cards')||'[]');
+function saveCustomCards(){localStorage.setItem('np_custom_cards',JSON.stringify(customCards));}
+function openAddCardModal(){
+  const existing=document.getElementById('addCardModal');
+  if(existing){existing.remove();return;}
+  const modal=document.createElement('div');
+  modal.id='addCardModal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML=`<div style="background:var(--orange-pale,#F5EFE8);border-radius:18px;padding:20px;width:100%;max-width:420px;font-family:'Noto Sans JP',sans-serif">
+    <div style="font-size:14px;font-weight:700;color:#6B5040;margin-bottom:14px">📝 カスタムカードを追加</div>
+    <div style="margin-bottom:10px"><label style="font-size:11px;color:#8A6A50;font-weight:700">表（質問）</label><textarea id="cardQ" rows="2" style="width:100%;box-sizing:border-box;margin-top:4px;padding:8px 10px;border:1.5px solid rgba(217,197,178,0.5);border-radius:10px;font-size:13px;font-family:'Noto Sans JP',sans-serif;background:rgba(255,255,255,0.8);resize:none;outline:none" placeholder="例: 正常血圧の定義は？"></textarea></div>
+    <div style="margin-bottom:10px"><label style="font-size:11px;color:#8A6A50;font-weight:700">裏（答え）</label><textarea id="cardA" rows="2" style="width:100%;box-sizing:border-box;margin-top:4px;padding:8px 10px;border:1.5px solid rgba(217,197,178,0.5);border-radius:10px;font-size:13px;font-family:'Noto Sans JP',sans-serif;background:rgba(255,255,255,0.8);resize:none;outline:none" placeholder="例: 収縮期120/拡張期80 mmHg未満"></textarea></div>
+    <div style="margin-bottom:14px"><label style="font-size:11px;color:#8A6A50;font-weight:700">補足（任意）</label><input id="cardSub" style="width:100%;box-sizing:border-box;margin-top:4px;padding:7px 10px;border:1.5px solid rgba(217,197,178,0.5);border-radius:10px;font-size:12px;font-family:'Noto Sans JP',sans-serif;background:rgba(255,255,255,0.8);outline:none" placeholder="例: JSH2019基準"></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="submitAddCard()" style="flex:1;padding:10px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">追加する</button>
+      <button onclick="document.getElementById('addCardModal').remove()" style="padding:10px 16px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:13px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">キャンセル</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  setTimeout(()=>document.getElementById('cardQ')?.focus(),100);
+}
+function submitAddCard(){
+  const q=(document.getElementById('cardQ')?.value||'').trim();
+  const a=(document.getElementById('cardA')?.value||'').trim();
+  const sub=(document.getElementById('cardSub')?.value||'').trim();
+  if(!q||!a){alert('表と裏は必須です');return;}
+  customCards.push({cat:'マイカード',q,a,sub,custom:true,id:'c'+Date.now()});
+  saveCustomCards();
+  document.getElementById('addCardModal')?.remove();
+  showToast('カスタムカードを追加しました！');
+  if(flashState.cat==='マイカード'||flashState.cat==='すべて') renderFlash();
+}
+function deleteCustomCard(cid){
+  if(!confirm('このカードを削除しますか？')) return;
+  customCards=customCards.filter(c=>c.id!==cid);
+  saveCustomCards();
+  flashState.idx=Math.max(0,flashState.idx-1);
+  renderFlash();
+  showToast('カードを削除しました');
+}
+
 let flashState = {cat:'すべて', idx:0, flipped:false, onlyAgain:false};
-const FLASH_CATS = ['すべて','検査値','薬物副作用','看護技術','感染管理','疾患・病態','周手術期','母性・小児','老年・在宅','精神看護'];
+const FLASH_CATS = ['すべて','マイカード','検査値','薬物副作用','看護技術','感染管理','疾患・病態','周手術期','母性・小児','老年・在宅','精神看護'];
 
 function showFlashCards(){
   document.getElementById('tabHome').style.display='none';
@@ -1916,7 +1981,11 @@ function showFlashCards(){
 }
 
 function getFlashPool(){
-  let pool=flashState.cat==='すべて'?FLASH_CARDS:FLASH_CARDS.filter(c=>c.cat===flashState.cat);
+  const allCards=[...FLASH_CARDS,...customCards];
+  let pool;
+  if(flashState.cat==='すべて') pool=allCards;
+  else if(flashState.cat==='マイカード') pool=customCards;
+  else pool=FLASH_CARDS.filter(c=>c.cat===flashState.cat);
   if(flashState.search){
     const kw=flashState.search.toLowerCase();
     pool=pool.filter(c=>(c.q+c.a+(c.sub||'')).toLowerCase().includes(kw));
@@ -1946,6 +2015,7 @@ function renderFlash(){
       <div style="font-size:13px;font-weight:700;color:#6B5040">暗記カード</div>
       <div style="display:flex;align-items:center;gap:6px">
         <button onclick="toggleFlashAgainMode()" style="padding:3px 8px;background:${flashState.onlyAgain?'rgba(248,113,113,0.2)':'rgba(240,232,222,0.8)'};border:1px solid rgba(217,197,178,0.5);border-radius:12px;font-size:10px;font-weight:700;color:${flashState.onlyAgain?'#dc2626':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">${flashState.onlyAgain?'🔴苦手のみ':'🔄苦手特訓'}</button>
+        <button onclick="openAddCardModal()" style="padding:3px 8px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);border-radius:12px;font-size:10px;font-weight:700;color:#7c3aed;cursor:pointer;font-family:'Noto Sans JP',sans-serif">＋ 追加</button>
         <div style="font-size:11px;color:#8A7060">${idx+1} / ${pool.length}</div>
       </div>
     </div>
@@ -1968,6 +2038,7 @@ function renderFlash(){
           <div class="flash-q-label" style="color:rgba(245,239,232,.5)">${card.cat}</div>
           <div class="flash-a-text">${card.a}</div>
           ${card.sub?`<div class="flash-a-sub">${card.sub}</div>`:''}
+          ${card.custom?`<button onclick="event.stopPropagation();deleteCustomCard('${card.id}')" style="margin-top:12px;padding:4px 12px;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.4);border-radius:10px;font-size:11px;color:#dc2626;cursor:pointer;font-family:'Noto Sans JP',sans-serif">🗑 削除</button>`:''}
         </div>
       </div>
     </div>
@@ -1980,7 +2051,7 @@ function renderFlash(){
       <button class="flash-nav-btn" style="flex:1;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.4);color:#166534" onclick="flashKnown()">覚えた ✓ <span style="font-size:9px;opacity:0.6">[K]</span></button>
       <button class="flash-nav-btn" style="flex:1;background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.4);color:#991b1b" onclick="flashAgain()">もう一度 <span style="font-size:9px;opacity:0.6">[R]</span></button>
     </div>
-    <div style="padding:0 16px 12px;font-size:10px;text-align:center;color:#8A7060">覚えた: ${Object.values(flashProgress).filter(v=>v==='known').length} / ${FLASH_CARDS.length}枚 <span style="margin-left:6px;opacity:0.6">スペース:めくる ←→:移動</span></div>
+    <div style="padding:0 16px 12px;font-size:10px;text-align:center;color:#8A7060">覚えた: ${Object.values(flashProgress).filter(v=>v==='known').length} / ${FLASH_CARDS.length}枚${customCards.length?` | マイカード: ${customCards.length}枚`:''} <span style="margin-left:6px;opacity:0.6">スペース:めくる ←→:移動</span></div>
   </div>`;
 }
 
@@ -2390,7 +2461,7 @@ function renderQuestion(){
       ${isTime?`<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div class="timer-count" id="timerCnt">${session.timeLimit}秒</div>`:''}
       <div class="q-field" style="display:flex;justify-content:space-between;align-items:center"><span>${q.category} ▸ ${q.field} <span style="color:#C0B0A0;font-size:9px">#${q.id}</span></span><span style="display:flex;align-items:center;gap:8px">${!isTime&&total-session.idx>1?`<button onclick="skipQuestion()" style="padding:2px 8px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">スキップ↓</button>`:''}<button id="autoAdvBtn" onclick="toggleAutoAdvance()" style="padding:2px 8px;background:${autoAdvance?'rgba(217,160,96,0.25)':'rgba(240,232,222,0.8)'};border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:${autoAdvance?'#c2410c':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">${autoAdvance?'⚡自動送りON':'⚡自動送りOFF'}</button><span style="color:#C0B0A0;font-size:9px;letter-spacing:0">A/B/C/D キー</span><span style="color:#D9C5B2;font-size:12px;letter-spacing:1px">${'★'.repeat(q.stars||1)+'☆'.repeat(3-(q.stars||1))}</span></span></div>
       <div class="q-text">${q.question}</div>
-      ${!isTime?`<div id="hintArea" style="margin:0 0 6px"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button></div>`:''}
+      ${!isTime?`<div id="hintArea" style="margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button>${(window.SpeechRecognition||window.webkitSpeechRecognition)?`<button id="voiceAnswerBtn" onclick="toggleVoiceAnswer()" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">🎙 声で回答</button>`:''}</div>`:''}
       <div class="choices">
         ${Object.entries(q.choices).map(([k,v])=>`
           <button class="choice-btn" onclick="answer('${k}')" id="ch${k}">
@@ -3700,6 +3771,7 @@ function renderStats(){
     <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
       <button onclick="exportData()" style="padding:7px 14px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📤 JSONエクスポート</button>
       <button onclick="exportCSV()" style="padding:7px 14px;background:rgba(22,163,74,0.1);color:#15803d;border:1.5px solid rgba(22,163,74,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📊 CSVエクスポート</button>
+      <button onclick="exportMemos()" style="padding:7px 14px;background:rgba(168,85,247,0.1);color:#7c3aed;border:1.5px solid rgba(168,85,247,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📋 メモをエクスポート</button>
       <button onclick="importData()" style="padding:7px 14px;background:rgba(74,222,128,0.1);color:#166534;border:1.5px solid rgba(74,222,128,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📥 データをインポート</button>
       <button onclick="setupReminder()" style="padding:7px 14px;background:rgba(245,158,11,0.1);color:#b45309;border:1.5px solid rgba(245,158,11,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif" id="reminderBtn">🔔 ${localStorage.getItem('np_reminder')?'リマインダー設定済み':'学習リマインダー'}</button>
     </div>
@@ -4560,6 +4632,46 @@ document.addEventListener('keydown', function(e){
     }
   }
 });
+// 音声解答入力
+let voiceRecog=null;let voiceActive=false;
+function initVoiceAnswer(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return;
+  voiceRecog=new SR();
+  voiceRecog.lang='ja-JP';
+  voiceRecog.continuous=false;
+  voiceRecog.interimResults=false;
+  voiceRecog.onresult=function(e){
+    const txt=(e.results[0][0].transcript||'').trim().toUpperCase();
+    const map={'エー':'A','ビー':'B','シー':'C','ディー':'D','でぃー':'D','A':'A','B':'B','C':'C','D':'D','１':'A','２':'B','３':'C','４':'D','1':'A','2':'B','3':'C','4':'D'};
+    const key=map[txt]||map[txt.charAt(0)];
+    if(key){
+      const btn=document.getElementById('ch'+key);
+      if(btn&&!btn.disabled){answer(key);}
+    }
+    setVoiceBtn(false);
+  };
+  voiceRecog.onerror=function(){setVoiceBtn(false);};
+  voiceRecog.onend=function(){setVoiceBtn(false);};
+}
+function setVoiceBtn(active){
+  voiceActive=active;
+  const btn=document.getElementById('voiceAnswerBtn');
+  if(!btn) return;
+  btn.style.background=active?'rgba(239,68,68,0.2)':'rgba(240,232,222,0.8)';
+  btn.style.color=active?'#dc2626':'#8A6A50';
+  btn.textContent=active?'🎙 聞いてます…':'🎙 声で回答';
+}
+function toggleVoiceAnswer(){
+  if(!voiceRecog) initVoiceAnswer();
+  if(!voiceRecog){showToast('このブラウザは音声認識に対応していません');return;}
+  const qa=document.getElementById('quizArea');
+  if(!qa||qa.style.display==='none') return;
+  const chA=document.getElementById('chA');
+  if(chA&&chA.disabled){showToast('次の問題で使用できます');return;}
+  if(voiceActive){voiceRecog.stop();setVoiceBtn(false);}
+  else{voiceRecog.start();setVoiceBtn(true);}
+}
 initChips();
 initModeButtons();
 updateScoreBadge();
