@@ -362,6 +362,7 @@ body.font-xl .explanation{font-size:15px}
       <input class="search-input" id="searchInput" placeholder="キーワード検索 / #123でID直接検索" oninput="onSearchInput(this.value)" autocomplete="off">
       <button onclick="clearSearch()" style="background:none;border:none;color:#aaa;font-size:14px;cursor:pointer;padding:2px 4px;display:none" id="searchClear">✕</button>
     </div>
+    <div id="searchPresetChips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px"></div>
     <div class="search-results" id="searchResults"></div>
     <div id="weakFieldQuick" style="margin-bottom:10px"></div>
     <div id="dailyBanner" style="margin-bottom:10px"></div>
@@ -936,6 +937,32 @@ function getAvgTime(id){
 }
 
 // 苦手分野クイック強化ボタン（ホーム画面）
+// 検索プリセットチップ
+const SEARCH_PRESETS=[
+  {label:'循環器',kw:'心不全'},
+  {label:'呼吸器',kw:'肺炎'},
+  {label:'感染管理',kw:'感染'},
+  {label:'糖尿病',kw:'糖尿病'},
+  {label:'投薬',kw:'薬'},
+  {label:'手術・周術期',kw:'術'},
+  {label:'輸血・輸液',kw:'輸液'},
+  {label:'褥瘡',kw:'褥瘡'},
+  {label:'がん看護',kw:'がん'},
+  {label:'老年',kw:'高齢'},
+];
+function renderSearchPresets(){
+  const el=document.getElementById('searchPresetChips');
+  if(!el) return;
+  el.innerHTML=SEARCH_PRESETS.map(p=>`<button onclick="applySearchPreset('${p.kw}')" style="padding:4px 10px;background:rgba(255,255,255,0.85);border:1px solid rgba(217,197,178,0.5);border-radius:20px;font-size:10px;font-weight:700;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">${p.label}</button>`).join('');
+}
+function applySearchPreset(kw){
+  const inp=document.getElementById('searchInput');
+  if(!inp) return;
+  inp.value=kw;
+  document.getElementById('searchClear').style.display='block';
+  onSearchInput(kw);
+  inp.focus();
+}
 function renderWeakFieldQuick(){
   const el=document.getElementById('weakFieldQuick');
   if(!el) return;
@@ -1274,6 +1301,39 @@ function highlightExplanation(text){
 }
 // ===== ポモドーロタイマー =====
 let pomState={mode:'work',remaining:25*60,running:false,interval:null,expanded:false,sessions:0};
+let calViewMode='heat'; // 'heat' | 'month'
+let calViewOffset=0;   // 0=this month, -1=last month, etc.
+function setCalView(mode,offset){calViewMode=mode;if(offset!==undefined)calViewOffset=offset;renderStats();}
+function buildMonthCalendar(){
+  const now=new Date();
+  now.setDate(1);now.setMonth(now.getMonth()+calViewOffset);
+  const year=now.getFullYear(),month=now.getMonth();
+  const firstDow=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const allDays=[...Array(firstDow).fill(null)];
+  for(let d=1;d<=daysInMonth;d++) allDays.push(new Date(year,month,d).toISOString().slice(0,10));
+  const max=Math.max(...allDays.filter(Boolean).map(k=>weeklyData[k]||0),1);
+  function col(cnt){if(!cnt)return'rgba(237,224,212,0.25)';const r=cnt/max;return r<0.25?'rgba(217,197,178,0.5)':r<0.5?'rgba(184,160,144,0.7)':r<0.75?'rgba(150,120,96,0.85)':'#8A6050';}
+  const dayLabels=['日','月','火','水','木','金','土'];
+  const label=`${year}年${month+1}月`;
+  const cells=allDays.map(k=>{
+    if(!k) return `<div></div>`;
+    const cnt=weeklyData[k]||0;
+    const isToday=k===todayKey;
+    const day=parseInt(k.slice(8));
+    return `<div title="${k}: ${cnt}問" style="aspect-ratio:1;border-radius:4px;background:${col(cnt)};display:flex;align-items:center;justify-content:center;font-size:8px;color:${cnt?'#55504D':'#ccc'};${isToday?'outline:2px solid #B8A090;outline-offset:1px;font-weight:700':''}">${day}</div>`;
+  }).join('');
+  const monthTotal=allDays.filter(Boolean).reduce((s,k)=>s+(weeklyData[k]||0),0);
+  return `<div style="margin-top:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <button onclick="setCalView('month',${calViewOffset-1})" style="background:none;border:none;font-size:16px;cursor:pointer;color:#8A6A50;padding:2px 6px">‹</button>
+      <span style="font-size:12px;font-weight:700;color:#6B5040">${label} <span style="font-weight:400;font-size:10px;color:#aaa">${monthTotal}問</span></span>
+      <button onclick="setCalView('month',${calViewOffset>=0?0:calViewOffset+1})" style="background:none;border:none;font-size:16px;cursor:pointer;color:${calViewOffset>=0?'#ddd':'#8A6A50'};padding:2px 6px" ${calViewOffset>=0?'disabled':''}>›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">${dayLabels.map(l=>`<div style="font-size:8px;color:#8A7060;text-align:center">${l}</div>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${cells}</div>
+  </div>`
+}
 function initPomodoro(){renderPomodoro();}
 function pomTick(){
   if(pomState.remaining>0){pomState.remaining--;renderPomodoro();}
@@ -1906,6 +1966,7 @@ function endFlash(){
   renderGoalBar();renderNoaCard();
   renderWeakFieldQuick();
   renderQuestionOfDay();
+  renderSearchPresets();
   initModeButtons();
 }
 
@@ -2528,7 +2589,7 @@ function finishQuiz(){
         if(!wids.length) return `<div style="margin:8px 0;padding:10px 14px;background:rgba(74,222,128,0.1);border-radius:12px;font-size:13px;color:#166534;font-weight:700;text-align:center">🎉 全問正解！完璧です！</div>`;
         return `<div style="margin:10px 0;text-align:left">
           <div style="font-size:11px;font-weight:700;color:#991b1b;margin-bottom:6px;padding:0 2px">✗ 間違えた問題（${wids.length}問）</div>
-          ${wids.map(id=>{const q=QUESTIONS.find(x=>x.id===id);return q?`<div class="weak-item" onclick="drillOne(${id})" style="margin-bottom:5px;border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.03)"><div class="weak-q" style="font-size:12px">${q.question}</div><div class="weak-meta">${q.category} ▸ ${q.field} ▸ 正解: ${q.answer}. ${q.choices[q.answer]}</div></div>`:''}).join('')}
+          ${wids.map((id,wi)=>{const q=QUESTIONS.find(x=>x.id===id);if(!q)return'';const expId=`wrongExp_${wi}`;return`<div style="margin-bottom:6px;border:1px solid rgba(248,113,113,0.3);border-radius:12px;background:rgba(248,113,113,0.03);overflow:hidden"><div onclick="const e=document.getElementById('${expId}');const open=e.style.display==='block';e.style.display=open?'none':'block';this.querySelector('.exp-arrow').textContent=open?'▸':'▾'" style="padding:10px 12px;cursor:pointer;display:flex;align-items:flex-start;gap:6px"><span class="exp-arrow" style="color:#dc2626;font-size:11px;min-width:12px;margin-top:2px">▸</span><div style="flex:1"><div style="font-size:12px;color:#55504D;font-weight:600;line-height:1.4">${q.question}</div><div style="font-size:10px;color:#B8907A;margin-top:3px">正解: ${q.answer}. ${q.choices[q.answer]}</div></div></div><div id="${expId}" style="display:none;padding:0 12px 10px"><div style="font-size:11px;color:#5A5450;line-height:1.6;padding:8px 10px;background:rgba(255,255,255,0.6);border-radius:8px">${q.explanation}</div><button onclick="drillOne(${id})" style="margin-top:6px;padding:5px 12px;background:rgba(239,68,68,0.1);color:#dc2626;border:1px solid rgba(239,68,68,0.2);border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">もう一度解く →</button></div></div>`;}).join('')}
           <button onclick="retryWrong()" style="width:100%;padding:10px;background:rgba(239,68,68,0.1);color:#dc2626;border:1.5px solid rgba(239,68,68,0.3);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:4px">🔁 間違えた問題だけやり直す</button>
         </div>`;
       })()}
@@ -3047,14 +3108,18 @@ function renderStats(){
     return `<div title="${d.k}: ${d.cnt}問" style="width:10px;height:10px;border-radius:2px;background:${heatColor(d.cnt)};${isToday?'outline:2px solid #B8A090;outline-offset:1px':''}"></div>`;
   }).join('');
   const weekChart=`<div style="margin-top:16px;text-align:left">
-    <div class="cat-stat-header" style="display:flex;justify-content:space-between">
-      <span>▸ 学習カレンダー（70日間）</span>
-      <span style="font-size:10px;color:#8A6A50;font-weight:400">🔥 連続${streakData.streak||0}日</span>
+    <div class="cat-stat-header" style="display:flex;justify-content:space-between;align-items:center">
+      <span>▸ 学習カレンダー</span>
+      <span style="display:flex;gap:4px;align-items:center">
+        <button onclick="setCalView('heat')" style="padding:2px 7px;border-radius:8px;border:1px solid rgba(217,197,178,0.5);background:${calViewMode==='heat'?'rgba(184,144,122,0.25)':'rgba(240,232,222,0.7)'};font-size:9px;font-weight:700;color:${calViewMode==='heat'?'#8A6050':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">70日</button>
+        <button onclick="setCalView('month',0)" style="padding:2px 7px;border-radius:8px;border:1px solid rgba(217,197,178,0.5);background:${calViewMode==='month'?'rgba(184,144,122,0.25)':'rgba(240,232,222,0.7)'};font-size:9px;font-weight:700;color:${calViewMode==='month'?'#8A6050':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">月表示</button>
+        <span style="font-size:10px;color:#8A6A50;font-weight:400">🔥 ${streakData.streak||0}日</span>
+      </span>
     </div>
-    <div style="display:flex;gap:3px;margin:8px 0 4px">
+    ${calViewMode==='month'?buildMonthCalendar():`<div style="display:flex;gap:3px;margin:8px 0 4px">
       ${dayLabels.map(l=>`<div style="font-size:8px;color:#8A7060;width:10px;text-align:center">${l}</div>`).join('')}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,10px);gap:3px">${gridCells}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,10px);gap:3px">${gridCells}</div>`}
     <div style="display:flex;justify-content:space-between;font-size:10px;color:#8A6A50;margin-top:6px">
       <span>今週: <b>${weekTotal7}</b>問</span><span>今月: <b>${monthTotal}</b>問</span><span>今日: <b>${weeklyData[todayKey]||0}</b>問</span>
     </div>
