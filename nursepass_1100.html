@@ -354,6 +354,7 @@ body.font-xl .explanation{font-size:15px}
     <div style="text-align:center;font-size:12px;margin-bottom:10px" id="examCountdown"></div>
     <div id="noaCard" style="margin-bottom:10px"></div>
     <div style="background:rgba(255,255,255,0.85);border:1px solid rgba(85,80,77,0.15);border-radius:14px;padding:10px 14px;margin-bottom:10px" id="goalBar"></div>
+    <div id="pomodoroWidget" style="margin-bottom:10px"></div>
     <div class="search-wrap">
       <span style="font-size:16px;color:#aaa">🔍</span>
       <input class="search-input" id="searchInput" placeholder="キーワード検索 / #123でID直接検索" oninput="onSearchInput(this.value)" autocomplete="off">
@@ -960,6 +961,88 @@ function updateDailyStats(){
   pulseSummaryCard('todayDisp');
 }
 
+// ===== ポモドーロタイマー =====
+let pomState={mode:'work',remaining:25*60,running:false,interval:null,expanded:false,sessions:0};
+function initPomodoro(){renderPomodoro();}
+function pomTick(){
+  if(pomState.remaining>0){pomState.remaining--;renderPomodoro();}
+  else{
+    clearInterval(pomState.interval);pomState.interval=null;pomState.running=false;
+    pomBeep();
+    if(pomState.mode==='work'){
+      pomState.sessions++;
+      showToast(`🍅 ポモドーロ完了！(${pomState.sessions}セット) 5分休憩しよう`);
+      pomState.mode='break';pomState.remaining=5*60;
+    } else {
+      showToast('☕ 休憩終了！次のポモドーロを始めよう');
+      pomState.mode='work';pomState.remaining=25*60;
+    }
+    renderPomodoro();
+  }
+}
+function pomBeep(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();const gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.frequency.value=pomState.mode==='work'?880:440;
+    gain.gain.setValueAtTime(0.3,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8);
+    osc.start();osc.stop(ctx.currentTime+0.8);
+  }catch(e){}
+}
+function pomToggle(){
+  if(pomState.running){clearInterval(pomState.interval);pomState.interval=null;pomState.running=false;}
+  else{pomState.running=true;pomState.interval=setInterval(pomTick,1000);}
+  renderPomodoro();
+}
+function pomReset(){
+  clearInterval(pomState.interval);pomState.interval=null;pomState.running=false;
+  pomState.remaining=pomState.mode==='work'?25*60:5*60;
+  renderPomodoro();
+}
+function pomToggleExpand(){pomState.expanded=!pomState.expanded;renderPomodoro();}
+function renderPomodoro(){
+  const el=document.getElementById('pomodoroWidget');
+  if(!el) return;
+  const m=Math.floor(pomState.remaining/60);
+  const s=pomState.remaining%60;
+  const timeStr=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const pct=Math.round((1-(pomState.remaining/(pomState.mode==='work'?25*60:5*60)))*100);
+  const isWork=pomState.mode==='work';
+  const accentColor=isWork?'rgba(239,68,68,0.7)':'rgba(34,197,94,0.7)';
+  const bgColor=isWork?'rgba(254,226,226,0.5)':'rgba(220,252,231,0.5)';
+  if(!pomState.expanded){
+    el.innerHTML=`<button onclick="pomToggleExpand()" style="width:100%;padding:8px 14px;background:${bgColor};border:1px solid ${accentColor};border-radius:12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:'Noto Sans JP',sans-serif">
+      <span style="font-size:12px;font-weight:700;color:#6B5040">🍅 ポモドーロ ${isWork?'作業中':'休憩中'} ${pomState.running?'▶':'⏸'}</span>
+      <span style="font-size:16px;font-weight:800;color:${isWork?'#dc2626':'#16a34a'};letter-spacing:1px">${timeStr}</span>
+    </button>`;
+  } else {
+    el.innerHTML=`<div style="padding:12px 14px;background:${bgColor};border:1.5px solid ${accentColor};border-radius:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:#6B5040">🍅 ポモドーロタイマー</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:10px;color:#8A6A50">${pomState.sessions}セット完了</span>
+          <button onclick="pomToggleExpand()" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:14px;padding:0 2px">▲</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button onclick="pomState.mode='work';pomState.remaining=25*60;pomReset()" style="flex:1;padding:6px;background:${isWork?'rgba(239,68,68,0.15)':'rgba(240,232,222,0.6)'};border:1.5px solid ${isWork?'rgba(239,68,68,0.4)':'rgba(85,80,77,0.15)'};border-radius:10px;font-size:11px;font-weight:700;color:${isWork?'#dc2626':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">🍅 作業 25分</button>
+        <button onclick="pomState.mode='break';pomState.remaining=5*60;pomReset()" style="flex:1;padding:6px;background:${!isWork?'rgba(34,197,94,0.15)':'rgba(240,232,222,0.6)'};border:1.5px solid ${!isWork?'rgba(34,197,94,0.4)':'rgba(85,80,77,0.15)'};border-radius:10px;font-size:11px;font-weight:700;color:${!isWork?'#16a34a':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">☕ 休憩 5分</button>
+      </div>
+      <div style="text-align:center;margin-bottom:10px">
+        <div style="font-size:40px;font-weight:800;color:${isWork?'#dc2626':'#16a34a'};letter-spacing:3px;line-height:1">${timeStr}</div>
+        <div style="height:4px;background:rgba(237,224,212,.3);border-radius:4px;margin-top:8px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${accentColor};border-radius:4px;transition:width 0.5s linear"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="pomToggle()" style="flex:2;padding:10px;background:${pomState.running?'rgba(85,80,77,0.15)':'rgba(239,68,68,0.12)'};border:1.5px solid ${pomState.running?'rgba(85,80,77,0.2)':'rgba(239,68,68,0.3)'};border-radius:12px;font-size:14px;font-weight:700;color:${pomState.running?'#6B5040':'#dc2626'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">${pomState.running?'⏸ 一時停止':'▶ スタート'}</button>
+        <button onclick="pomReset()" style="flex:1;padding:10px;background:rgba(240,232,222,0.6);border:1.5px solid rgba(85,80,77,0.15);border-radius:12px;font-size:12px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">↺ リセット</button>
+      </div>
+    </div>`;
+  }
+}
 function useStreakFreeze(){
   const weekNum=`${new Date().getFullYear()}-W${String(Math.ceil(new Date().getDate()/7)).padStart(2,'0')}`;
   if(streakFreeze&&streakFreeze.usedWeek===weekNum){showToast('今週のフリーズはすでに使用済みです');return;}
@@ -1469,7 +1552,20 @@ function startQuiz(mode){
   let pool=[];
   const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
   const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
-  if(mode==='random') pool=shuffle([...fieldFilter]).slice(0,5);
+  if(mode==='random'){
+    // Smart weighted random: 40% weak/unmastered, 30% unread, 30% general
+    const weakQ=fieldFilter.filter(q=>{const h=history[String(q.id)];return h&&h.wrong>0&&h.correct<=h.wrong;});
+    const unreadQ=fieldFilter.filter(q=>!history[String(q.id)]);
+    const otherQ=fieldFilter.filter(q=>{const h=history[String(q.id)];return h&&(h.correct>h.wrong);});
+    const pick=(arr,n)=>shuffle([...arr]).slice(0,n);
+    const n=5;
+    const weakN=weakQ.length?Math.min(Math.round(n*0.4),weakQ.length):0;
+    const unreadN=unreadQ.length?Math.min(Math.round(n*0.3),unreadQ.length):0;
+    const otherN=Math.min(n-weakN-unreadN,otherQ.length);
+    const selected=new Set([...pick(weakQ,weakN),...pick(unreadQ,unreadN),...pick(otherQ,otherN)].map(q=>q.id));
+    if(selected.size<n){shuffle([...fieldFilter]).forEach(q=>{if(selected.size<n)selected.add(q.id);});}
+    pool=shuffle(QUESTIONS.filter(q=>selected.has(q.id)).slice(0,n));
+  }
   else if(mode==='field') pool=shuffle([...fieldFilter]).slice(0,10);
   else if(mode==='weak'){
     const weakIds=Object.keys(history).filter(id=>history[id].wrong>0);
@@ -1815,9 +1911,10 @@ function answer(key){
       ${rel.map(r=>{const rh=history[String(r.id)];const rLabel=rh&&rh.wrong>0?`<span style="color:#dc2626;font-size:9px">✗${rh.wrong}回</span>`:`<span style="color:#aaa;font-size:9px">未解答</span>`;return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid rgba(85,80,77,0.08)"><span style="flex:1;font-size:11px;color:#55504D;cursor:pointer" onclick="drillOne(${r.id})">${r.question.slice(0,40)}…</span>${rLabel}</div>`;}).join('')}
     </div>`;
   })()}
-  <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+  <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
     ${window.speechSynthesis?`<button class="tts-btn" onclick="speakText('${(q.question+' 正解は'+q.choices[q.answer]+' 解説: '+q.explanation).replace(/'/g,'&apos;')}')">🔊 読み上げ</button>`:''}
     <button id="flagBtn_${q.id}" onclick="flagQuestion(${q.id})" style="padding:5px 10px;background:${flaggedIds.has(q.id)?'rgba(239,68,68,0.12)':'rgba(240,232,222,0.8)'};color:${flaggedIds.has(q.id)?'#dc2626':'#8A6A50'};border:1px solid rgba(85,80,77,0.2);border-radius:16px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">${flaggedIds.has(q.id)?'🔖 フラグ済み':'🤔 難しかった'}</button>
+    ${(()=>{const s=srsData[q.id];if(!s)return'';const due=new Date(s.due);const today2=new Date(todayKey);const diff=Math.round((due-today2)/(1000*60*60*24));const label=diff<=0?'今日':diff===1?'明日':`${diff}日後（${s.due.slice(5)}）`;return`<span style="font-size:10px;color:#8A6A50;padding:4px 8px;background:rgba(240,232,222,0.6);border-radius:10px;white-space:nowrap">📅 次回SRS: ${label}</span>`;})()}
   </div>
   `;
   choices.after(res);
@@ -3567,6 +3664,7 @@ renderHomeSummary();
 renderExamCountdown();
 renderGoalBar();renderNoaCard();renderDailyBanner();
 showResumeBanner();
+initPomodoro();
 </script>
 </body>
 </html>
