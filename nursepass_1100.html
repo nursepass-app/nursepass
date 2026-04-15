@@ -665,10 +665,12 @@ function checkAchievements(){
     weak0: masteredWeak>=10,
   };
   let newEarned=false;
+  const majorBadges=['q500','q1000','q3000','str7','str30','acc90','cov50','cov100'];
   ACHIEVEMENTS.forEach(a=>{
     if(checks[a.id]&&!earnedBadges.includes(a.id)){
       earnedBadges.push(a.id);newEarned=true;
-      showToast(a.icon+' バッジ解除：'+a.name);
+      showToast(a.icon+' バッジ解除：'+a.name+'！');
+      if(majorBadges.includes(a.id)) setTimeout(launchConfetti,300);
     }
   });
   if(newEarned) localStorage.setItem('np_badges',JSON.stringify(earnedBadges));
@@ -2282,11 +2284,32 @@ function renderStats(){
     })()}
     <div style="text-align:left;margin-top:16px">
       <div class="cat-stat-header">▸ バッジコレクション（${earnedBadges.length}/${ACHIEVEMENTS.length}）</div>
-      <div class="badge-grid">${ACHIEVEMENTS.map(a=>`
-        <div class="badge-item ${earnedBadges.includes(a.id)?'earned':'locked'}" title="${a.desc}">
-          <span class="badge-icon">${a.icon}</span>
-          <span class="badge-name">${a.name}</span>
-        </div>`).join('')}</div>
+      <div class="badge-grid">${(()=>{
+        const answered2=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
+        const correct2=Object.values(history).reduce((s,h)=>s+h.correct,0);
+        const covered2=Object.keys(history).length;
+        const rate2=answered2?correct2/answered2:0;
+        const streak2=streakData.streak||0;
+        const bmCount2=Object.keys(bookmarks).length;
+        const mastered2=Object.keys(history).filter(id=>history[id].wrong>0&&history[id].correct>history[id].wrong).length;
+        const progress={
+          q50:[answered2,50],q100:[answered2,100],q500:[answered2,500],q1000:[answered2,1000],q3000:[answered2,3000],
+          str3:[streak2,3],str7:[streak2,7],str30:[streak2,30],
+          acc80:[Math.round(rate2*100),80],acc90:[Math.round(rate2*100),90],
+          cov25:[covered2,Math.round(QUESTIONS.length*0.25)],cov50:[covered2,Math.round(QUESTIONS.length*0.5)],cov100:[covered2,QUESTIONS.length],
+          bm10:[bmCount2,10],weak0:[mastered2,10],
+        };
+        return ACHIEVEMENTS.map(a=>{
+          const earned=earnedBadges.includes(a.id);
+          const p=progress[a.id];
+          const progHtml=!earned&&p&&p[1]>0?`<div style="margin-top:3px;height:2px;background:rgba(85,80,77,0.1);border-radius:2px;overflow:hidden"><div style="width:${Math.min(100,Math.round(p[0]/p[1]*100))}%;height:100%;background:rgba(184,160,144,0.5)"></div></div><div style="font-size:8px;color:#aaa;margin-top:1px">${p[0]}/${p[1]}</div>`:'';
+          return `<div class="badge-item ${earned?'earned':'locked'}" title="${a.desc}">
+            <span class="badge-icon">${a.icon}</span>
+            <span class="badge-name">${a.name}</span>
+            ${progHtml}
+          </div>`;
+        }).join('');
+      })()}</div>
     </div>
     ${(()=>{
       // 日別正答率トレンド（14日間折れ線）
