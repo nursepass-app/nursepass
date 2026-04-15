@@ -410,6 +410,7 @@ body.font-xl .explanation{font-size:15px}
         <button class="chip" id="weakFilterbrowse" onclick="setWeakFilter('browse')" style="margin-left:4px">📋 全問</button>
         <button class="chip" id="weakFilterunanswered" onclick="setWeakFilter('unanswered')" style="margin-left:4px">✨ 未解答</button>
         <button class="chip" id="weakFilterwrong_only" onclick="setWeakFilter('wrong_only')">✗ 間違えた</button>
+        <button class="chip" id="weakFilterpriority" onclick="setWeakFilter('priority')" style="margin-left:4px;border-color:rgba(239,68,68,0.4)">🎯 最優先</button>
         <button class="chip" id="weakFilterimportant" onclick="setWeakFilter('tag_important')" style="margin-left:4px">⭐重要</button>
         <button class="chip" id="weakFilterhard" onclick="setWeakFilter('tag_hard')">🔴難解</button>
         <button class="chip" id="weakFilterreview" onclick="setWeakFilter('tag_review')">🔵復習</button>
@@ -2845,7 +2846,7 @@ function renderQuestion(){
       <div class="quiz-header">
         <button class="back-btn" onclick="clearQuizTimer();backHome()">← 戻る</button>
         <div class="q-progress"><div class="q-bar" style="width:${pct}%"></div></div>
-        <div class="q-count" onclick="${!isTime?'jumpToQuestion()':''}" style="${!isTime?'cursor:pointer;text-decoration:underline dotted':''}" title="${!isTime?'タップで問題番号へジャンプ':''}">${isTime?'⏱ ':''}${session.idx+1}/${total}${session.combo>=3?`<span style="color:#f59e0b;font-size:10px;font-weight:700;margin-left:4px">🔥${session.combo}</span>`:''}</div>
+        <div class="q-count" onclick="${!isTime?'jumpToQuestion()':''}" style="${!isTime?'cursor:pointer;text-decoration:underline dotted':''}" title="${!isTime?'タップで問題番号へジャンプ':''}">${isTime?'⏱ ':''}${session.idx+1}/${total}${session.combo>=3?`<span style="color:#f59e0b;font-size:10px;font-weight:700;margin-left:4px">🔥${session.combo}</span>`:''}${session.idx>0?(()=>{const ap=Math.round(session.correct/session.idx*100);const ac=ap>=80?'#16a34a':ap>=60?'#D9A060':'#ef4444';return `<span style="font-size:9px;color:${ac};margin-left:5px;font-weight:700">${ap}%</span>`;})():''}</div>
       </div>
       ${session.mode==='mock'?`<div id="mockElapsed" style="font-size:10px;color:#8A6A50;text-align:right;padding:2px 20px 0;font-variant-numeric:tabular-nums">⏱ 00:00</div>`:''}
       ${isTime?`<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div class="timer-count" id="timerCnt">${session.timeLimit}秒</div>`:''}
@@ -3443,7 +3444,7 @@ function setWeakSort(s){
 }
 function setWeakFilter(f){
   weakFilter=f;
-  ['all','必修','一般','状況設定','bookmark','memo','browse','unanswered','wrong_only'].forEach(k=>{
+  ['all','必修','一般','状況設定','bookmark','memo','browse','unanswered','wrong_only','priority'].forEach(k=>{
     const btn=document.getElementById('weakFilter'+(k==='all'?'All':k));
     if(btn) btn.classList.toggle('selected',k===f);
   });
@@ -3581,6 +3582,27 @@ function renderWeak(){
     if(wb) wb.style.display=pool.length?'block':'none';
     if(!pool.length){wl.innerHTML='<div class="empty">まだ間違えた問題はないよ！すごい！</div>';return;}
     wl.innerHTML=pool.slice(0,50).map(q=>{const h=history[String(q.id)];const acc=Math.round(h.correct/(h.correct+h.wrong)*100);return `<div class="weak-item" onclick="drillOne(${q.id})"><div class="weak-q">✗ ${q.question}</div><div class="weak-meta">${q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')} · <span style="color:#dc2626;font-weight:600">間違え${h.wrong}回 (${acc}%)</span></div></div>`;}).join('');
+    return;
+  }
+  if(weakFilter==='priority'){
+    // 間違えた × 頻出度2以上 の最優先問題
+    const pool=Object.entries(history).filter(([id,h])=>h.wrong>0).map(([id])=>QUESTIONS.find(x=>x.id===Number(id))).filter(q=>q&&q.stars>=2).sort((a,b)=>{const ha=history[String(a.id)],hb=history[String(b.id)];const scoreA=(b.stars-a.stars)*3+hb.wrong-ha.wrong+(ha.correct>ha.wrong?0:2)-(hb.correct>hb.wrong?0:2);return scoreA;});
+    if(sb) sb.innerHTML=`🎯 最優先（間違えた×頻出★★以上） <strong style="color:#dc2626">${pool.length}</strong>問`;
+    if(wb) wb.style.display=pool.length?'block':'none';
+    if(!pool.length){wl.innerHTML='<div class="empty">最優先問題はありません。<br>★★以上の頻出問題を解いてみよう！</div>';return;}
+    wl.innerHTML=pool.slice(0,50).map(q=>{
+      const h=history[String(q.id)];
+      const acc=Math.round(h.correct/(h.correct+h.wrong)*100);
+      const mastered=h.correct>h.wrong;
+      const wc=wrongChoices[q.id]||{};
+      const topWrong=Object.entries(wc).sort((a,b)=>b[1]-a[1])[0];
+      const trapLine=topWrong&&!mastered?`<div style="font-size:10px;color:#9B4A3A;margin-top:3px;padding:2px 6px;background:rgba(239,68,68,0.07);border-radius:5px;border-left:2px solid rgba(239,68,68,0.3)">⚠️ よく選ぶ誤答: <strong>${topWrong[0]}. ${(q.choices[topWrong[0]]||'').slice(0,24)}…</strong></div>`:'';
+      return `<div class="weak-item" onclick="drillOne(${q.id})" style="border-color:rgba(239,68,68,0.35)">
+        <div class="weak-q">${'★'.repeat(q.stars)} ${q.question}</div>
+        <div class="weak-meta">${q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')} · <span style="color:#dc2626;font-weight:600">間違え${h.wrong}回 (${acc}%)</span>${mastered?' <span style="color:#16a34a;font-weight:700">✓克服</span>':''}</div>
+        ${trapLine}
+      </div>`;
+    }).join('');
     return;
   }
   if(weakFilter==='browse'){
@@ -3880,6 +3902,39 @@ function renderFieldRanking(){
         ${bot3.map((r,i)=>row(r,i,false)).join('')}
       </div>
     </div>
+  </div>`;
+}
+// 正答率分布ヒストグラム
+function renderAccDistribution(){
+  const buckets=[0,0,0,0,0]; // 0-19, 20-39, 40-59, 60-79, 80-100
+  const answered=Object.values(history).filter(h=>h.correct+h.wrong>=1);
+  if(answered.length<5) return '';
+  answered.forEach(h=>{
+    const acc=Math.round(h.correct/(h.correct+h.wrong)*100);
+    const idx=acc>=80?4:acc>=60?3:acc>=40?2:acc>=20?1:0;
+    buckets[idx]++;
+  });
+  const total=answered.length;
+  const maxB=Math.max(...buckets,1);
+  const labels=['0〜19%','20〜39%','40〜59%','60〜79%','80〜100%'];
+  const colors=['rgba(239,68,68,0.7)','rgba(248,113,113,0.6)','rgba(251,191,36,0.7)','rgba(74,222,128,0.5)','rgba(22,163,74,0.7)'];
+  const bars=buckets.map((cnt,i)=>{
+    const pct=Math.round(cnt/total*100);
+    const barH=cnt?Math.max(6,Math.round(cnt/maxB*52)):0;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div style="font-size:9px;color:#6B5040;font-weight:700">${cnt||''}</div>
+      <div style="height:52px;display:flex;align-items:flex-end">
+        <div style="width:18px;height:${barH}px;background:${colors[i]};border-radius:3px 3px 0 0;min-height:${cnt?2:0}px"></div>
+      </div>
+      <div style="font-size:8px;color:#A09080;text-align:center;line-height:1.2">${labels[i]}</div>
+      <div style="font-size:8px;color:#B8907A;font-weight:600">${cnt?pct+'%':''}</div>
+    </div>`;
+  }).join('');
+  const masteredCnt=buckets[3]+buckets[4];
+  return `<div style="margin-bottom:14px;padding:12px 14px;background:rgba(245,239,232,0.85);border:1.5px solid rgba(217,197,178,0.4);border-radius:14px">
+    <div style="font-size:11px;font-weight:700;color:#B8907A;margin-bottom:4px">📊 正答率分布（解答済み${total}問）</div>
+    <div style="font-size:10px;color:#8A6A50;margin-bottom:8px">60%以上: <strong style="color:#16a34a">${masteredCnt}問（${Math.round(masteredCnt/total*100)}%）</strong> が得意ゾーン</div>
+    <div style="display:flex;gap:4px;align-items:flex-end">${bars}</div>
   </div>`;
 }
 // 学習カレンダーヒートマップ（12週分）
@@ -4777,6 +4832,7 @@ function renderStats(){
       <div id="noaAnalysisOutput" style="display:none;margin-top:8px;padding:12px 14px;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(237,224,212,0.85));border:1.5px solid rgba(217,197,178,0.4);border-radius:12px"></div>
     </div>
     <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');localStorage.removeItem('np_mock_history');localStorage.removeItem('np_flash_progress');localStorage.removeItem('np_srs');localStorage.removeItem('np_daily');localStorage.removeItem('np_memos');localStorage.removeItem('np_best');localStorage.removeItem('np_daily_acc');localStorage.removeItem('np_wrong_choices');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];mockHistory=[];flashProgress={};srsData={};dailyChallenge=null;memoData={};bestScores={};dailyAccuracy={};wrongChoices={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:12px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>
+    ${renderAccDistribution()}
     ${renderCalendarHeatmap()}
     ${renderMonthlyStats()}
     ${renderStudyTimeChart()}
