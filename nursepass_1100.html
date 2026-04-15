@@ -480,6 +480,35 @@ let srsData=JSON.parse(localStorage.getItem('np_srs')||'{}');
 // デイリーチャレンジ: {date:'YYYY-MM-DD', correct:0, total:0, done:false}
 let dailyChallenge=JSON.parse(localStorage.getItem('np_daily')||'null');
 function seededRand(seed){let x=Math.sin(seed+1)*10000;return x-Math.floor(x);}
+function pickCount(mode, label){
+  const existing=document.getElementById('countModal');
+  if(existing) existing.remove();
+  const opts=[5,10,20,30,50];
+  const modal=document.createElement('div');
+  modal.id='countModal';
+  modal.className='cal-modal';
+  modal.innerHTML=`<div class="cal-modal-inner" style="text-align:center">
+    <div class="cal-modal-title">📝 ${label}：問題数を選択</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px">
+      ${opts.map(n=>`<button onclick="document.getElementById('countModal').remove();startQuizWithCount('${mode}',${n})" style="padding:12px 0;border:1.5px solid rgba(217,197,178,.5);border-radius:12px;background:rgba(240,232,222,.8);font-size:15px;font-weight:700;color:#5A5450;cursor:pointer;font-family:'Noto Sans JP',sans-serif">${n}</button>`).join('')}
+    </div>
+    <button onclick="document.getElementById('countModal').remove()" style="background:none;border:none;color:#8A6A50;font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">キャンセル</button>
+  </div>`;
+  modal.addEventListener('click',e=>{if(e.target===modal) modal.remove();});
+  document.body.appendChild(modal);
+}
+function startQuizWithCount(mode, count){
+  const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
+  const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
+  let pool;
+  if(mode==='random') pool=shuffle([...fieldFilter]).slice(0,count);
+  else if(mode==='field') pool=shuffle([...fieldFilter]).slice(0,count);
+  else if(mode==='allcat') pool=shuffle([...catQ]).slice(0,count);
+  else { startQuiz(mode); return; }
+  if(!pool.length){alert('問題が見つかりません。');return;}
+  session={pool,idx:0,correct:0,wrong:0,mode};
+  showQuiz();
+}
 function getDailyPool(){
   const n=parseInt(todayKey.replace(/-/g,''));
   const arr=[...QUESTIONS];
@@ -1031,8 +1060,8 @@ function initModeButtons(){
   const srsBtn=srsDue>0?`<button class="mode-btn" onclick="startQuiz('srs')" style="border-color:rgba(124,58,237,0.4);background:rgba(245,240,255,0.9)"><div class="mode-icon">🧠</div><div class="mode-title">SRS復習(${srsDue}問)</div><div class="mode-desc">今日が期限の反復復習</div></button>`:'';
   if(currentCategory==='必修'){
     mg.innerHTML=`
-      <button class="mode-btn" onclick="startQuiz('random')"><div class="mode-icon">🎲</div><div class="mode-title">ランダム5問</div><div class="mode-desc">まずここから</div></button>
-      <button class="mode-btn" onclick="startQuiz('field')"><div class="mode-icon">📖</div><div class="mode-title">分野別</div><div class="mode-desc">選んだ分野のみ</div></button>
+      <button class="mode-btn" onclick="pickCount('random','ランダム')"><div class="mode-icon">🎲</div><div class="mode-title">ランダム</div><div class="mode-desc">問題数を選べる</div></button>
+      <button class="mode-btn" onclick="pickCount('field','分野別')"><div class="mode-icon">📖</div><div class="mode-title">分野別</div><div class="mode-desc">問題数を選べる</div></button>
       <button class="mode-btn" onclick="startQuiz('weak')"><div class="mode-icon">💪</div><div class="mode-title">苦手強化</div><div class="mode-desc">間違えた問題</div></button>
       ${unreadBtn}
       ${stars3Btn}
@@ -1045,8 +1074,8 @@ function initModeButtons(){
   }
   else if(currentCategory==='一般'){
     mg.innerHTML=`
-      <button class="mode-btn" onclick="startQuiz('random')"><div class="mode-icon">🎲</div><div class="mode-title">ランダム5問</div><div class="mode-desc">まずここから</div></button>
-      <button class="mode-btn" onclick="startQuiz('field')"><div class="mode-icon">📖</div><div class="mode-title">分野別</div><div class="mode-desc">選んだ分野のみ</div></button>
+      <button class="mode-btn" onclick="pickCount('random','ランダム')"><div class="mode-icon">🎲</div><div class="mode-title">ランダム</div><div class="mode-desc">問題数を選べる</div></button>
+      <button class="mode-btn" onclick="pickCount('field','分野別')"><div class="mode-icon">📖</div><div class="mode-title">分野別</div><div class="mode-desc">問題数を選べる</div></button>
       <button class="mode-btn" onclick="startQuiz('weak')"><div class="mode-icon">💪</div><div class="mode-title">苦手強化</div><div class="mode-desc">間違えた問題</div></button>
       ${unreadBtn}
       ${stars3Btn}
@@ -1059,8 +1088,8 @@ function initModeButtons(){
   }
   else if(currentCategory==='状況設定'){
     mg.innerHTML=`
-      <button class="mode-btn" onclick="startQuiz('random')"><div class="mode-icon">🎲</div><div class="mode-title">ランダム5問</div><div class="mode-desc">まずここから</div></button>
-      <button class="mode-btn" onclick="startQuiz('field')"><div class="mode-icon">📖</div><div class="mode-title">分野別</div><div class="mode-desc">選んだ分野のみ</div></button>
+      <button class="mode-btn" onclick="pickCount('random','ランダム')"><div class="mode-icon">🎲</div><div class="mode-title">ランダム</div><div class="mode-desc">問題数を選べる</div></button>
+      <button class="mode-btn" onclick="pickCount('field','分野別')"><div class="mode-icon">📖</div><div class="mode-title">分野別</div><div class="mode-desc">問題数を選べる</div></button>
       <button class="mode-btn" onclick="startQuiz('weak')"><div class="mode-icon">💪</div><div class="mode-title">苦手強化</div><div class="mode-desc">間違えた問題</div></button>
       ${unreadBtn}
       ${stars3Btn}
@@ -1635,7 +1664,11 @@ function renderStats(){
   const allCells=[...Array(padCells).fill(null),...heatDays];
   const cols=Math.ceil(allCells.length/7);
   const weekTotal7=heatDays.slice(-7).reduce((s,d)=>s+d.cnt,0);
+  const prevWeek7=heatDays.slice(-14,-7).reduce((s,d)=>s+d.cnt,0);
   const monthTotal=heatDays.slice(-30).reduce((s,d)=>s+d.cnt,0);
+  const weekDiff=weekTotal7-prevWeek7;
+  const weekTrend=weekDiff>0?`▲ ${weekDiff}問増`:weekDiff<0?`▼ ${Math.abs(weekDiff)}問減`:'→ 先週と同じ';
+  const weekTrendColor=weekDiff>0?'#16a34a':weekDiff<0?'#dc2626':'#8A6A50';
   const dayLabels=['日','月','火','水','木','金','土'];
   const gridCells=allCells.map(d=>{
     if(!d) return `<div style="width:10px;height:10px"></div>`;
@@ -1652,8 +1685,12 @@ function renderStats(){
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,10px);gap:3px">${gridCells}</div>
     <div style="display:flex;justify-content:space-between;font-size:10px;color:#8A6A50;margin-top:6px">
-      <span>今週: ${weekTotal7}問</span><span>今月: ${monthTotal}問</span><span>今日: ${weeklyData[todayKey]||0}問</span>
+      <span>今週: <b>${weekTotal7}</b>問</span><span>今月: <b>${monthTotal}</b>問</span><span>今日: <b>${weeklyData[todayKey]||0}</b>問</span>
     </div>
+    ${weekTotal7>0||prevWeek7>0?`<div style="margin-top:6px;padding:6px 8px;background:rgba(240,232,222,.4);border-radius:8px;font-size:10px;display:flex;justify-content:space-between">
+      <span style="color:#6B5040">先週比</span>
+      <span style="font-weight:700;color:${weekTrendColor}">${weekTrend}</span>
+    </div>`:''}
   </div>`;
   const coverPct2=Math.round(total/QUESTIONS.length*100);
 
