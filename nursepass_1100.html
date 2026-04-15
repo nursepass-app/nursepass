@@ -2716,6 +2716,7 @@ function answer(key){
     ${(()=>{const s=srsData[q.id];if(!s)return'';const due=new Date(s.due);const today2=new Date(todayKey);const diff=Math.round((due-today2)/(1000*60*60*24));const label=diff<=0?'今日':diff===1?'明日':`${diff}日後（${s.due.slice(5)}）`;return`<span style="font-size:10px;color:#8A6A50;padding:4px 8px;background:rgba(240,232,222,0.6);border-radius:10px;white-space:nowrap">📅 次回SRS: ${label}</span>`;})()}
     ${elapsedSec>=0.5?`<span style="font-size:10px;color:#8A6A50;padding:4px 8px;background:rgba(240,232,222,0.6);border-radius:10px;white-space:nowrap">⏱ ${elapsedSec}秒${(()=>{const avg=getAvgTime(q.id);return avg?` (平均${avg}秒)`:''})()}</span>`:''}
     <button onclick="shareQuestion(${q.id})" style="padding:4px 9px;background:rgba(240,232,222,0.7);border:1px solid rgba(217,197,178,0.4);border-radius:10px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">📤 問題をシェア</button>
+    ${!correct&&history[q.id]&&history[q.id].wrong>0?`<button id="masterBtn_${q.id}" onclick="markMastered(${q.id})" style="padding:4px 9px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.35);border-radius:10px;font-size:10px;color:#16a34a;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">✓ 克服済みにする</button>`:''}
   </div>
   `;
   choices.after(res);
@@ -2898,6 +2899,35 @@ function finishQuiz(){
       <button class="result-home" onclick="stopTts();backHome()">ホームへ戻る</button>
       <button onclick="shareResult(${rate},${total},${session.correct})" style="width:100%;padding:12px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,0.3);border-radius:14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px">📤 結果をシェア</button>
       <button class="cal-btn" onclick="showCalModal('NursePass 看護師国試 学習', '正解率 ${rate}% (${total}問中${session.correct}問正解)')">📅 次の学習をカレンダーに追加</button>
+      ${(()=>{
+        // 次の学習提案
+        const suggestions=[];
+        const srsDue=getSrsDueIds().length;
+        if(srsDue>0) suggestions.push({label:`SRS復習 ${srsDue}問期限`,onclick:"startQuiz('srs')",color:'rgba(124,58,237,0.1)',border:'rgba(124,58,237,0.3)',text:'#7c3aed'});
+        if(rate<70){
+          // Find weakest field in this session
+          const fm={};
+          session.pool.forEach((q,i)=>{
+            if(!fm[q.field]) fm[q.field]={c:0,t:0};
+            const ok=(session.answerLog&&session.answerLog[i])===1||(session.wrongIds&&!session.wrongIds.includes(q.id));
+            fm[q.field].t++;
+            if(ok) fm[q.field].c++;
+          });
+          const worst=Object.entries(fm).sort((a,b)=>(a[1].c/a[1].t)-(b[1].c/b[1].t))[0];
+          if(worst) suggestions.push({label:`${worst[0].replace('必修・','').replace('一般・','').replace('状況設定・','')}を強化`,onclick:`startFieldFocus('${worst[0]}')`,color:'rgba(239,68,68,0.08)',border:'rgba(239,68,68,0.3)',text:'#dc2626'});
+        }
+        const wids=session.wrongIds||[];
+        if(wids.length>0) suggestions.push({label:`間違えた${wids.length}問を復習`,onclick:'retryWrong()',color:'rgba(248,113,113,0.08)',border:'rgba(248,113,113,0.3)',text:'#dc2626'});
+        const unread=QUESTIONS.filter(q=>!history[String(q.id)]&&q.stars>=3).length;
+        if(unread>0) suggestions.push({label:`未解答の頻出問題 ${Math.min(unread,20)}問`,onclick:"startQuiz('stars3')",color:'rgba(234,179,8,0.08)',border:'rgba(234,179,8,0.35)',text:'#92400e'});
+        if(!suggestions.length) return '';
+        return `<div style="margin-top:10px;padding:10px 12px;background:rgba(240,232,222,0.4);border-radius:12px">
+          <div style="font-size:10px;font-weight:700;color:#8A6A50;margin-bottom:6px">📌 次にやること</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            ${suggestions.slice(0,3).map(s=>`<button onclick="${s.onclick}" style="padding:7px 12px;background:${s.color};border:1px solid ${s.border};border-radius:10px;font-size:12px;font-weight:700;color:${s.text};cursor:pointer;font-family:'Noto Sans JP',sans-serif;text-align:left">${s.label} →</button>`).join('')}
+          </div>
+        </div>`;
+      })()}
       ${(()=>{const msgs=[rate>=90?'完璧な結果だね。このまま本番でも力を発揮できるよ🌸':'今日も一歩前へ進んだよ。続けることが一番大切だよ✨',rate>=70?'着実に力がついてきてるよ。あと少しで合格圏内だね🌟':'間違えた問題が、明日のあなたを強くしてくれる。大丈夫✨',streakData.streak>=3?`${streakData.streak}日連続！その習慣が本物の実力になるよ🔥`:'毎日少しでもいい。続けていくことが合格への道だよ💫',Object.keys(bookmarks).length>0?'ブックマークした問題は宝物。後でじっくり復習してね🌸':'気になった問題はブックマークしておくと後で見返せるよ✨'];const msg=msgs[Math.floor(Math.random()*msgs.length)];return`<div style="margin-top:12px;padding:10px 12px;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(237,224,212,0.85));border:1.5px solid rgba(217,197,178,0.4);border-radius:12px;font-size:11px;color:#4A3828;line-height:1.6;text-align:center"><span style="font-size:10px;font-weight:700;color:#B8907A;display:block;margin-bottom:4px">🌸 のあ先生より</span>${msg}</div>`;})()}
     </div>
   </div>`;
@@ -3057,6 +3087,18 @@ function toggleHideMastered(){
   renderWeak();
 }
 function isMastered(h){return h&&h.correct>=3&&h.correct>h.wrong;}
+function markMastered(id){
+  if(!history[id]) history[id]={correct:0,wrong:0};
+  // Set correct to wrong+3 to make isMastered true
+  const h=history[id];
+  if(h.correct<=h.wrong) h.correct=h.wrong+3;
+  else h.correct+=3;
+  save();
+  const btn=document.getElementById('masterBtn_'+id);
+  if(btn){btn.textContent='✓ 克服済み！';btn.disabled=true;btn.style.opacity='0.5';}
+  showToast('克服済みにしました！苦手リストから外れます');
+  checkAchievements();
+}
 function setWeakSort(s){
   weakSort=s;
   ['wrong','acc','streak'].forEach(k=>{
@@ -3478,6 +3520,39 @@ function renderFieldRanking(){
         <div style="font-size:10px;font-weight:700;color:#dc2626;margin-bottom:4px">📌 苦手分野</div>
         ${bot3.map((r,i)=>row(r,i,false)).join('')}
       </div>
+    </div>
+  </div>`;
+}
+// 週間学習時間グラフ（直近7日）
+function renderStudyTimeChart(){
+  const days=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  const mins=days.map(dt=>(dailyAccuracy[dt]&&dailyAccuracy[dt].mins)||0);
+  const maxMins=Math.max(...mins,1);
+  const hasMins=mins.some(m=>m>0);
+  if(!hasMins) return '';
+  const DOW=['日','月','火','水','木','金','土'];
+  const bars=days.map((dt,i)=>{
+    const m=mins[i];
+    const h=m?Math.max(4,Math.round((m/maxMins)*52)):2;
+    const col=m>=30?'rgba(59,130,246,0.75)':m>=10?'rgba(147,197,253,0.8)':'rgba(219,234,254,0.8)';
+    const dow=DOW[new Date(dt).getDay()];
+    const label=m>=60?`${Math.floor(m/60)}h${m%60?m%60+'m':''}`:m?`${m}m`:'';
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px" title="${dt}: ${m}分">
+      <div style="font-size:8px;color:#8A7060;font-variant-numeric:tabular-nums;min-height:10px">${label}</div>
+      <div style="width:14px;height:${h}px;background:${col};border-radius:3px 3px 0 0;min-height:2px"></div>
+      <div style="font-size:9px;color:#8A7060">${dow}</div>
+    </div>`;
+  });
+  const totalMins=mins.reduce((s,m)=>s+m,0);
+  const timeStr=totalMins>=60?`${Math.floor(totalMins/60)}時間${totalMins%60?totalMins%60+'分':''}`:totalMins+'分';
+  return `<div style="margin-bottom:14px;padding:12px 14px;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(235,225,210,0.85));border:1.5px solid rgba(217,197,178,0.4);border-radius:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:#B8907A">⏱ 週間学習時間</div>
+      <div style="font-size:10px;color:#8A6A50">今週合計: <strong style="color:#1d4ed8">${timeStr}</strong></div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:2px;height:72px;padding-bottom:16px">
+      ${bars.join('')}
     </div>
   </div>`;
 }
@@ -4166,6 +4241,7 @@ function renderStats(){
       <div id="noaAnalysisOutput" style="display:none;margin-top:8px;padding:12px 14px;background:linear-gradient(135deg,rgba(245,239,232,0.9),rgba(237,224,212,0.85));border:1.5px solid rgba(217,197,178,0.4);border-radius:12px"></div>
     </div>
     <button onclick="if(confirm('記録をすべてリセットしますか？')){localStorage.removeItem('np_history');localStorage.removeItem('np_streak');localStorage.removeItem('np_weekly');localStorage.removeItem('np_badges');localStorage.removeItem('np_today_wrong');localStorage.removeItem('np_mock_history');localStorage.removeItem('np_flash_progress');localStorage.removeItem('np_srs');localStorage.removeItem('np_daily');localStorage.removeItem('np_memos');localStorage.removeItem('np_best');localStorage.removeItem('np_daily_acc');localStorage.removeItem('np_wrong_choices');history={};streakData={lastDate:'',streak:0};weeklyData={};earnedBadges=[];mockHistory=[];flashProgress={};srsData={};dailyChallenge=null;memoData={};bestScores={};dailyAccuracy={};wrongChoices={};updateScoreBadge();renderStats();renderHomeSummary();}" style="margin-top:12px;background:none;border:none;color:#5A5450;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">記録をリセット</button>
+    ${renderStudyTimeChart()}
     ${renderStrengthMap()}
     ${renderRecentHistory()}
     ${renderMockHistoryChart()}
