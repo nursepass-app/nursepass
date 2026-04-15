@@ -1662,6 +1662,48 @@ function shareWeeklyReport(){
     });
   }
 }
+function shareAchievementCard(){
+  const total=Object.keys(history).length;
+  const answered=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
+  const correct=Object.values(history).reduce((s,h)=>s+h.correct,0);
+  const rate=answered?Math.round(correct/answered*100):0;
+  const streak=streakData.streak||0;
+  const coverPct=Math.round(total/QUESTIONS.length*100);
+  const mastered=Object.values(history).filter(h=>h.correct>h.wrong*2&&h.correct>=3).length;
+  const badges=earnedBadges.length;
+  const examDays=getExamDays();
+  const level=rate>=90&&coverPct>=80?'エキスパート':rate>=80&&coverPct>=60?'マスター':rate>=70&&coverPct>=40?'上級者':rate>=60&&coverPct>=20?'中級者':'学習中';
+  const levelStar=level==='エキスパート'?'⭐⭐⭐⭐⭐':level==='マスター'?'⭐⭐⭐⭐':level==='上級者'?'⭐⭐⭐':level==='中級者'?'⭐⭐':'⭐';
+  const bar=n=>Array(10).fill('░').map((_,i)=>i<Math.round(n/10)?'█':'░').join('');
+  const text=[
+    '╔══════════════════════════╗',
+    '║   📜 NursePass 学習実績証明書   ║',
+    '╚══════════════════════════╝',
+    '',
+    `発行日: ${todayKey}`,
+    `レベル: ${level} ${levelStar}`,
+    '',
+    `正答率  ${bar(rate)} ${rate}%`,
+    `カバー率 ${bar(coverPct)} ${coverPct}%`,
+    '',
+    `✅ 解答問題数:  ${total}問 / ${QUESTIONS.length}問`,
+    `🏆 習得済み問題: ${mastered}問`,
+    `🔥 連続学習:    ${streak}日`,
+    `🎖 獲得バッジ:  ${badges}個`,
+    examDays&&examDays>0?`📅 試験まで:    ${examDays}日`:'',
+    '',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '#NursePass #看護師国家試験',
+    'https://yunoa091224.github.io/nursepass/'
+  ].filter(l=>l!==null&&l!==undefined&&(l.length>0||l==='\\n')).join('\n');
+  if(navigator.share){
+    navigator.share({title:'NursePass 学習実績証明書',text}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(()=>showToast('実績証明書をコピーしました！')).catch(()=>{
+      const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('コピーしました！');
+    });
+  }
+}
 function useStreakFreeze(){
   const weekNum=`${new Date().getFullYear()}-W${String(Math.ceil(new Date().getDate()/7)).padStart(2,'0')}`;
   if(streakFreeze&&streakFreeze.usedWeek===weekNum){showToast('今週のフリーズはすでに使用済みです');return;}
@@ -1707,7 +1749,12 @@ function doSearch(q){
   const kws=q.toLowerCase().split(/\s+/);
   const results=QUESTIONS.filter(x=>kws.every(k=>x.question.includes(k)||x.field.includes(k)||x.explanation.includes(k))).slice(0,20);
   if(!results.length){sr.innerHTML='<div style="padding:12px 14px;color:#aaa;font-size:13px">見つかりませんでした</div>';sr.style.display='block';return;}
-  sr.innerHTML=results.map(x=>{
+  // 検索結果IDリストを保持（クイズ開始に使う）
+  window._searchResultIds=results.map(x=>x.id);
+  const quizBtn=results.length>=2?`<div style="padding:6px 12px;border-bottom:1px solid rgba(217,197,178,0.3);background:rgba(245,239,232,0.6)">
+    <button onclick="startSearchQuiz()" style="width:100%;padding:7px 12px;background:linear-gradient(135deg,rgba(217,160,96,0.25),rgba(200,140,80,0.2));border:1px solid rgba(217,160,96,0.4);border-radius:10px;font-size:12px;font-weight:700;color:#8A5A30;cursor:pointer;font-family:'Noto Sans JP',sans-serif">🎯 この ${results.length} 問でクイズ開始</button>
+  </div>`:'';
+  sr.innerHTML=quizBtn+results.map(x=>{
     const h=history[String(x.id)];
     const bm=bookmarks[x.id]?'🔖':'';
     const memo=memoData[x.id]?'📝':'';
@@ -1726,6 +1773,17 @@ function clearSearch(){
   if(inp) inp.value='';
   if(sr){sr.style.display='none';sr.innerHTML='';}
   if(cl) cl.style.display='none';
+  window._searchResultIds=null;
+}
+function startSearchQuiz(){
+  const ids=window._searchResultIds;
+  if(!ids||!ids.length) return;
+  const pool=shuffle(ids.map(id=>QUESTIONS.find(x=>x.id===id)).filter(Boolean));
+  if(!pool.length) return;
+  clearSearch();
+  session={pool,idx:0,correct:0,wrong:0,mode:'random'};
+  showQuiz();
+  showToast(`検索結果 ${pool.length} 問でクイズ開始！`);
 }
 let passScoreOpen=false;
 function showPassScoreDetail(){
@@ -3796,6 +3854,41 @@ function renderSrsForecast(){
   </div>`;
 }
 
+// SRS詳細統計カード
+function renderSrsStats(){
+  const entries=Object.entries(srsData);
+  if(entries.length<3) return '';
+  const today=new Date(todayKey);
+  const dueToday=entries.filter(([,s])=>s.due<=todayKey).length;
+  const dueWeek=entries.filter(([,s])=>{const d=new Date(s.due);return d>today&&d<=new Date(today.getTime()+7*86400000);}).length;
+  const totalReviews=Object.values(answerTimes).reduce((s,arr)=>s+arr.length,0);
+  const avgInterval=entries.length?Math.round(entries.reduce((s,[,s2])=>s+s2.interval,0)/entries.length*10)/10:0;
+  const mastered=entries.filter(([,s])=>s.interval>=21).length;
+  const masteredPct=entries.length?Math.round(mastered/entries.length*100):0;
+  return `<div style="margin:12px 0;padding:12px 14px;background:rgba(240,232,222,0.5);border:1.5px solid rgba(217,197,178,0.35);border-radius:14px">
+    <div style="font-size:12px;font-weight:700;color:#B8907A;margin-bottom:8px">🧠 SRS 学習統計</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin-bottom:8px">
+      <div style="padding:8px;background:rgba(255,255,255,0.6);border-radius:10px">
+        <div style="font-size:18px;font-weight:700;color:${dueToday>0?'#dc2626':'#16a34a'}">${dueToday}</div>
+        <div style="font-size:9px;color:#8A6A50;margin-top:2px">今日の復習</div>
+      </div>
+      <div style="padding:8px;background:rgba(255,255,255,0.6);border-radius:10px">
+        <div style="font-size:18px;font-weight:700;color:#D9A060">${dueWeek}</div>
+        <div style="font-size:9px;color:#8A6A50;margin-top:2px">今週の予定</div>
+      </div>
+      <div style="padding:8px;background:rgba(255,255,255,0.6);border-radius:10px">
+        <div style="font-size:18px;font-weight:700;color:#7c3aed">${entries.length}</div>
+        <div style="font-size:9px;color:#8A6A50;margin-top:2px">SRS登録数</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;font-size:10px;color:#8A6A50">
+      <span style="flex:1;padding:5px 8px;background:rgba(255,255,255,0.5);border-radius:8px;text-align:center">平均間隔 <strong style="color:#4A3828">${avgInterval}日</strong></span>
+      <span style="flex:1;padding:5px 8px;background:rgba(255,255,255,0.5);border-radius:8px;text-align:center">習得済み <strong style="color:#16a34a">${mastered}問 (${masteredPct}%)</strong></span>
+    </div>
+    ${dueToday>0?`<button onclick="startQuiz('srs')" style="width:100%;margin-top:8px;padding:7px;background:rgba(184,144,122,0.2);border:1px solid rgba(184,144,122,0.4);border-radius:10px;font-size:11px;font-weight:700;color:#8A5A30;cursor:pointer;font-family:'Noto Sans JP',sans-serif">今すぐ復習 ${dueToday}問 →</button>`:''}
+  </div>`;
+}
+
 // 学習ペース分析カード
 function renderPaceAnalysis(){
   // 直近7日間の平均問題数/日
@@ -4430,11 +4523,17 @@ function renderStats(){
     ${renderMockHistoryChart()}
     ${renderDowChart()}
     ${renderSrsForecast()}
+    ${renderSrsStats()}
     ${renderPaceAnalysis()}
     ${renderSpeedRanking()}
     ${renderTopMissed()}
     ${renderFieldRanking()}
     ${renderAccTrend()}
+    <div style="margin:12px 0;padding:12px 14px;background:rgba(240,232,222,0.5);border:1.5px solid rgba(217,197,178,0.35);border-radius:14px;text-align:center">
+      <div style="font-size:12px;font-weight:700;color:#B8907A;margin-bottom:8px">🏅 学習実績証明書</div>
+      <div style="font-size:11px;color:#8A6A50;margin-bottom:10px">今の成績をカード形式でシェアしよう</div>
+      <button onclick="shareAchievementCard()" style="width:100%;padding:10px;background:linear-gradient(135deg,rgba(253,230,138,0.3),rgba(217,160,96,0.2));border:1.5px solid rgba(217,160,96,0.4);border-radius:12px;font-size:13px;font-weight:700;color:#7C4A20;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📜 実績証明書を生成・シェア</button>
+    </div>
     `;
 }
 
