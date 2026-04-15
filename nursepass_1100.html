@@ -1975,7 +1975,12 @@ function renderWeak(){
   if(sb) sb.innerHTML=allWeak.length?`苦手問題 <strong style="color:#B8907A">${allWeak.length}</strong>問 ／ 克服済み <strong style="color:#16a34a">${mastered}</strong>問 ／ 🔖${bmCount}問${memoCount?` ／ 📝${memoCount}件`:''}`:'';
   if(wb) wb.style.display=weakIds.length?'block':'none';
   if(!weakIds.length){wl.innerHTML='<div class="empty">'+(weakFilter==='all'?'まだ苦手問題はないよ。<br>問題を解いてみよう！':`${weakFilter}の苦手問題はまだないよ。`)+'</div>';return;}
-  wl.innerHTML=weakIds.slice(0,50).map(id=>{
+  const WEAK_PAGE_SIZE=30;
+  let weakShowCount=parseInt(wl.dataset.showCount||WEAK_PAGE_SIZE);
+  if(wl.dataset.filterKey!==weakFilter){weakShowCount=WEAK_PAGE_SIZE;wl.dataset.filterKey=weakFilter;}
+  const visible=weakIds.slice(0,weakShowCount);
+  wl.dataset.showCount=weakShowCount;
+  wl.innerHTML=visible.map(id=>{
     const q=QUESTIONS.find(x=>x.id==id);
     if(!q) return '';
     const h=history[id];
@@ -1988,6 +1993,13 @@ function renderWeak(){
       ${memo}
     </div>`;
   }).join('');
+  if(weakIds.length>weakShowCount){
+    const more=document.createElement('button');
+    more.style.cssText='width:100%;margin-top:6px;padding:10px;background:rgba(240,232,222,.5);border:1px solid rgba(85,80,77,.15);border-radius:10px;font-size:12px;font-weight:700;color:#6B5040;cursor:pointer;font-family:"Noto Sans JP",sans-serif';
+    more.textContent=`さらに ${Math.min(WEAK_PAGE_SIZE,weakIds.length-weakShowCount)} 問を表示（残り${weakIds.length-weakShowCount}問）`;
+    more.onclick=()=>{wl.dataset.showCount=weakShowCount+WEAK_PAGE_SIZE;renderWeak();};
+    wl.appendChild(more);
+  }
 }
 function drillAllWeak(){
   let pool;
