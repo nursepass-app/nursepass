@@ -656,7 +656,7 @@ function toggleSkipMastered(){
     b.textContent=skipMastered?'✅ 習得済みスキップ中':'⬜ 習得済みも出題';
   });
 }
-function isMastered(id){const h=history[String(id)];return h&&h.correct>=3&&h.correct>=h.wrong*3;}
+function isMastered(id){const h=history[String(id)];return h&&h.correct>=3&&h.correct>h.wrong;}
 function setSessionGoal(pct){
   sessionGoal=sessionGoal===pct?0:pct;
   localStorage.setItem('np_session_goal',sessionGoal);
@@ -3712,7 +3712,6 @@ function toggleHideMastered(){
   if(btn){btn.style.background=hideMastered?'rgba(124,58,237,0.18)':'rgba(240,232,222,0.8)';btn.style.fontWeight=hideMastered?'700':'400';btn.textContent=hideMastered?'✓習得済み非表示':'習得済みを非表示';}
   renderWeak();
 }
-function isMastered(h){return h&&h.correct>=3&&h.correct>h.wrong;}
 function markMastered(id){
   if(!history[id]) history[id]={correct:0,wrong:0};
   // Set correct to wrong+3 to make isMastered true
@@ -3947,7 +3946,7 @@ function renderWeak(){
   if(weakFilter!=='all'&&!weakFilter.startsWith('tag_')){
     weakIds=allWeak.filter(id=>{const q=QUESTIONS.find(x=>x.id==id);return q&&q.category===weakFilter;});
   }
-  if(hideMastered){weakIds=weakIds.filter(id=>!isMastered(history[id]));}
+  if(hideMastered){weakIds=weakIds.filter(id=>!isMastered(id));}
   if(weakSort==='acc'){
     weakIds.sort((a,b)=>{const ha=history[a],hb=history[b];const ra=ha.correct/(ha.correct+ha.wrong);const rb=hb.correct/(hb.correct+hb.wrong);return ra-rb;});
   } else if(weakSort==='streak'){
@@ -6136,7 +6135,6 @@ document.addEventListener('keydown', function(e){
   const qa=document.getElementById('quizArea');
   if(!qa||qa.style.display==='none') return;
   if(!session||!session.pool) return;
-  const key=e.key.toUpperCase();
   // 選択肢ボタンが有効かチェック（未回答時）
   const chA=document.getElementById('chA');
   const answered=chA&&chA.disabled;
