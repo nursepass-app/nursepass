@@ -13,21 +13,21 @@
 --text:#55504D;--text-mid:#5A5450;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);font-family:'Noto Sans JP',sans-serif;padding:16px;position:relative;overflow-x:hidden}
+body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);font-family:'Noto Sans JP',sans-serif;padding:16px;padding-bottom:80px;position:relative;overflow-x:hidden}
 .blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
 .blob1{width:400px;height:400px;top:-10%;right:-5%;background:radial-gradient(circle,rgba(217,197,178,0.3) 0%,transparent 70%);animation:float1 8s ease-in-out infinite}
 .blob2{width:350px;height:350px;bottom:-10%;left:-5%;background:radial-gradient(circle,rgba(217,197,178,0.25) 0%,transparent 70%);animation:float2 10s ease-in-out infinite}
 .wrap{max-width:520px;margin:0 auto;position:relative;z-index:1}
 
 /* NAV */
-.nav{display:flex;align-items:center;gap:10px;padding:12px 0 16px}
+.nav{display:flex;align-items:center;gap:10px;padding:12px 0 12px}
 .logo{font-family:'Zen Kaku Gothic New',sans-serif;font-size:18px;font-weight:700;background:linear-gradient(135deg,#D9C5B2,#B8A090);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .logo-sub{font-size:10px;color:#5A5450;letter-spacing:.05em}
 .score-badge{margin-left:auto;background:rgba(255,255,255,0.8);border:1px solid rgba(85,80,77,0.25);border-radius:20px;padding:4px 12px;font-size:12px;color:#55504D}
 .score-badge span{font-weight:700;color:#55504D}
 
 /* TABS */
-.tabs{display:flex;gap:6px;margin-bottom:16px;background:rgba(255,255,255,0.82);border-radius:16px;padding:4px}
+.tabs{display:none}
 .tab{flex:1;padding:8px;border:none;border-radius:12px;font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:.2s;background:transparent;color:#5A5450}
 .tab.active{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;box-shadow:0 2px 8px rgba(184,160,144,.2)}
 
@@ -323,6 +323,16 @@ body.font-xl .explanation{font-size:15px}
 .mode-switch-btn{flex:1;padding:8px 10px;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:"Noto Sans JP",sans-serif;transition:.2s;background:transparent;color:#6B5040}
 .mode-switch-btn.active.hikari{background:linear-gradient(135deg,#EDE0D4,#D9C5B2);color:#4A3828;box-shadow:0 2px 8px rgba(184,160,144,.2)}
 .mode-switch-btn.active.gachi{background:linear-gradient(135deg,#475569,#334155);color:white;box-shadow:0 2px 8px rgba(51,65,85,.3)}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:999;background:rgba(255,252,248,0.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(217,197,178,0.4);display:flex;justify-content:space-around;align-items:stretch;height:62px;box-shadow:0 -2px 16px rgba(184,160,144,.15)}
+.bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;padding:6px 4px;transition:.2s;position:relative}
+.bn-icon{font-size:20px;line-height:1;transition:.2s}
+.bn-label{font-size:10px;color:#8A7A70;font-weight:500;transition:.2s}
+.bn-btn.active .bn-icon{transform:scale(1.1)}
+.bn-btn.active .bn-label{color:#8A6A50;font-weight:700}
+.bn-btn.active::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:3px;background:linear-gradient(135deg,#D9C5B2,#B8A090);border-radius:0 0 4px 4px}
+.bn-badge{position:absolute;top:4px;right:calc(50% - 18px);background:#ef4444;color:white;font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4}
 </style>
 </head>
 <body>
@@ -343,12 +353,6 @@ body.font-xl .explanation{font-size:15px}
     </div>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('home')" id="tabBtnHome">ホーム</button>
-    <button class="tab" onclick="switchTab('weak')" id="tabBtnWeak">苦手</button>
-    <button class="tab" onclick="switchTab('stats')" id="tabBtnStats">記録</button>
-    <button class="tab" onclick="switchTab('noa')" style="color:#8A6A50;font-weight:700" id="tabBtnNoa">ヒカリ</button>
-  </div>
 
   <div id="tabHome">
     <!-- モード切替スイッチ -->
@@ -529,6 +533,21 @@ body.font-xl .explanation{font-size:15px}
   <div id="jokyoArea" style="display:none;margin-top:0"></div>
   <div id="flashArea" style="display:none;margin-top:0"></div>
 </div>
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-btn active" data-tab="home" onclick="switchTab('home')">
+    <span class="bn-icon">🏠</span><span class="bn-label">ホーム</span>
+  </button>
+  <button class="bn-btn" data-tab="weak" onclick="switchTab('weak')">
+    <span class="bn-icon">📚</span><span class="bn-label">復習</span>
+    <span class="bn-badge" id="bnWeakBadge" style="display:none"></span>
+  </button>
+  <button class="bn-btn" data-tab="stats" onclick="switchTab('stats')">
+    <span class="bn-icon">📊</span><span class="bn-label">記録</span>
+  </button>
+  <button class="bn-btn" data-tab="noa" onclick="switchTab('noa')">
+    <span class="bn-icon">✨</span><span class="bn-label">ヒカリ</span>
+  </button>
+</nav>
 
 <!-- APIキー入力モーダル -->
 <div class="modal-overlay" id="apiKeyModal" style="display:none">
@@ -2394,10 +2413,12 @@ function switchTab(t){
   document.getElementById('tabWeak').style.display=t==='weak'?'block':'none';
   document.getElementById('tabStats').style.display=t==='stats'?'block':'none';
   document.getElementById('tabNoa').style.display=t==='noa'?'block':'none';
-  document.querySelectorAll('.tab').forEach((b,i)=>{
-    b.classList.toggle('active',['home','weak','stats','noa'][i]===t);
+  document.querySelectorAll('.bn-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.tab===t);
   });
-  if(t==='weak') renderWeak();
+  const bn=document.getElementById('bottomNav');
+  if(bn) bn.style.display='';
+  if(t==='weak'){renderWeak();updateBnWeakBadge();}
   if(t==='stats') renderStats();
   if(t==='noa') initChat();
   document.getElementById('quizArea').style.display='none';
@@ -2806,7 +2827,9 @@ function resetFlashProgress(){
 function endFlash(){
   document.getElementById('flashArea').style.display='none';
   document.getElementById('tabHome').style.display='block';
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('.bn-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab==='home'));
+  const bn_ef=document.getElementById('bottomNav');
+  if(bn_ef) bn_ef.style.display='';
   document.querySelectorAll('.sub-tab').forEach(b=>{
     b.classList.toggle('active',b.dataset.cat===currentCategory);
   });
@@ -3113,7 +3136,9 @@ function showQuiz(){
   document.getElementById('tabHome').style.display='none';
   document.getElementById('tabWeak').style.display='none';
   document.getElementById('tabStats').style.display='none';
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
+  const bn_qs=document.getElementById('bottomNav');
+  if(bn_qs) bn_qs.style.display='none';
   const qa=document.getElementById('quizArea');
   qa.style.display='block';
   // Start elapsed timer for mock exam
@@ -3770,7 +3795,9 @@ function backHome(force){
   document.getElementById('jokyoArea').style.display='none';
   document.getElementById('flashArea').style.display='none';
   document.getElementById('tabHome').style.display='block';
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('.bn-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab==='home'));
+  const bn_gh=document.getElementById('bottomNav');
+  if(bn_gh) bn_gh.style.display='';
   document.querySelectorAll('.sub-tab').forEach(b=>{
     b.classList.toggle('active',b.dataset.cat===currentCategory);
   });
@@ -3868,6 +3895,14 @@ function setWeakFilter(f){
 function onWeakSearch(val){
   weakSearchText=val.trim();
   renderWeak();
+}
+function updateBnWeakBadge(){
+  try{
+    const h=JSON.parse(localStorage.getItem('np_history')||'{}');
+    const wrongCount=QUESTIONS.filter(q=>h[String(q.id)]&&h[String(q.id)].wrong>0&&!isMastered(String(q.id))).length;
+    const el=document.getElementById('bnWeakBadge');
+    if(el){el.textContent=wrongCount>99?'99+':String(wrongCount);el.style.display=wrongCount>0?'':'none';}
+  }catch(e){}
 }
 function renderWeak(){
   const wl=document.getElementById('weakList');
@@ -4136,7 +4171,9 @@ function drillField(fieldName){
   const pool=shuffle([...wrong,...rest]).slice(0,20);
   if(!pool.length){showToast('この分野の問題が見つかりません');return;}
   // Switch to home tab first
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
+  const bn_fd=document.getElementById('bottomNav');
+  if(bn_fd) bn_fd.style.display='none';
   document.getElementById('tabHome').style.display='';
   document.getElementById('tabWeak').style.display='none';
   document.getElementById('tabStats').style.display='none';
@@ -5430,8 +5467,9 @@ function renderStats(){
 // ===== 状況設定モード =====
 var jokS={};
 function startJokyoMode(){
-  var tabs=document.querySelectorAll('.tab');
-  for(var i=0;i<tabs.length;i++)tabs[i].classList.remove('active');
+  document.querySelectorAll('.bn-btn').forEach(function(b){b.classList.remove('active');});
+  var bn_jm=document.getElementById('bottomNav');
+  if(bn_jm) bn_jm.style.display='none';
   document.getElementById('tabHome').style.display='none';
   // 状況設定カテゴリの問題を抜き出す
   var pool=QUESTIONS.filter(function(q){return q.category==='状況設定';});
@@ -5521,7 +5559,9 @@ function finJok(){
 function endJok(){
   document.getElementById('jokyoArea').style.display='none';
   document.getElementById('tabHome').style.display='block';
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.querySelectorAll('.bn-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab==='home'));
+  const bn_ej=document.getElementById('bottomNav');
+  if(bn_ej) bn_ej.style.display='';
   document.querySelectorAll('.sub-tab').forEach(b=>{
     b.classList.toggle('active',b.dataset.cat===currentCategory);
   });
@@ -6317,6 +6357,7 @@ initModeButtons();
 updateScoreBadge();
 initDailyMessage();
 renderHomeSummary();
+updateBnWeakBadge();
 renderExamCountdown();
 renderHikariHint();updateModeSwitch();renderGoalBar();renderNoaCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();renderSearchHistoryChips();renderPassGauge();
 showResumeBanner();
