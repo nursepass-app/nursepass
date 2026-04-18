@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>NursePass | 看護師国試対策</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -63,7 +63,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .q-field{padding:10px 20px 0;font-size:10px;color:#5A5450;letter-spacing:.05em}
 .q-text{padding:14px 20px 16px;font-size:15px;line-height:1.7;color:#55504D;font-weight:500}
 .choices{display:flex;flex-direction:column;gap:8px;padding:0 16px 16px}
-.choice-btn{width:100%;padding:12px 16px;border:1.5px solid rgba(85,80,77,0.3);border-radius:14px;background:rgba(240,232,222,.8);text-align:left;cursor:pointer;font-size:13px;line-height:1.5;color:#55504D;font-family:'Noto Sans JP',sans-serif;transition:.2s;display:flex;align-items:flex-start;gap:10px}
+.choice-btn{width:100%;padding:12px 16px;border:1.5px solid rgba(85,80,77,0.3);border-radius:14px;background:rgba(240,232,222,.8);text-align:left;cursor:pointer;font-size:13px;line-height:1.5;color:#55504D;font-family:'Noto Sans JP',sans-serif;transition:.2s;display:flex;align-items:flex-start;gap:10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .choice-btn:hover:not(:disabled){border-color:rgba(217,197,178,.4);background:rgba(245,239,232,.9)}
 .choice-btn.correct{background:rgba(74,222,128,.12);border-color:#4ade80;color:#166534}
 .choice-btn.wrong{background:rgba(248,113,113,.1);border-color:#f87171;color:#991b1b}
@@ -216,8 +216,6 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .bm-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:4px 8px;border-radius:8px;transition:.15s;line-height:1}
 .bm-btn:hover{background:rgba(217,197,178,0.2)}
 .memo-btn{background:none;border:none;cursor:pointer;font-size:15px;padding:4px 6px;border-radius:8px;transition:.15s;line-height:1;color:#8A7060}
-.tts-btn{padding:5px 10px;border:1.5px solid rgba(217,197,178,.4);border-radius:20px;background:rgba(240,232,222,.7);font-size:11px;font-weight:700;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:.2s;display:inline-flex;align-items:center;gap:4px}
-.tts-btn:hover{background:rgba(217,197,178,.5)}
 .memo-btn:hover{background:rgba(217,197,178,0.2)}
 .memo-modal{position:fixed;inset:0;z-index:400;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.45);animation:fadein .2s ease}
 .memo-inner{background:#fff;border-radius:22px 22px 0 0;padding:20px 20px 32px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,0.15)}
@@ -334,7 +332,7 @@ body.font-xl .explanation{font-size:15px}
 
 /* BOTTOM NAV */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:999;background:rgba(255,252,248,0.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(217,197,178,0.4);display:flex;justify-content:space-around;align-items:stretch;height:62px;box-shadow:0 -2px 16px rgba(184,160,144,.15)}
-.bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;padding:6px 4px;transition:.2s;position:relative}
+.bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;padding:6px 4px;transition:.2s;position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .bn-icon{font-size:20px;line-height:1;transition:.2s}
 .bn-label{font-size:10px;color:#8A7A70;font-weight:500;transition:.2s}
 .bn-btn.active .bn-icon{transform:scale(1.1)}
@@ -348,7 +346,7 @@ body.font-xl .explanation{font-size:15px}
 <div class="blob blob2"></div>
 <div class="wrap">
   <div class="nav">
-    <div>
+    <div onclick="switchTab('home')" style="cursor:pointer;-webkit-tap-highlight-color:transparent">
       <div class="logo">NursePass</div>
       <div class="logo-sub">看護師国試対策 - ヒカリ</div>
     </div>
@@ -923,39 +921,7 @@ function pulseSummaryCard(id){
   void el.closest('.summary-card')?.offsetWidth; // reflow
   el.closest('.summary-card')?.classList.add('pulse');
 }
-// ===== TTS（音声読み上げ）=====
-let ttsActive=false;
-let ttsRate=parseFloat(localStorage.getItem('np_tts_rate')||'0.88');
-const TTS_SPEEDS=[{label:'遅い',rate:0.65},{label:'普通',rate:0.88},{label:'速い',rate:1.25}];
-function setTtsSpeed(rate){
-  ttsRate=rate;localStorage.setItem('np_tts_rate',rate);
-  document.querySelectorAll('.tts-speed-btn').forEach(b=>{
-    b.style.background=parseFloat(b.dataset.rate)===rate?'rgba(217,160,96,0.35)':'rgba(240,232,222,0.7)';
-    b.style.fontWeight=parseFloat(b.dataset.rate)===rate?'700':'400';
-  });
-  showToast(`読み上げ速度: ${TTS_SPEEDS.find(s=>s.rate===rate)?.label||'普通'}`);
-}
-function renderTtsSpeedBtns(){
-  return `<span style="display:inline-flex;gap:3px;align-items:center;margin-left:4px">` +
-    TTS_SPEEDS.map(s=>`<button class="tts-speed-btn" data-rate="${s.rate}" onclick="setTtsSpeed(${s.rate})" style="padding:3px 7px;background:${ttsRate===s.rate?'rgba(217,160,96,0.35)':'rgba(240,232,222,0.7)'};border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:${ttsRate===s.rate?'700':'400'}">${s.label}</button>`).join('') +
-    `</span>`;
-}
-function speakText(text){
-  if(!window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  if(ttsActive){ttsActive=false;return;}
-  const utt=new SpeechSynthesisUtterance(text.replace(/<[^>]+>/g,''));
-  utt.lang='ja-JP';utt.rate=ttsRate;utt.pitch=1.0;
-  utt.onstart=()=>{ttsActive=true;};
-  utt.onend=()=>{ttsActive=false;updateTtsBtn(false);};
-  utt.onerror=()=>{ttsActive=false;};
-  speechSynthesis.speak(utt);
-  updateTtsBtn(true);
-}
-function updateTtsBtn(active){
-  document.querySelectorAll('.tts-btn').forEach(b=>{b.textContent=active?'⏹ 停止':'🔊 読み上げ';b.style.opacity=active?'0.7':'1';});
-}
-function stopTts(){speechSynthesis.cancel();ttsActive=false;updateTtsBtn(false);}
+
 // ===== ベストスコア保存 =====
 function saveBestScore(mode, rate, correct, total){
   if(total<5) return; // 短すぎるセッションは除外
@@ -2704,7 +2670,6 @@ function renderFlash(){
     </div>
     <div class="flash-nav">
       <button class="flash-nav-btn" onclick="flashPrev()">← 前へ</button>
-      ${window.speechSynthesis?`<button onclick="speakText('${(flashState.flipped?(card.a+(card.sub?' '+card.sub:'')):card.q).replace(/'/g,'&apos;').replace(/\n/g,' ')}')" style="padding:4px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.3);border-radius:10px;font-size:11px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">🔊</button>`:''}
       <div class="flash-counter">${idx+1} / ${pool.length}</div>
       <button class="flash-nav-btn" onclick="flashNext()">次へ →</button>
     </div>
@@ -3220,7 +3185,7 @@ function renderQuestion(){
       ${isTime?`<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div class="timer-count" id="timerCnt">${session.timeLimit}秒</div>`:''}
       <div class="q-field" style="display:flex;justify-content:space-between;align-items:center"><span>${q.category} ▸ ${q.field} <span style="color:#C0B0A0;font-size:9px">#${q.id}</span></span><span style="display:flex;align-items:center;gap:8px">${!isTime&&total-session.idx>1?`<button onclick="skipQuestion()" style="padding:2px 8px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">スキップ↓</button>`:''}<button id="autoAdvBtn" onclick="toggleAutoAdvance()" style="padding:2px 8px;background:${autoAdvance?'rgba(217,160,96,0.25)':'rgba(240,232,222,0.8)'};border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:${autoAdvance?'#c2410c':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">${autoAdvance?'⚡自動送りON':'⚡自動送りOFF'}</button><span style="color:#C0B0A0;font-size:9px;letter-spacing:0">A/B/C/D キー</span><span style="color:#D9C5B2;font-size:12px;letter-spacing:1px">${'★'.repeat(q.stars||1)+'☆'.repeat(3-(q.stars||1))}</span></span></div>
       <div class="q-text">${q.question}</div>
-      ${!isTime?`<div id="hintArea" style="margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button>${(window.SpeechRecognition||window.webkitSpeechRecognition)?`<button id="voiceAnswerBtn" onclick="toggleVoiceAnswer()" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">🎙 声で回答</button>`:''}</div>`:''}
+      ${!isTime?`<div id="hintArea" style="margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button></div>`:''}
       <div class="choices">
         ${Object.entries(q.choices).map(([k,v])=>`
           <button class="choice-btn" onclick="answer('${k}')" id="ch${k}">
@@ -3379,7 +3344,6 @@ function answer(key){
   })()}
   ${correct?`<div id="confBar_${q.id}" style="margin-top:8px;padding:7px 10px;background:rgba(240,232,222,0.4);border-radius:10px;display:flex;gap:6px;align-items:center"><span style="font-size:10px;color:#8A6A50;white-space:nowrap">確信度：</span><button onclick="setConfidence(${q.id},'sure')" id="confSure_${q.id}" style="flex:1;padding:5px 8px;background:rgba(74,222,128,0.15);border:1.5px solid rgba(74,222,128,0.4);border-radius:10px;font-size:11px;font-weight:700;color:#16a34a;cursor:pointer;font-family:'Noto Sans JP',sans-serif">✓ 完璧</button><button onclick="setConfidence(${q.id},'unsure')" id="confUnsure_${q.id}" style="flex:1;padding:5px 8px;background:rgba(251,191,36,0.12);border:1.5px solid rgba(251,191,36,0.4);border-radius:10px;font-size:11px;font-weight:700;color:#b45309;cursor:pointer;font-family:'Noto Sans JP',sans-serif">△ 曖昧</button></div>`:''}
   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-    ${window.speechSynthesis?`<button class="tts-btn" onclick="speakText('${(q.question+' 正解は'+q.choices[q.answer]+' 解説: '+q.explanation).replace(/'/g,'&apos;')}')">🔊 読み上げ</button>${renderTtsSpeedBtns()}`:''}
     <button id="flagBtn_${q.id}" onclick="flagQuestion(${q.id})" style="padding:5px 10px;background:${flaggedIds.has(q.id)?'rgba(239,68,68,0.12)':'rgba(240,232,222,0.8)'};color:${flaggedIds.has(q.id)?'#dc2626':'#8A6A50'};border:1px solid rgba(85,80,77,0.2);border-radius:16px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">${flaggedIds.has(q.id)?'🔖 フラグ済み':'🤔 難しかった'}</button>
     ${(()=>{const s=srsData[q.id];if(!s)return'';const due=new Date(s.due);const today2=new Date(todayKey);const diff=Math.round((due-today2)/(1000*60*60*24));const label=diff<=0?'今日':diff===1?'明日':`${diff}日後（${s.due.slice(5)}）`;return`<span style="font-size:10px;color:#8A6A50;padding:4px 8px;background:rgba(240,232,222,0.6);border-radius:10px;white-space:nowrap">📅 次回SRS: ${label}</span>`;})()}
     ${elapsedSec>=0.5?`<span style="font-size:10px;color:#8A6A50;padding:4px 8px;background:rgba(240,232,222,0.6);border-radius:10px;white-space:nowrap">⏱ ${elapsedSec}秒${(()=>{const avg=getAvgTime(q.id);return avg?` (平均${avg}秒)`:''})()}</span>`:''}
@@ -3630,7 +3594,7 @@ function finishQuiz(){
         </div>`;
       })()}
       <button class="result-retry" onclick="retrySession()">もう一度やる</button>
-      <button class="result-home" onclick="stopTts();backHome()">ホームへ戻る</button>
+      <button class="result-home" onclick="backHome()">ホームへ戻る</button>
 ` + (quizMode!=='gachi'?`<button class="cal-btn" onclick="showCalModal('NursePass 看護師国試 学習', '正解率 ${rate}% (${total}問中${session.correct}問正解)')">📅 次の学習をカレンダーに追加</button>`:'') + `
       ${(()=>{
         // 次の学習提案
@@ -3774,7 +3738,6 @@ function backHome(force){
   if(window._breakAlertTimer){clearTimeout(window._breakAlertTimer);window._breakAlertTimer=null;}
   document.getElementById('breakAlert')?.remove();
   recordStudyTime();
-  stopTts();
   document.getElementById('quizArea').style.display='none';
   document.getElementById('jokyoArea').style.display='none';
   document.getElementById('flashArea').style.display='none';
@@ -6290,46 +6253,6 @@ document.addEventListener('keydown', function(e){
     }
   }
 });
-// 音声解答入力
-let voiceRecog=null;let voiceActive=false;
-function initVoiceAnswer(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR) return;
-  voiceRecog=new SR();
-  voiceRecog.lang='ja-JP';
-  voiceRecog.continuous=false;
-  voiceRecog.interimResults=false;
-  voiceRecog.onresult=function(e){
-    const txt=(e.results[0][0].transcript||'').trim().toUpperCase();
-    const map={'エー':'A','ビー':'B','シー':'C','ディー':'D','でぃー':'D','A':'A','B':'B','C':'C','D':'D','１':'A','２':'B','３':'C','４':'D','1':'A','2':'B','3':'C','4':'D'};
-    const key=map[txt]||map[txt.charAt(0)];
-    if(key){
-      const btn=document.getElementById('ch'+key);
-      if(btn&&!btn.disabled){answer(key);}
-    }
-    setVoiceBtn(false);
-  };
-  voiceRecog.onerror=function(){setVoiceBtn(false);};
-  voiceRecog.onend=function(){setVoiceBtn(false);};
-}
-function setVoiceBtn(active){
-  voiceActive=active;
-  const btn=document.getElementById('voiceAnswerBtn');
-  if(!btn) return;
-  btn.style.background=active?'rgba(239,68,68,0.2)':'rgba(240,232,222,0.8)';
-  btn.style.color=active?'#dc2626':'#8A6A50';
-  btn.textContent=active?'🎙 聞いてます…':'🎙 声で回答';
-}
-function toggleVoiceAnswer(){
-  if(!voiceRecog) initVoiceAnswer();
-  if(!voiceRecog){showToast('このブラウザは音声認識に対応していません');return;}
-  const qa=document.getElementById('quizArea');
-  if(!qa||qa.style.display==='none') return;
-  const chA=document.getElementById('chA');
-  if(chA&&chA.disabled){showToast('次の問題で使用できます');return;}
-  if(voiceActive){voiceRecog.stop();setVoiceBtn(false);}
-  else{voiceRecog.start();setVoiceBtn(true);}
-}
 initChips();
 initModeButtons();
 updateScoreBadge();
