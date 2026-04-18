@@ -350,7 +350,7 @@ body.font-xl .explanation{font-size:15px}
 .bn-badge{position:absolute;top:4px;right:calc(50% - 18px);background:#ef4444;color:white;font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4}
 
 /* ===== SUBJECT MODE ===== */
-.subject-screen{position:fixed;inset:0;z-index:800;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.subject-screen{position:fixed;inset:0;z-index:800;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);overflow-y:auto;pointer-events:none;display:none}
 .subject-screen-inner{max-width:520px;margin:0 auto;padding:16px 16px 100px}
 .subject-screen-header{display:flex;align-items:center;justify-content:space-between;padding:8px 0 18px}
 .subject-screen-title{font-size:17px;font-weight:700;color:#3C3530;font-family:'Zen Kaku Gothic New',sans-serif}
@@ -366,9 +366,16 @@ body.font-xl .explanation{font-size:15px}
 .subject-q-count{font-size:11px;font-weight:700;color:#8A6A50;background:rgba(217,197,178,0.2);border-radius:8px;padding:2px 7px;flex-shrink:0;margin-left:8px}
 .subject-arrow{font-size:20px;color:#C0B0A0;flex-shrink:0;margin-left:4px}
 .subject-section-label{font-size:11px;font-weight:700;color:#8A7060;letter-spacing:.05em;margin:16px 0 8px;padding-left:2px}
+
+/* ===== ANSWER FEEDBACK ANIMATIONS ===== */
+@keyframes correctZoom{0%{opacity:0;transform:translate(-50%,-50%) scale(.3);}40%{opacity:1;transform:translate(-50%,-50%) scale(1.15);}70%{transform:translate(-50%,-50%) scale(.95);}100%{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+@keyframes correctFade{0%{opacity:1;}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1);}}
+@keyframes wrongSlide{0%{opacity:0;transform:translateX(-50%) translateY(16px);}30%{opacity:1;transform:translateX(-50%) translateY(0);}80%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-8px);}}
+.answer-feedback-correct{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:130px;font-weight:900;color:#4CAF50;line-height:1;z-index:9999;pointer-events:none;text-shadow:0 4px 24px rgba(76,175,80,0.35);}
+.answer-feedback-wrong{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);font-size:60px;font-weight:700;color:#999999;line-height:1;z-index:9999;pointer-events:none;}
 </style>
 </head>
-<body>
+<body ontouchstart="">
 <div class="blob blob1"></div>
 <div class="blob blob2"></div>
 <div class="wrap">
@@ -519,7 +526,7 @@ body.font-xl .explanation{font-size:15px}
   <div id="jokyoArea" style="display:none;margin-top:0"></div>
   <div id="flashArea" style="display:none;margin-top:0"></div>
 </div>
-<div id="subjectScreen" class="subject-screen" style="display:none">
+<div id="subjectScreen" class="subject-screen">
   <div class="subject-screen-inner">
     <div class="subject-screen-header">
       <button onclick="closeSubjectScreen()" class="back-btn" style="touch-action:manipulation">← 戻る</button>
@@ -558,6 +565,8 @@ body.font-xl .explanation{font-size:15px}
 </div>
 
 <script>
+// Mobile touch: passive touchstart for iOS scroll performance
+document.addEventListener('touchstart',function(){},{passive:true});
 // localStorage fallback: iOS private browsing throws SecurityError on access
 (function(){
   try{localStorage.getItem('_np_test');}
@@ -579,31 +588,31 @@ const QUESTIONS = [{"id":1,"category":"必修","field":"基礎看護","question"
 const FIELDS = [...new Set(QUESTIONS.map(q=>q.field))].sort();
 // ===== 科目別学習 =====
 const SUBJECT_LIST=[
-  {key:'all',name:'すべてランダム',icon:'🎲',color:'#B8A090',
+  {key:'all',name:'すべてランダム',icon:'',color:'#B8A090',
    filter:null},
-  {key:'hisshu',name:'必修問題',icon:'⭐',color:'#D9A060',
+  {key:'hisshu',name:'★ 必修問題',icon:'',color:'#D9A060',
    filter:q=>q.category==='必修'},
-  {key:'jintai',name:'人体の構造と機能',icon:'🫀',color:'#5BAD92',
+  {key:'jintai',name:'人体の構造と機能',icon:'',color:'#5BAD92',
    filter:q=>q.field.includes('人体の構造と機能')||q.field==='解剖生理'||q.field==='栄養・代謝'},
-  {key:'shippei',name:'疾病の成り立ちと回復の促進',icon:'🏥',color:'#E07070',
+  {key:'shippei',name:'疾病の成り立ちと回復の促進',icon:'',color:'#E07070',
    filter:q=>['疾患別看護','周手術期','救急・クリティカル','薬理・与薬','検査・診断'].includes(q.field)},
-  {key:'kenkou',name:'健康支援と社会保障制度',icon:'🏛',color:'#9B59B6',
+  {key:'kenkou',name:'健康支援と社会保障制度',icon:'',color:'#9B59B6',
    filter:q=>q.field.includes('健康支援と社会保障制度')||q.field==='看護倫理・法律'},
-  {key:'kiso',name:'基礎看護学',icon:'📋',color:'#5B9BD5',
+  {key:'kiso',name:'基礎看護学',icon:'',color:'#5B9BD5',
    filter:q=>q.field.includes('基礎看護')||['コミュニケーション','リハビリ・ADL','感染管理'].includes(q.field)},
-  {key:'seijin',name:'成人看護学',icon:'🧑‍⚕️',color:'#E67E22',
+  {key:'seijin',name:'成人看護学',icon:'',color:'#E67E22',
    filter:q=>q.field.includes('成人看護')},
-  {key:'rounen',name:'老年看護学',icon:'👴',color:'#F5A623',
+  {key:'rounen',name:'老年看護学',icon:'',color:'#F5A623',
    filter:q=>q.field.includes('老年看護')},
-  {key:'shoni',name:'小児看護学',icon:'👶',color:'#FF7B9C',
+  {key:'shoni',name:'小児看護学',icon:'',color:'#FF7B9C',
    filter:q=>q.field.includes('小児看護')},
-  {key:'boshi',name:'母性看護学',icon:'🤱',color:'#C0392B',
+  {key:'boshi',name:'母性看護学',icon:'',color:'#C0392B',
    filter:q=>q.field.includes('母性看護')},
-  {key:'seishin',name:'精神看護学',icon:'🧠',color:'#8E44AD',
+  {key:'seishin',name:'精神看護学',icon:'',color:'#8E44AD',
    filter:q=>q.field.includes('精神看護')},
-  {key:'zaitan',name:'地域・在宅看護論',icon:'🏡',color:'#27AE60',
+  {key:'zaitan',name:'地域・在宅看護論',icon:'',color:'#27AE60',
    filter:q=>q.field.includes('在宅看護')||q.field==='在宅・地域'},
-  {key:'tougou',name:'看護の統合と実践',icon:'🎯',color:'#E74C3C',
+  {key:'tougou',name:'看護の統合と実践',icon:'',color:'#E74C3C',
    filter:q=>q.field.includes('看護の統合と実践')},
 ];
 function getSubjectPool(key){
@@ -614,7 +623,8 @@ function getSubjectPool(key){
 }
 function openSubjectScreen(){
   renderSubjectList();
-  document.getElementById('subjectScreen').style.display='block';
+  const ss=document.getElementById('subjectScreen');
+  ss.style.display='block';ss.style.pointerEvents='auto';
   const bn=document.getElementById('bottomNav');
   if(bn) bn.style.display='none';
   document.getElementById('tabHome').style.display='none';
@@ -623,7 +633,8 @@ function openSubjectScreen(){
   document.getElementById('tabNoa').style.display='none';
 }
 function closeSubjectScreen(){
-  document.getElementById('subjectScreen').style.display='none';
+  const ss=document.getElementById('subjectScreen');
+  ss.style.display='none';ss.style.pointerEvents='none';
   document.getElementById('tabHome').style.display='block';
   const bn=document.getElementById('bottomNav');
   if(bn) bn.style.display='';
@@ -642,7 +653,7 @@ function renderSubjectList(){
     const pct=total?Math.round(answered/total*100):0;
     const isAll=subj.key==='all';
     html+=`<div class="subject-card${isAll?' all-card':''}" onclick="startSubjectQuiz('${subj.key}')">
-      <span class="subject-icon">${subj.icon}</span>
+      ${subj.icon?`<span class="subject-icon">${subj.icon}</span>`:''}
       <div class="subject-info">
         <div class="subject-name">${subj.name}</div>
         ${isAll?'':`<div class="subject-prog-track"><div class="subject-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${subj.color}99,${subj.color})"></div></div>
@@ -3359,6 +3370,29 @@ function renderQuestion(){
   if(isTime) startQuizTimer();
 }
 
+function showAnswerFeedback(correct){
+  // Remove any existing feedback
+  document.querySelectorAll('.answer-feedback-correct,.answer-feedback-wrong').forEach(e=>e.remove());
+  const el=document.createElement('div');
+  if(correct){
+    el.className='answer-feedback-correct';
+    el.textContent='◎';
+    document.body.appendChild(el);
+    // Phase 1: zoom in (0.5s)
+    el.style.animation='correctZoom .5s cubic-bezier(.17,.67,.35,1.3) forwards';
+    // Phase 2: hold then fade out
+    setTimeout(()=>{
+      el.style.animation='correctFade .5s ease-in forwards';
+      setTimeout(()=>el.remove(),500);
+    },1000);
+  } else {
+    el.className='answer-feedback-wrong';
+    el.textContent='×';
+    document.body.appendChild(el);
+    el.style.animation='wrongSlide .9s ease forwards';
+    setTimeout(()=>el.remove(),900);
+  }
+}
 function answer(key){
   clearQuizTimer();
   const elapsedMs=questionStartTime?Date.now()-questionStartTime:0;
@@ -3401,6 +3435,7 @@ function answer(key){
   if(session.answerLog) session.answerLog.push(correct?1:0);
   haptic(correct);
   playAnswerSound(correct);
+  showAnswerFeedback(correct);
   if(correct){
     session.correct++;
     session.combo=(session.combo||0)+1;
