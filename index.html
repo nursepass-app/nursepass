@@ -3079,6 +3079,8 @@ function resumeSession(){
 }
 let mockElapsedInterval=null;
 function showQuiz(){
+  // ガチ自動送りタイマーをクリア（前のクイズの残りタイマーが誤発火しないよう）
+  if(autoAdvanceTimer){clearInterval(autoAdvanceTimer);autoAdvanceTimer=null;}
   sessionStartTime=Date.now();
   // 連続学習60分休憩アラート
   if(window._breakAlertTimer) clearTimeout(window._breakAlertTimer);
@@ -3096,6 +3098,7 @@ function showQuiz(){
   document.getElementById('tabHome').style.display='none';
   document.getElementById('tabWeak').style.display='none';
   document.getElementById('tabStats').style.display='none';
+  document.getElementById('tabNoa').style.display='none';
   document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
   const bn_qs=document.getElementById('bottomNav');
   if(bn_qs) bn_qs.style.display='none';
@@ -3195,7 +3198,13 @@ function renderQuestion(){
   hintLevel=0;
   questionStartTime=Date.now();
   const qa=document.getElementById('quizArea');
+  if(!qa){console.error('quizArea not found');return;}
+  if(!session||!session.pool||session.idx>=session.pool.length){
+    console.error('Invalid session state',session);
+    finishQuiz();return;
+  }
   const q=session.pool[session.idx];
+  if(!q){console.error('Question is null at idx',session.idx);finishQuiz();return;}
   const total=session.pool.length;
   const pct=Math.round(session.idx/total*100);
   const isTime=session.mode==='timeatk';
@@ -3305,12 +3314,14 @@ function answer(key){
 
   Object.keys(q.choices).forEach(k=>{
     const btn=document.getElementById('ch'+k);
+    if(!btn) return;
     if(k===q.answer) btn.classList.add('correct');
     else if(k===key&&!correct) btn.classList.add('wrong');
     btn.disabled=true;
   });
 
   const choices=document.querySelector('.choices');
+  if(!choices) return; // renderQuestion failed or already answered
   const res=document.createElement('div');
   res.className='result-area '+(correct?'correct':'wrong');
   const msgs_ok=[
