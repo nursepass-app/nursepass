@@ -394,10 +394,17 @@ body.font-xl .explanation{font-size:15px}
 
 
   <div id="tabHome">
-    <!-- エリア2: ヒカリのひとこと -->
-    <div id="hikariHintBar" style="background:rgba(255,255,255,0.82);border:1.5px solid rgba(217,197,178,0.5);border-radius:14px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
-      <span style="font-size:18px;flex-shrink:0">🌸</span>
-      <span id="hikariHintText" style="font-size:13px;color:#4A3828;font-weight:500;line-height:1.4;flex:1"></span>
+    <!-- エリア2: ヒカリのひとこと (daily-msg-card) -->
+    <div id="hikariHintBar" class="daily-msg-card" style="margin-bottom:12px">
+      <div class="daily-msg-avatar"><img class="noa-av-img" id="dailyAvImg" src="" alt="ヒカリ"></div>
+      <div class="daily-msg-content">
+        <div class="daily-msg-label">ヒカリより</div>
+        <div class="daily-msg-text" id="dailyMsgText"></div>
+        <div class="daily-msg-footer">
+          <span class="daily-msg-date" id="dailyMsgDate"></span>
+          <span class="daily-msg-countdown" id="dailyMsgCountdown"></span>
+        </div>
+      </div>
     </div>
     <!-- エリア3: モード切替 -->
     <div class="mode-switch-wrap" id="modeSwitchBar" style="margin-bottom:18px">
