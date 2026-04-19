@@ -597,6 +597,30 @@ body.font-xl .explanation{font-size:16px}
 <script>
 // Mobile touch: passive touchstart for iOS scroll performance
 document.addEventListener('touchstart',function(){},{passive:true});
+// iOS touchend delegation: fire click on non-button clickable elements (subject-card etc.)
+(function(){
+  var _ts=null,_tx=0,_ty=0;
+  document.addEventListener('touchstart',function(e){
+    _ts=e.target;_tx=e.touches[0].clientX;_ty=e.touches[0].clientY;
+  },{passive:true,capture:true});
+  document.addEventListener('touchend',function(e){
+    var el=e.changedTouches?e.changedTouches[0]:null;
+    if(!el||!_ts) return;
+    var dx=el.clientX-_tx,dy=el.clientY-_ty;
+    if(Math.abs(dx)>10||Math.abs(dy)>10){_ts=null;return;}// スクロールは除外
+    var t=e.target;
+    // subject-cardクラスを持つdiv(科目別リスト)
+    while(t&&t!==document.body){
+      if(t.classList&&t.classList.contains('subject-card')){
+        var now=Date.now();
+        if(!t._tt||now-t._tt>400){t._tt=now;t.click();}
+        break;
+      }
+      t=t.parentElement;
+    }
+    _ts=null;
+  },{passive:true,capture:true});
+})();
 // localStorage fallback: iOS private browsing throws SecurityError on access
 (function(){
   try{localStorage.getItem('_np_test');}
@@ -958,6 +982,7 @@ function pickCount(mode, label){
   document.body.appendChild(modal);
 }
 function startQuizWithCount(mode, count){
+  if(!QUESTIONS||!QUESTIONS.length){alert('データ読み込み中です。しばらくお待ちください。');return;}
   const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
   const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
   let pool;
@@ -1571,17 +1596,12 @@ function setQuizMode(mode){
   quizMode=mode;
   localStorage.setItem('np_quiz_mode',mode);
   updateModeSwitch();
-  // ヒカリのひとこと表示切替
-  const hintBar=document.getElementById('hikariHintBar');
-  if(hintBar) hintBar.style.display=mode==='gachi'?'none':'flex';
 }
 function updateModeSwitch(){
   const bh=document.getElementById('modeBtnHikari');
   const bg=document.getElementById('modeBtnGachi');
-  const hintBar=document.getElementById('hikariHintBar');
   if(bh){bh.classList.toggle('active',quizMode==='hikari');}
   if(bg){bg.classList.toggle('active',quizMode==='gachi');}
-  if(hintBar) hintBar.style.display=quizMode==='gachi'?'none':'flex';
 }
 function startMainExam(){
   // カテゴリに応じた本番形式を起動
@@ -2128,7 +2148,7 @@ function playAnswerSound(correct){
       // 正解: MP3ファイル再生
       const correctAudio=new Audio('sounds/correct.mp3');
       correctAudio.volume=0.7;
-      correctAudio.play();
+      var p=correctAudio.play();if(p&&p.catch)p.catch(function(){});
     } else {
       // 不正解: 低い2音下降
       [330,220].forEach((freq,i)=>{
@@ -3041,6 +3061,7 @@ function initModeButtons(){
 
 // START QUIZ
 function startQuiz(mode){
+  if(!QUESTIONS||!QUESTIONS.length){alert('データ読み込み中です。しばらくお待ちください。');return;}
   let pool=[];
   const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
   const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
