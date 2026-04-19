@@ -3671,6 +3671,7 @@ function answer(key){
   const hasMemo=!!memoData[q.id];
   const wrongAns=!correct?`<div style="font-size:11px;color:#991b1b;margin:4px 0;padding:3px 8px;background:rgba(248,113,113,0.06);border-radius:6px">あなたの答え: <strong>${key}. ${q.choices[key]}</strong></div>`:'';
   const correctAns=!correct?`<div style="font-size:11px;color:#16a34a;margin:2px 0 4px;padding:3px 8px;background:rgba(74,222,128,0.06);border-radius:6px">正解: <strong>${q.answer}. ${q.choices[q.answer]}</strong></div>`:'';
+  // ── res: 正解/不正解ヘッダーのみ（ラベル・メッセージ・誤答表示）──
   res.innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
     <div class="result-label">${correct?'✓ 正解！':'✗ 不正解'}</div>
     <div style="display:flex;gap:2px">
@@ -3680,36 +3681,23 @@ function answer(key){
   </div>
   ${isBm?`<div id="bmTagRow_${q.id}" style="display:flex;gap:5px;margin:4px 0 6px;flex-wrap:wrap"></div>`:''}
   ${quizMode!=='gachi'?`<div style="font-size:12px;color:${correct?'#166534':'#B8A090'};font-weight:600;margin:4px 0 6px;padding:4px 8px;background:${correct?'rgba(74,222,128,0.08)':'rgba(217,197,178,0.08)'};border-radius:8px">${nmsg}</div>`:''}
-  ${wrongAns}${correctAns}${quizMode==='gachi'?`<details style="margin-top:6px"><summary style="font-size:12px;color:#64748b;cursor:pointer;user-select:none;padding:4px 0">解説を見る ▾</summary><div class="explanation">${highlightExplanation(q.explanation)}</div></details>`:`<div class="explanation" style="position:relative">${highlightExplanation(q.explanation)}<button onclick="navigator.clipboard.writeText('Q: '+this.closest('.explanation').textContent.trim()).then(()=>showToast('解説をコピーしました'))" style="position:absolute;top:4px;right:4px;padding:2px 6px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.15);border-radius:6px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif" title="解説をコピー">📋</button></div>`}
-  ${(()=>{const h=history[q.id];if(!h||h.correct+h.wrong<1) return '';const tot=h.correct+h.wrong;const acc=Math.round(h.correct/tot*100);const srs=srsData[q.id];const accColor=acc>=80?'#16a34a':acc>=60?'#D9A060':'#ef4444';return `<div style="margin-top:6px;padding:4px 10px;background:rgba(237,224,212,0.2);border-radius:8px;font-size:10px;color:#8A6A50;display:flex;gap:10px;align-items:center">この問題: <strong style="color:${accColor}">${acc}%</strong>正答 (${tot}回挑戦)${srs?` · 次の復習: ${srs.due<=todayKey?'今日！':`${Math.max(1,Math.ceil((new Date(srs.due)-new Date())/86400000))}日後`}`:''}</div>`;})()}
-  ${hasMemo?`<div style="margin-top:8px;padding:8px 10px;background:rgba(217,185,80,0.1);border-left:3px solid #D9A060;border-radius:6px;font-size:12px;color:#5A4420">📝 <strong>マイメモ：</strong>${memoData[q.id]}<button onclick="openMemo(${q.id})" style="margin-left:8px;padding:1px 6px;background:none;border:1px solid rgba(217,160,96,0.4);border-radius:6px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">編集</button></div>`:!correct?`<div style="margin-top:6px"><button onclick="openMemo(${q.id})" style="padding:4px 12px;background:rgba(217,185,80,0.1);border:1px dashed rgba(217,160,96,0.5);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif;width:100%;text-align:left">📝 この問題にメモを追加して復習に役立てよう ＋</button></div>`:''}
-  ${(()=>{
-    // 同じ分野の関連問題サジェスト（間違えた問題を優先）
-    if(!correct) return '';
-    const relWeak=QUESTIONS.filter(x=>x.id!==q.id&&x.field===q.field&&history[String(x.id)]&&history[String(x.id)].wrong>0).slice(0,2);
-    const relNew=QUESTIONS.filter(x=>x.id!==q.id&&x.field===q.field&&!history[String(x.id)]).slice(0,2-relWeak.length);
-    const rel=[...relWeak,...relNew];
-    if(!rel.length) return '';
-    return `<div style="margin-top:8px;padding:6px 10px;background:rgba(240,232,222,0.3);border-radius:10px">
-      <div style="font-size:10px;color:#8A6A50;font-weight:700;margin-bottom:4px">📌 同じ分野の問題</div>
-      ${rel.map(r=>{const rh=history[String(r.id)];const rLabel=rh&&rh.wrong>0?`<span style="color:#dc2626;font-size:9px">✗${rh.wrong}回</span>`:`<span style="color:#aaa;font-size:9px">未解答</span>`;return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid rgba(85,80,77,0.08)"><span style="flex:1;font-size:11px;color:#55504D;cursor:pointer" onclick="drillOne(${r.id})">${r.question.slice(0,40)}…</span>${rLabel}</div>`;}).join('')}
-    </div>`;
-  })()}
-  ${correct?`<div id="confBar_${q.id}" style="margin-top:8px;padding:7px 10px;background:rgba(240,232,222,0.4);border-radius:10px;display:flex;gap:6px;align-items:center"><span style="font-size:10px;color:#8A6A50;white-space:nowrap">確信度：</span><button onclick="setConfidence(${q.id},'sure')" id="confSure_${q.id}" style="flex:1;padding:5px 8px;background:rgba(74,222,128,0.15);border:1.5px solid rgba(74,222,128,0.4);border-radius:10px;font-size:11px;font-weight:700;color:#16a34a;cursor:pointer;font-family:'Noto Sans JP',sans-serif">✓ 完璧</button><button onclick="setConfidence(${q.id},'unsure')" id="confUnsure_${q.id}" style="flex:1;padding:5px 8px;background:rgba(251,191,36,0.12);border:1.5px solid rgba(251,191,36,0.4);border-radius:10px;font-size:11px;font-weight:700;color:#b45309;cursor:pointer;font-family:'Noto Sans JP',sans-serif">△ 曖昧</button></div>`:''}
-  <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-    <button id="flagBtn_${q.id}" onclick="flagQuestion(${q.id})" style="padding:5px 10px;background:${flaggedIds.has(q.id)?'rgba(239,68,68,0.12)':'rgba(240,232,222,0.8)'};color:${flaggedIds.has(q.id)?'#dc2626':'#8A6A50'};border:1px solid rgba(85,80,77,0.2);border-radius:16px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">${flaggedIds.has(q.id)?'🔖 フラグ済み':'🤔 難しかった'}</button>
-    ${(()=>{const s=srsData[q.id];if(!s)return'';const due=new Date(s.due);const today2=new Date(todayKey);const diff=Math.round((due-today2)/(1000*60*60*24));const label=diff<=0?'今日':diff===1?'明日':`${diff}日後（${s.due.slice(5)}）`;return`<span style="font-size:10px;color:#8A6A50;padding:4px 8px;background:rgba(240,232,222,0.6);border-radius:10px;white-space:nowrap">📅 次回SRS: ${label}</span>`;})()}
-    ${elapsedSec>=0.5?`<span style="font-size:10px;color:#8A6A50;padding:4px 8px;background:rgba(240,232,222,0.6);border-radius:10px;white-space:nowrap">⏱ ${elapsedSec}秒${(()=>{const avg=getAvgTime(q.id);return avg?` (平均${avg}秒)`:''})()}</span>`:''}
-${!correct&&history[q.id]&&history[q.id].wrong>0?`<button id="masterBtn_${q.id}" onclick="markMastered(${q.id})" style="padding:4px 9px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.35);border-radius:10px;font-size:10px;color:#16a34a;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">✓ 克服済みにする</button>`:''}
-  </div>
-  `;
+  ${wrongAns}${correctAns}`;
   choices.after(res);
 
   const isLast=session.idx>=session.pool.length-1;
   const streak10End=session.mode==='streak10'&&(session.streakGameOver||(session.currentStreak||0)>=session.streakTarget);
 
+  // ── 解説・アクションHTML（次のボタンの下に表示）──
+  const _explHtml=quizMode==='gachi'
+    ?`<details style="margin-bottom:8px"><summary style="font-size:12px;color:#64748b;cursor:pointer;user-select:none;padding:4px 0">解説を見る ▾</summary><div class="explanation">${highlightExplanation(q.explanation)}</div></details>`
+    :`<div class="explanation" style="position:relative;margin-bottom:8px">${highlightExplanation(q.explanation)}<button onclick="navigator.clipboard.writeText('Q: '+this.closest('.explanation').textContent.trim()).then(()=>showToast('解説をコピーしました'))" style="position:absolute;top:4px;right:4px;padding:2px 6px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.15);border-radius:6px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif" title="解説をコピー">📋</button></div>`;
+  const _accHtml=(()=>{const h=history[q.id];if(!h||h.correct+h.wrong<1)return'';const tot=h.correct+h.wrong;const acc=Math.round(h.correct/tot*100);const srs=srsData[q.id];const accColor=acc>=80?'#16a34a':acc>=60?'#D9A060':'#ef4444';return`<div style="margin-bottom:6px;padding:4px 10px;background:rgba(237,224,212,0.2);border-radius:8px;font-size:10px;color:#8A6A50;display:flex;gap:10px;align-items:center">この問題: <strong style="color:${accColor}">${acc}%</strong>正答 (${tot}回挑戦)${srs?` · 次の復習: ${srs.due<=todayKey?'今日！':`${Math.max(1,Math.ceil((new Date(srs.due)-new Date())/86400000))}日後`}`:''}</div>`;})();
+  const _memoHtml=hasMemo?`<div style="margin-bottom:8px;padding:8px 10px;background:rgba(217,185,80,0.1);border-left:3px solid #D9A060;border-radius:6px;font-size:12px;color:#5A4420">📝 <strong>マイメモ：</strong>${memoData[q.id]}<button onclick="openMemo(${q.id})" style="margin-left:8px;padding:1px 6px;background:none;border:1px solid rgba(217,160,96,0.4);border-radius:6px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">編集</button></div>`:!correct?`<div style="margin-bottom:6px"><button onclick="openMemo(${q.id})" style="padding:4px 12px;background:rgba(217,185,80,0.1);border:1px dashed rgba(217,160,96,0.5);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif;width:100%;text-align:left">📝 この問題にメモを追加して復習に役立てよう ＋</button></div>`:'';
+  const _relHtml=(()=>{if(!correct)return'';const relWeak=QUESTIONS.filter(x=>x.id!==q.id&&x.field===q.field&&history[String(x.id)]&&history[String(x.id)].wrong>0).slice(0,2);const relNew=QUESTIONS.filter(x=>x.id!==q.id&&x.field===q.field&&!history[String(x.id)]).slice(0,2-relWeak.length);const rel=[...relWeak,...relNew];if(!rel.length)return'';return`<div style="margin-bottom:8px;padding:6px 10px;background:rgba(240,232,222,0.3);border-radius:10px"><div style="font-size:10px;color:#8A6A50;font-weight:700;margin-bottom:4px">📌 同じ分野の問題</div>${rel.map(r=>{const rh=history[String(r.id)];const rLabel=rh&&rh.wrong>0?`<span style="color:#dc2626;font-size:9px">✗${rh.wrong}回</span>`:`<span style="color:#aaa;font-size:9px">未解答</span>`;return`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid rgba(85,80,77,0.08)"><span style="flex:1;font-size:11px;color:#55504D;cursor:pointer" onclick="drillOne(${r.id})">${r.question.slice(0,40)}…</span>${rLabel}</div>`;}).join('')}</div>`;})();
+  const _actHtml=`${correct?`<div id="confBar_${q.id}" style="margin-bottom:8px;padding:7px 10px;background:rgba(240,232,222,0.4);border-radius:10px;display:flex;gap:6px;align-items:center"><span style="font-size:10px;color:#8A6A50;white-space:nowrap">確信度：</span><button onclick="setConfidence(${q.id},'sure')" id="confSure_${q.id}" style="flex:1;padding:5px 8px;background:rgba(74,222,128,0.15);border:1.5px solid rgba(74,222,128,0.4);border-radius:10px;font-size:11px;font-weight:700;color:#16a34a;cursor:pointer;font-family:'Noto Sans JP',sans-serif">✓ 完璧</button><button onclick="setConfidence(${q.id},'unsure')" id="confUnsure_${q.id}" style="flex:1;padding:5px 8px;background:rgba(251,191,36,0.12);border:1.5px solid rgba(251,191,36,0.4);border-radius:10px;font-size:11px;font-weight:700;color:#b45309;cursor:pointer;font-family:'Noto Sans JP',sans-serif">△ 曖昧</button></div>`:''}<div style="margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button id="flagBtn_${q.id}" onclick="flagQuestion(${q.id})" style="padding:5px 10px;background:${flaggedIds.has(q.id)?'rgba(239,68,68,0.12)':'rgba(240,232,222,0.8)'};color:${flaggedIds.has(q.id)?'#dc2626':'#8A6A50'};border:1px solid rgba(85,80,77,0.2);border-radius:16px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif">${flaggedIds.has(q.id)?'🔖 フラグ済み':'🤔 難しかった'}</button>${(()=>{const s=srsData[q.id];if(!s)return'';const due=new Date(s.due);const today2=new Date(todayKey);const diff=Math.round((due-today2)/(1000*60*60*24));const label=diff<=0?'今日':diff===1?'明日':`${diff}日後（${s.due.slice(5)}）`;return`<span style="font-size:10px;color:#8A6A50;padding:4px 8px;background:rgba(240,232,222,0.6);border-radius:10px;white-space:nowrap">📅 次回SRS: ${label}</span>`;})()}${elapsedSec>=0.5?`<span style="font-size:10px;color:#8A6A50;padding:4px 8px;background:rgba(240,232,222,0.6);border-radius:10px;white-space:nowrap">⏱ ${elapsedSec}秒${(()=>{const avg=getAvgTime(q.id);return avg?` (平均${avg}秒)`:''})()}</span>`:''}${!correct&&history[q.id]&&history[q.id].wrong>0?`<button id="masterBtn_${q.id}" onclick="markMastered(${q.id})" style="padding:4px 9px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.35);border-radius:10px;font-size:10px;color:#16a34a;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">✓ 克服済みにする</button>`:''}</div>`;
+
   if(quizMode==='gachi'){
-    // ガチモード: 最終問題はボタン、それ以外は自動送り
+    // スピードモード: res → nb → detail(解説+アクション)
     const isLastQ=isLast||streak10End;
     const nb=document.createElement('button');
     nb.className='gachi-next-btn';nb.id='nextBtn';
@@ -3717,14 +3705,12 @@ ${!correct&&history[q.id]&&history[q.id].wrong>0?`<button id="masterBtn_${q.id}"
       nb.textContent='結果を見る →';
       nb.onclick=finishQuiz;
       nb.style.background=correct?'linear-gradient(135deg,#16a34a,#15803d)':'linear-gradient(135deg,#dc2626,#b91c1c)';
-      res.after(nb);
     } else {
       // 自動送り: 正解1.5秒、不正解2.5秒
       let gachiRemain=correct?1.5:2.5;
       nb.style.background=correct?'linear-gradient(135deg,#16a34a,#15803d)':'linear-gradient(135deg,#dc2626,#b91c1c)';
       nb.textContent=`次へ (${gachiRemain.toFixed(1)})`;
       nb.onclick=()=>{if(autoAdvanceTimer){clearInterval(autoAdvanceTimer);autoAdvanceTimer=null;}nextQ();};
-      res.after(nb);
       autoAdvanceTimer=setInterval(()=>{
         gachiRemain-=0.1;
         if(gachiRemain<=0){clearInterval(autoAdvanceTimer);autoAdvanceTimer=null;nextQ();return;}
@@ -3732,12 +3718,16 @@ ${!correct&&history[q.id]&&history[q.id].wrong>0?`<button id="masterBtn_${q.id}"
         if(btn2) btn2.textContent=`次へ (${gachiRemain.toFixed(1)})`;
       },100);
     }
+    res.after(nb);
+    const gd=document.createElement('div');gd.style.cssText='padding:0 16px 8px';
+    gd.innerHTML=_explHtml+_accHtml+_memoHtml+_relHtml+_actHtml;
+    nb.after(gd);
   } else {
-    // ヒカリモード: ミニチャット + 5問区切り + 通常ボタン
+    // やさしくモード: res → nb → 解説 → ヒカリ質問 → アクション
     const mc=createMiniChat(q);
-    res.after(mc);
     const is5=(session.idx+1)%5===0&&!isLast&&!streak10End;
     if(is5){
+      // 5問区切り: res → continue-card → 解説 → ヒカリ → アクション
       const cc=document.createElement('div');
       cc.className='continue-card';
       cc.innerHTML=`<div class="continue-title">${session.idx+1}問終わったよ。どうする？</div>
@@ -3746,13 +3736,28 @@ ${!correct&&history[q.id]&&history[q.id].wrong>0?`<button id="masterBtn_${q.id}"
         <button class="c-btn active" onclick="startWeakFromHere()">△　苦手に絞る</button>
         <button class="c-btn done" onclick="finishQuiz()">◎　今日はここまで</button>
       </div>`;
-      mc.after(cc);
+      res.after(cc);
+      const ed=document.createElement('div');ed.style.cssText='padding:0 16px 8px';
+      ed.innerHTML=_explHtml+_accHtml+_memoHtml+_relHtml;
+      cc.after(ed);
+      ed.after(mc);
+      const ad=document.createElement('div');ad.style.cssText='padding:0 16px 8px';
+      ad.innerHTML=_actHtml;
+      mc.after(ad);
     } else {
+      // 通常: res → nb → 解説 → ヒカリ質問 → アクション
       const nb=document.createElement('button');
       nb.className='next-btn';nb.id='nextBtn';
       nb.textContent=(isLast||streak10End)?'結果を見る →':'次の問題 →';
       nb.onclick=(isLast||streak10End)?finishQuiz:nextQ;
-      mc.after(nb);
+      res.after(nb);
+      const ed=document.createElement('div');ed.style.cssText='padding:0 16px 8px';
+      ed.innerHTML=_explHtml+_accHtml+_memoHtml+_relHtml;
+      nb.after(ed);
+      ed.after(mc);
+      const ad=document.createElement('div');ad.style.cssText='padding:0 16px 8px';
+      ad.innerHTML=_actHtml;
+      mc.after(ad);
     }
   }
 }
