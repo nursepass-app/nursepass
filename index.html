@@ -4523,7 +4523,7 @@ async function requestHikariAnalysis(){
     const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'gpt-4o-mini',messages:[
+      body:JSON.stringify({model:'gpt-4o',messages:[
         {role:'system',content:'あなたは看護師国家試験対策アプリ「NursePass」のAIコーチ「ヒカリ（叶愛）」です。静かなやさしさで不安な心に寄り添い、温かく励ます口調で学習アドバイスをします。200字以内で簡潔に。'},
         {role:'user',content:`以下の学習データに基づき、具体的で実用的な学習アドバイスをください。\n\n${summary}`}
       ],max_tokens:250,temperature:0.7})
@@ -5958,7 +5958,7 @@ async function sendMiniChat(){
     const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'gpt-4o-mini',messages:apiMsgs,max_tokens:300,temperature:0.7})
+      body:JSON.stringify({model:'gpt-4o',messages:apiMsgs,max_tokens:300,temperature:0.7})
     });
     const t=document.getElementById('miniTyping');if(t)t.remove();
     if(!res.ok){
@@ -6054,7 +6054,7 @@ async function sendChat(){
     const res=await fetch('https://api.openai.com/v1/chat/completions',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:'gpt-4o-mini',messages:msgs,max_tokens:300,temperature:0.8})
+      body:JSON.stringify({model:'gpt-4o',messages:msgs,max_tokens:300,temperature:0.8})
     });
     const t=document.getElementById('typingIndicator');
     if(t) t.remove();
