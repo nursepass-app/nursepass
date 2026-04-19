@@ -973,7 +973,7 @@ function shareResult(rate, total, correct){
     `📖 累計解答：${answered}問`,
     '',
     '#NursePass #看護師国家試験 #看護学生',
-    'https://yunoa091224.github.io/nursepass/'
+    'https://nursepass-app.github.io/nursepass/'
   ].join('\n');
   if(navigator.share){
     navigator.share({title:'NursePass 学習記録',text}).catch(()=>{});
@@ -2303,7 +2303,7 @@ function shareAchievementCard(){
     '',
     '━━━━━━━━━━━━━━━━━━━━━━━━━━',
     '#NursePass #看護師国家試験',
-    'https://yunoa091224.github.io/nursepass/'
+    'https://nursepass-app.github.io/nursepass/'
   ].filter(l=>l!==null&&l!==undefined&&(l.length>0||l==='\\n')).join('\n');
   if(navigator.share){
     navigator.share({title:'NursePass 学習実績証明書',text}).catch(()=>{});
@@ -4127,7 +4127,7 @@ function shareQuestion(id){
   const q=QUESTIONS.find(x=>x.id===id);
   if(!q) return;
   const choices=Object.entries(q.choices).map(([k,v])=>`${k}. ${v}`).join('\n');
-  const text=`【NursePass 練習問題 #${id}】\n${q.category} ▸ ${q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')}\n\n${q.question}\n\n${choices}\n\n正解: ${q.answer}. ${q.choices[q.answer]}\n\n📚 NursePass で看護師国試対策\nhttps://yunoa091224.github.io/nursepass/`;
+  const text=`【NursePass 練習問題 #${id}】\n${q.category} ▸ ${q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')}\n\n${q.question}\n\n${choices}\n\n正解: ${q.answer}. ${q.choices[q.answer]}\n\n📚 NursePass で看護師国試対策\nhttps://nursepass-app.github.io/nursepass/`;
   if(navigator.share){
     navigator.share({title:'NursePass 練習問題',text}).catch(()=>{});
   } else {
