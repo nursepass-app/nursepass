@@ -60,22 +60,22 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .back-btn{background:none;border:none;cursor:pointer;color:#5A5450;font-size:13px;padding:4px;font-family:'Noto Sans JP',sans-serif}
 .q-progress{flex:1;height:5px;background:rgba(237,224,212,.2);border-radius:10px;overflow:hidden}
 .q-bar{height:100%;background:linear-gradient(90deg,#D9C5B2,#B8A090);border-radius:10px;transition:.4s}
-.q-count{font-size:11px;color:#5A5450;white-space:nowrap}
-.q-field{padding:10px 20px 0;font-size:10px;color:#5A5450;letter-spacing:.05em}
-.q-text{padding:14px 20px 16px;font-size:15px;line-height:1.7;color:#55504D;font-weight:500}
+.q-count{font-size:13px;color:#5A5450;white-space:nowrap}
+.q-field{padding:10px 20px 0;font-size:12px;color:#5A5450;letter-spacing:.05em}
+.q-text{padding:14px 20px 16px;font-size:18px;line-height:1.7;color:#55504D;font-weight:500}
 .choices{display:flex;flex-direction:column;gap:8px;padding:0 16px 16px}
-.choice-btn{width:100%;padding:12px 16px;border:1.5px solid rgba(85,80,77,0.3);border-radius:14px;background:rgba(240,232,222,.8);text-align:left;cursor:pointer;font-size:13px;line-height:1.5;color:#55504D;font-family:'Noto Sans JP',sans-serif;transition:.2s;display:flex;align-items:flex-start;gap:10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.choice-btn{width:100%;padding:12px 16px;border:1.5px solid rgba(85,80,77,0.3);border-radius:14px;background:rgba(240,232,222,.8);text-align:left;cursor:pointer;font-size:16px;line-height:1.5;color:#55504D;font-family:'Noto Sans JP',sans-serif;transition:.2s;display:flex;align-items:flex-start;gap:10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .choice-btn:hover:not(:disabled){border-color:rgba(217,197,178,.4);background:rgba(245,239,232,.9)}
 .choice-btn.correct{background:rgba(74,222,128,.12);border-color:#4ade80;color:#166534}
 .choice-btn.wrong{background:rgba(248,113,113,.1);border-color:#f87171;color:#991b1b}
 .choice-btn:disabled{cursor:default}
-.choice-key{font-weight:700;font-size:12px;opacity:.6;flex-shrink:0;margin-top:1px}
-.result-area{margin:0 16px 16px;padding:14px 16px;border-radius:14px;font-size:13px;line-height:1.7}
+.choice-key{font-weight:700;font-size:14px;opacity:.6;flex-shrink:0;margin-top:1px}
+.result-area{margin:0 16px 16px;padding:14px 16px;border-radius:14px;font-size:14px;line-height:1.7}
 .result-area.correct{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:#166534}
 .result-area.wrong{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#991b1b}
-.result-label{font-weight:700;font-size:14px;margin-bottom:6px}
-.explanation{color:#55504D;font-size:12px;line-height:1.7;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.06)}
-.next-btn{width:calc(100% - 32px);margin:0 16px 16px;padding:12px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 3px 12px rgba(184,160,144,.25)}
+.result-label{font-weight:700;font-size:16px;margin-bottom:6px}
+.explanation{color:#55504D;font-size:14px;line-height:1.7;margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,.06)}
+.next-btn{width:calc(100% - 32px);margin:0 16px 16px;padding:12px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 3px 12px rgba(184,160,144,.25)}
 .continue-card{margin:0 16px 16px;padding:14px 16px;background:linear-gradient(135deg,rgba(245,239,232,.98),rgba(245,239,232,.98));border:1.5px solid rgba(85,80,77,0.28);border-radius:16px;animation:fadein .4s ease}
 .continue-title{font-size:13px;font-weight:500;color:#55504D;text-align:center;margin-bottom:10px;font-family:'Zen Kaku Gothic New',sans-serif}
 .c-btns{display:flex;flex-direction:column;gap:6px}
@@ -86,11 +86,11 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 /* RESULTS */
 .result-summary{padding:24px 20px;text-align:center}
 .result-big{font-size:48px;font-weight:700;font-family:'Zen Kaku Gothic New',sans-serif;background:linear-gradient(135deg,#D9C5B2,#B8A090);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1}
-.result-label2{font-size:13px;color:#5A5450;margin:4px 0 16px}
+.result-label2{font-size:15px;color:#5A5450;margin:4px 0 16px}
 .result-stars{font-size:28px;margin-bottom:16px}
-.result-msg{font-size:14px;color:#55504D;line-height:1.7;margin-bottom:20px}
-.result-retry{width:100%;padding:12px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px}
-.result-home{width:100%;padding:12px;background:rgba(237,224,212,.35);color:#55504D;border:1px solid rgba(237,224,212,.3);border-radius:14px;font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+.result-msg{font-size:15px;color:#55504D;line-height:1.7;margin-bottom:20px}
+.result-retry{width:100%;padding:12px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px}
+.result-home{width:100%;padding:12px;background:rgba(237,224,212,.35);color:#55504D;border:1px solid rgba(237,224,212,.3);border-radius:14px;font-size:15px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
 
 /* WEAK LIST */
 .weak-list{padding:12px 16px}
@@ -171,9 +171,9 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .daily-msg-card{background:linear-gradient(135deg,rgba(245,239,232,0.96),rgba(237,224,212,0.92));border:1.5px solid rgba(85,80,77,0.32);border-radius:20px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px;box-shadow:0 2px 14px rgba(217,197,178,0.12);animation:fadein .5s ease}
 .daily-msg-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#EDE0D4,#D9C5B2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;box-shadow:0 3px 10px rgba(217,197,178,0.3);letter-spacing:-.5px;overflow:hidden}
 .daily-msg-content{flex:1;min-width:0}
-.daily-msg-label{font-size:10px;color:#8A6A50;font-weight:700;letter-spacing:.06em;margin-bottom:5px}
-.daily-msg-text{font-size:13px;line-height:1.78;color:#55504D;font-weight:500;word-break:break-all}
-.daily-msg-footer{font-size:10px;color:#5A5450;margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.daily-msg-label{font-size:12px;color:#8A6A50;font-weight:700;letter-spacing:.06em;margin-bottom:5px}
+.daily-msg-text{font-size:15px;line-height:1.78;color:#55504D;font-weight:500;word-break:break-all}
+.daily-msg-footer{font-size:12px;color:#5A5450;margin-top:8px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
 .daily-msg-date{background:rgba(138,106,80,0.12);color:#8A6A50;padding:1px 7px;border-radius:8px;font-weight:700;white-space:nowrap}
 .daily-msg-countdown{white-space:nowrap;color:#5A5450}
 .cal-btn{width:100%;padding:11px;background:rgba(66,133,244,0.1);color:#3367D6;border:1.5px solid rgba(66,133,244,0.25);border-radius:14px;font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:8px;font-weight:600;letter-spacing:.3px}
@@ -249,7 +249,7 @@ body.dark .memo-textarea{background:rgba(50,38,30,.8);color:#D8C8B8;border-color
 .flash-front{background:linear-gradient(135deg,rgba(245,239,232,.95),rgba(237,224,212,.9));border:2px solid rgba(217,197,178,.5)}
 .flash-back{background:linear-gradient(135deg,rgba(90,80,70,.92),rgba(60,50,42,.9));color:#F5EFE8;transform:rotateY(180deg)}
 .flash-q-label{font-size:10px;font-weight:700;color:#B8A090;letter-spacing:1.5px;margin-bottom:10px;text-transform:uppercase}
-.flash-q-text{font-size:15px;font-weight:700;color:#3C2A1E;text-align:center;line-height:1.65}
+.flash-q-text{font-size:18px;font-weight:700;color:#3C2A1E;text-align:center;line-height:1.65}
 .flash-a-text{font-size:16px;font-weight:800;color:#F5EFE8;text-align:center;line-height:1.65}
 .flash-a-sub{font-size:11px;color:rgba(245,239,232,.7);margin-top:8px;text-align:center;line-height:1.6}
 .flash-hint{font-size:10px;color:rgba(107,80,64,.5);margin-top:12px;letter-spacing:.5px}
@@ -308,18 +308,18 @@ body.dark .subject-prog-track{background:rgba(180,160,140,0.15)}
 body.dark .subject-q-count{background:rgba(60,44,30,0.6);color:#C8A888}
 body.dark .subject-screen-title{color:#D8C8B8}
 /* フォントサイズ */
-body.font-lg .q-text{font-size:17px}
-body.font-lg .choice-btn{font-size:15px}
-body.font-lg .explanation{font-size:14px}
-body.font-xl .q-text{font-size:19px}
-body.font-xl .choice-btn{font-size:16px}
-body.font-xl .explanation{font-size:15px}
+body.font-lg .q-text{font-size:20px}
+body.font-lg .choice-btn{font-size:17px}
+body.font-lg .explanation{font-size:15px}
+body.font-xl .q-text{font-size:22px}
+body.font-xl .choice-btn{font-size:18px}
+body.font-xl .explanation{font-size:16px}
 /* ガチモード（本番・反復練習）スタイル */
 .gachi-quiz .card{background:rgba(250,250,253,0.98)!important;border-color:rgba(100,110,130,0.2)!important;box-shadow:0 4px 20px rgba(0,0,0,.07)!important}
 .gachi-quiz .q-bar{background:linear-gradient(90deg,#475569,#334155)!important}
 .gachi-quiz .q-count{font-size:18px!important;font-weight:900!important;color:#1e293b!important;letter-spacing:-.5px}
 .gachi-quiz .q-field{color:#64748b!important}
-.gachi-quiz .q-text{color:#1e293b!important;font-weight:600!important;font-size:16px!important}
+.gachi-quiz .q-text{color:#1e293b!important;font-weight:600!important;font-size:18px!important}
 .gachi-quiz .choice-btn{background:rgba(248,250,252,0.96)!important;border-color:rgba(100,116,139,0.3)!important;color:#1e293b!important}
 .gachi-quiz .choice-btn:hover:not(:disabled){border-color:rgba(71,85,105,.55)!important;background:rgba(241,245,249,0.99)!important}
 .gachi-quiz .choice-btn.correct{background:rgba(74,222,128,.14)!important;border-color:#4ade80!important}
@@ -327,7 +327,7 @@ body.font-xl .explanation{font-size:15px}
 .gachi-next-btn{width:calc(100% - 32px);margin:0 16px 16px;padding:18px;background:linear-gradient(135deg,#475569,#334155);color:white;border:none;border-radius:14px;font-size:22px;font-weight:900;cursor:pointer;font-family:"Noto Sans JP",sans-serif;box-shadow:0 4px 16px rgba(51,65,85,.3);letter-spacing:2px}
 /* モード切替スイッチ */
 .mode-switch-wrap{display:flex;gap:6px;margin-bottom:10px;background:rgba(255,255,255,0.75);border:1.5px solid rgba(217,197,178,0.4);border-radius:14px;padding:4px}
-.mode-switch-btn{flex:1;padding:8px 10px;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;font-family:"Noto Sans JP",sans-serif;transition:.2s;background:transparent;color:#6B5040}
+.mode-switch-btn{flex:1;padding:8px 10px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:"Noto Sans JP",sans-serif;transition:.2s;background:transparent;color:#6B5040}
 .mode-switch-btn.active.hikari{background:linear-gradient(135deg,#EDE0D4,#D9C5B2);color:#4A3828;box-shadow:0 2px 8px rgba(184,160,144,.2)}
 .mode-switch-btn.active.gachi{background:linear-gradient(135deg,#475569,#334155);color:white;box-shadow:0 2px 8px rgba(51,65,85,.3)}
 
@@ -343,7 +343,7 @@ body.font-xl .explanation{font-size:15px}
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:999;background:rgba(255,252,248,0.97);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(217,197,178,0.4);display:flex;justify-content:space-around;align-items:stretch;height:62px;box-shadow:0 -2px 16px rgba(184,160,144,.15)}
 .bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;font-family:'Noto Sans JP',sans-serif;padding:6px 4px;transition:.2s;position:relative;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .bn-icon{font-size:20px;line-height:1;transition:.2s}
-.bn-label{font-size:10px;color:#8A7A70;font-weight:500;transition:.2s}
+.bn-label{font-size:13px;color:#8A7A70;font-weight:500;transition:.2s}
 .bn-btn.active .bn-icon{transform:scale(1.1)}
 .bn-btn.active .bn-label{color:#8A6A50;font-weight:700}
 .bn-btn.active::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:3px;background:linear-gradient(135deg,#D9C5B2,#B8A090);border-radius:0 0 4px 4px}
@@ -379,7 +379,7 @@ body.font-xl .explanation{font-size:15px}
 .hikari-msg-toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:9500;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(245,239,232,0.97),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.65);border-radius:20px;padding:10px 14px;box-shadow:0 4px 20px rgba(184,144,122,0.3);max-width:300px;width:88%;pointer-events:none;animation:hikariMsgIn .35s ease forwards;}
 .hikari-msg-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,#EDE0D4,#D9C5B2);}
 .hikari-msg-av img{width:100%;height:100%;object-fit:contain;}
-.hikari-msg-body{font-size:12px;color:#4A3828;font-weight:500;line-height:1.55;font-family:'Noto Sans JP',sans-serif;}
+.hikari-msg-body{font-size:15px;color:#4A3828;font-weight:500;line-height:1.55;font-family:'Noto Sans JP',sans-serif;}
 #streakHomeBadge{text-align:center;font-size:12px;font-weight:700;color:#B8907A;letter-spacing:.3px;margin-bottom:10px;display:none;}
 @keyframes lv1Spark{0%,100%{box-shadow:0 3px 10px rgba(217,197,178,0.3);}50%{box-shadow:0 0 12px 5px rgba(255,220,130,0.55),0 0 20px 8px rgba(255,220,130,0.18);}}
 @keyframes lv2Gold{0%,100%{box-shadow:0 0 8px 3px rgba(212,175,55,0.5);}50%{box-shadow:0 0 20px 8px rgba(212,175,55,0.9),0 0 32px 14px rgba(212,175,55,0.22);}}
@@ -408,8 +408,7 @@ body.font-xl .explanation{font-size:15px}
     <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
       <div class="score-badge">正答率 <span id="rateDisp">--%</span></div>
       <button onclick="toggleDark()" id="darkBtn" title="ダークモード" style="background:none;border:none;cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;border-radius:8px;transition:.15s">🌙</button>
-      <button onclick="cycleFontSize()" id="fontBtn" title="文字サイズ" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;line-height:1;border-radius:8px;border:1px solid rgba(85,80,77,0.25);color:#5A5450;font-family:'Noto Sans JP',sans-serif">A</button>
-      <button onclick="toggleSound()" class="sound-toggle-btn" title="サウンドOFF" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;border-radius:8px;opacity:0.7">🔔</button>
+<button onclick="toggleSound()" class="sound-toggle-btn" title="サウンドOFF" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;border-radius:8px;opacity:0.7">🔔</button>
     </div>
   </div>
 
@@ -433,7 +432,7 @@ body.font-xl .explanation{font-size:15px}
     <!-- エリア3: モード切替 -->
     <div class="mode-switch-wrap" id="modeSwitchBar" style="margin-bottom:18px">
       <button class="mode-switch-btn active hikari" id="modeBtnHikari" onclick="setQuizMode('hikari')">🌸 やさしく</button>
-      <button class="mode-switch-btn gachi" id="modeBtnGachi" onclick="setQuizMode('gachi')">⚡ ガチ</button>
+      <button class="mode-switch-btn gachi" id="modeBtnGachi" onclick="setQuizMode('gachi')">⚡ スピード</button>
     </div>
     <!-- エリア4: メインボタン -->
     <div style="display:flex;flex-direction:column;gap:12px">
