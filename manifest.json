@@ -1,0 +1,22 @@
+{
+  "name": "NursePass 看護師国試対策",
+  "short_name": "NursePass",
+  "description": "AIコーチ・ヒカリと一緒に国試合格を目指すアプリ",
+  "start_url": "/nursepass/",
+  "display": "standalone",
+  "background_color": "#f5ede4",
+  "theme_color": "#c4956a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "images/hikari/hikari_lv1.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/hikari/hikari_lv1.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
