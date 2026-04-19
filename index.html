@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>NursePass | 看護師国試対策</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -12,7 +12,9 @@
 --sage:#BDC7C1;--sage-light:#D8E2DE;
 --text:#55504D;--text-mid:#5A5450;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{touch-action:manipulation}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button,[onclick]{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
 body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);font-family:'Noto Sans JP',sans-serif;padding:16px;padding-bottom:80px;position:relative;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
@@ -415,7 +417,7 @@ body.font-xl .explanation{font-size:16px}
 
   <div id="tabHome">
     <!-- エリア2: ヒカリのひとこと (daily-msg-card) -->
-    <div id="hikariHintBar" class="daily-msg-card" style="margin-bottom:12px">
+    <div id="hikariHintBar" class="daily-msg-card" style="margin-bottom:12px;display:flex!important">
       <div style="position:relative;flex-shrink:0"><div class="daily-msg-avatar" id="dailyMsgAvDiv"><img class="noa-av-img" id="dailyAvImg" src="" alt="ヒカリ"></div><span id="hikariCrown" style="display:none;position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:15px;line-height:1;z-index:2">👑</span></div>
       <div class="daily-msg-content">
         <div class="daily-msg-label">ヒカリより <span id="hikariLvBadge" style="background:rgba(138,106,80,0.15);color:#8A6A50;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px">Lv.1</span></div>
@@ -6650,6 +6652,40 @@ renderTodayPlan();
   el.onclick=()=>el.remove();
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),5000);
+})();
+// Android Chrome: touchend on [onclick] elements to eliminate 300ms delay
+// e.preventDefault() prevents the synthetic click so function runs only once
+(function(){
+  function attachTouchEnd(el){
+    if(el._te) return;
+    el._te=true;
+    el.addEventListener('touchend',function(e){
+      var dx=0,dy=0;
+      if(e.changedTouches){dx=Math.abs(e.changedTouches[0].clientX-(el._tsx||0));dy=Math.abs(e.changedTouches[0].clientY-(el._tsy||0));}
+      if(dx>10||dy>10) return;// スクロールは除外
+      var attr=el.getAttribute('onclick');
+      if(!attr) return;
+      e.preventDefault();
+      try{(new Function(attr))();}catch(err){}
+    },{passive:false});
+    el.addEventListener('touchstart',function(e){
+      if(e.touches){el._tsx=e.touches[0].clientX;el._tsy=e.touches[0].clientY;}
+    },{passive:true});
+  }
+  // 静的要素（ページ読み込み時に存在するもの）
+  function bindAll(){document.querySelectorAll('[onclick]').forEach(attachTouchEnd);}
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',bindAll);}else{bindAll();}
+  // 動的要素（renderSubjectList等で生成されるもの）- MutationObserverで監視
+  var obs=new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      m.addedNodes.forEach(function(n){
+        if(n.nodeType!==1) return;
+        if(n.getAttribute&&n.getAttribute('onclick')) attachTouchEnd(n);
+        n.querySelectorAll&&n.querySelectorAll('[onclick]').forEach(attachTouchEnd);
+      });
+    });
+  });
+  obs.observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 </body>
