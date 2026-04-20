@@ -3430,7 +3430,7 @@ function renderQuestion(){
       </div>
       ${session.mode==='mock'?`<div id="mockElapsed" style="font-size:10px;color:#8A6A50;text-align:right;padding:2px 20px 0;font-variant-numeric:tabular-nums">⏱ 00:00</div>`:''}
       ${isTime?`<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div class="timer-count" id="timerCnt">${session.timeLimit}秒</div>`:''}
-      <div class="q-field" style="display:flex;justify-content:space-between;align-items:center"><span>${q.category} ▸ ${q.field} <span style="color:#C0B0A0;font-size:9px">#${q.id}</span></span><span style="display:flex;align-items:center;gap:8px">${!isTime&&total-session.idx>1?`<button onclick="skipQuestion()" style="padding:2px 8px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">スキップ↓</button>`:''}<button id="autoAdvBtn" onclick="toggleAutoAdvance()" style="padding:2px 8px;background:${autoAdvance?'rgba(217,160,96,0.25)':'rgba(240,232,222,0.8)'};border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:${autoAdvance?'#c2410c':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">${autoAdvance?'⚡自動送りON':'⚡自動送りOFF'}</button><span style="color:#C0B0A0;font-size:9px;letter-spacing:0">A/B/C/D キー</span><span style="color:#D9C5B2;font-size:12px;letter-spacing:1px">${'★'.repeat(q.stars||1)+'☆'.repeat(3-(q.stars||1))}</span></span></div>
+      <div class="q-field" style="display:flex;justify-content:space-between;align-items:center"><span>${q.category} ▸ ${q.field} <span style="color:#C0B0A0;font-size:9px">#${q.id}</span></span><span style="display:flex;align-items:center;gap:8px">${!isTime&&total-session.idx>1?`<button onclick="skipQuestion()" style="padding:2px 8px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">スキップ↓</button>`:''}<button id="autoAdvBtn" onclick="toggleAutoAdvance()" style="padding:2px 8px;background:${autoAdvance?'rgba(217,160,96,0.25)':'rgba(240,232,222,0.8)'};border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:${autoAdvance?'#c2410c':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">${autoAdvance?'⚡自動送りON':'⚡自動送りOFF'}</button><span style="color:#C0B0A0;font-size:9px;letter-spacing:0">A/B/C/D キー</span><span style="font-size:12px;letter-spacing:1px"><span style="color:#e53935">${'★'.repeat(q.stars||1)}</span><span style="color:#D9C5B2">${'☆'.repeat(3-(q.stars||1))}</span></span></span></div>
       <div class="q-text">${q.question}</div>
       ${!isTime?`<div id="hintArea" style="margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button></div>`:''}
       <div class="choices">
@@ -4333,7 +4333,7 @@ function renderWeak(){
       const acc=h&&h.correct+h.wrong?Math.round(h.correct/(h.correct+h.wrong)*100)+'%':'未解答';
       const col=!h?'#8A6A50':h.correct>h.wrong?'#16a34a':'#dc2626';
       return `<div class="weak-item" onclick="drillOne(${q.id})">
-        <div class="weak-q">${'★'.repeat(starNum)} ${q.question}</div>
+        <div class="weak-q"><span style="color:#e53935">${'★'.repeat(starNum)}</span> ${q.question}</div>
         <div class="weak-meta">${q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')} · <span style="color:${col};font-weight:600">正答率: ${acc}</span></div>
       </div>`;
     }).join('');
@@ -4395,7 +4395,7 @@ function renderWeak(){
     if(!pool.length){wl.innerHTML='<div class="empty">🎉 全問解答済みです！素晴らしい！</div>';return;}
     wl.innerHTML=pool.slice(0,50).map(q=>`<div class="weak-item" onclick="drillOne(${q.id})">
       <div class="weak-q">✨ ${q.question}</div>
-      <div class="weak-meta">${q.category} ▸ ${q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')} ▸ ${'★'.repeat(q.stars||1)}</div>
+      <div class="weak-meta">${q.category} ▸ ${q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')} ▸ <span style="color:#e53935">${'★'.repeat(q.stars||1)}</span></div>
     </div>`).join('')+(pool.length>50?`<div style="text-align:center;padding:8px;font-size:11px;color:#8A6A50">他${pool.length-50}問</div>`:'');
     return;
   }
@@ -4421,7 +4421,7 @@ function renderWeak(){
       const topWrong=Object.entries(wc).sort((a,b)=>b[1]-a[1])[0];
       const trapLine=topWrong&&!mastered?`<div style="font-size:10px;color:#9B4A3A;margin-top:3px;padding:2px 6px;background:rgba(239,68,68,0.07);border-radius:5px;border-left:2px solid rgba(239,68,68,0.3)">⚠️ よく選ぶ誤答: <strong>${topWrong[0]}. ${(q.choices[topWrong[0]]||'').slice(0,24)}…</strong></div>`:'';
       return `<div class="weak-item" onclick="drillOne(${q.id})" style="border-color:rgba(239,68,68,0.35)">
-        <div class="weak-q">${'★'.repeat(q.stars)} ${q.question}</div>
+        <div class="weak-q"><span style="color:#e53935">${'★'.repeat(q.stars)}</span> ${q.question}</div>
         <div class="weak-meta">${q.field.replace('必修・','').replace('一般・','').replace('状況設定・','')} · <span style="color:#dc2626;font-weight:600">間違え${h.wrong}回 (${acc}%)</span>${mastered?' <span style="color:#16a34a;font-weight:700">✓克服</span>':''}</div>
         ${trapLine}
       </div>`;
