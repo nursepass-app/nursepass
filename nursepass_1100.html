@@ -3473,7 +3473,8 @@ var HIKARI_IMG_PATHS=[
 var HIKARI_LV_NAMES=['たまごのヒカリ','小さなヒカリ','めざめたヒカリ','かがやくヒカリ','うつくしいヒカリ','めがみヒカリ'];
 var HIKARI_LV_REQ=[0,10,50,100,200,500];
 function getTotalAnswered(){
-  return Object.values(history).reduce(function(s,h){return s+h.correct+h.wrong;},0);
+  // 正解数のみでレベルを計算する（不正解はカウントしない）
+  return Object.values(history).reduce(function(s,h){return s+h.correct;},0);
 }
 function getHikariLevel(){
   var t=getTotalAnswered();
