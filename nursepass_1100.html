@@ -3471,13 +3471,13 @@ var HIKARI_IMG_PATHS=[
   'images/hikari/hikari_lv5.png'
 ];
 var HIKARI_LV_NAMES=['たまごのヒカリ','小さなヒカリ','めざめたヒカリ','かがやくヒカリ','うつくしいヒカリ','めがみヒカリ'];
-var HIKARI_LV_REQ=[0,11,41,101,201,501];
+var HIKARI_LV_REQ=[0,10,50,100,200,500];
 function getTotalAnswered(){
   return Object.values(history).reduce(function(s,h){return s+h.correct+h.wrong;},0);
 }
 function getHikariLevel(){
   var t=getTotalAnswered();
-  if(t>=501)return 5;if(t>=201)return 4;if(t>=101)return 3;if(t>=41)return 2;if(t>=11)return 1;return 0;
+  if(t>=500)return 5;if(t>=200)return 4;if(t>=100)return 3;if(t>=50)return 2;if(t>=10)return 1;return 0;
 }
 function getHikariImgSrc(){return HIKARI_IMG_PATHS[getHikariLevel()];}
 var _hikariLvPrev=-1;
