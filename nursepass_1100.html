@@ -407,6 +407,17 @@ body.font-xl .explanation{font-size:16px}
 .streak-warn{background:linear-gradient(135deg,rgba(254,243,199,0.98),rgba(253,230,138,0.95));border:1.5px solid rgba(245,158,11,0.45);border-radius:14px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:'Noto Sans JP',sans-serif}
 .streak-warn-icon{font-size:22px;flex-shrink:0}
 .streak-warn-text{font-size:12px;color:#92400e;font-weight:700;line-height:1.4}
+/* ===== PERSONALITY QUIZ ===== */
+.pq-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);z-index:11000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;animation:eggFadeIn 0.4s ease}
+.pq-avatar{width:90px;height:90px;border-radius:50%;object-fit:cover;object-position:center top;border:3px solid rgba(217,197,178,0.6);margin-bottom:12px;box-shadow:0 4px 16px rgba(184,144,122,0.25)}
+.pq-bubble{background:rgba(255,255,255,0.95);border-radius:20px;border:1.5px solid rgba(217,197,178,0.4);padding:14px 18px;max-width:300px;font-size:14px;font-weight:700;color:#3C3530;line-height:1.6;text-align:center;font-family:'Noto Sans JP',sans-serif;box-shadow:0 2px 12px rgba(184,144,122,0.15);margin-bottom:20px;position:relative}
+.pq-bubble::after{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-bottom-color:rgba(217,197,178,0.4)}
+.pq-bubble::before{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);border:7px solid transparent;border-bottom-color:rgba(255,255,255,0.95);z-index:1}
+.pq-step{font-size:11px;color:#B8907A;font-weight:700;margin-bottom:8px;letter-spacing:.05em}
+.pq-btn{width:100%;max-width:300px;padding:13px 16px;background:rgba(255,255,255,0.95);border:1.5px solid rgba(217,197,178,0.5);border-radius:14px;font-size:13px;font-weight:700;color:#3C3530;font-family:'Noto Sans JP',sans-serif;cursor:pointer;touch-action:manipulation;margin-bottom:10px;transition:.15s;text-align:left}
+.pq-btn:active{transform:scale(0.98);background:rgba(245,239,232,0.99)}
+.pt-btn{padding:8px 14px;border-radius:12px;border:1.5px solid rgba(217,197,178,0.5);background:rgba(240,232,222,0.8);font-size:12px;font-weight:700;color:#5A5450;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:.15s;touch-action:manipulation}
+.pt-btn.active{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(184,160,144,0.4)}
 .hikari-xp-track{height:6px;background:rgba(217,197,178,0.3);border-radius:10px;overflow:hidden;margin:4px 0 3px}
 .hikari-xp-fill{height:100%;background:linear-gradient(90deg,#f0c040,#f5a020);border-radius:10px;width:0%;transition:width 0.6s ease;transform-origin:left center}
 .hikari-xp-fill.pop{animation:xpPop 0.35s ease}
@@ -3532,6 +3543,7 @@ function showLevelUp(lv){
     +'<div class="lv-up-lv-num">Lv.'+lv+'</div>'
     +'<div class="lv-up-name-text">'+HIKARI_LV_NAMES[lv]+'</div>'
     +'<div class="lv-up-evolve">に進化した！✨</div>'
+    +'<div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:10px;font-family:\'Noto Sans JP\',sans-serif;text-align:center;line-height:1.5">'+getPersonalityMsg('levelup')+'</div>'
     +'</div>'
     +'<div class="lv-up-tap">タップして続ける</div>';
   screen.onclick=function(){
@@ -3784,7 +3796,7 @@ function answer(key){
     if(session.combo>bestCombo){bestCombo=session.combo;localStorage.setItem('np_best_combo',bestCombo);}
     const milestones=[3,5,10,20];
     if(milestones.includes(session.combo)){setTimeout(function(){showComboBanner(session.combo);},200);if(session.combo>=5)setTimeout(launchConfetti,400);}
-    if(session.combo===3){var _cm=['止まらないね！この調子！','すごい、どんどん伸びてる！'];setTimeout(function(){showHikariMsg(_cm[Math.floor(Math.random()*2)]);},1300);}
+    if(session.combo===3){setTimeout(function(){showHikariMsg(getPersonalityMsg('correct'));},1300);}
     localStorage.setItem('np_last_study_ts',Date.now());
   } else {
     session.combo=0;
@@ -3794,7 +3806,7 @@ function answer(key){
     if(!session.wrongIds.includes(q.id))session.wrongIds.push(q.id);
     // 連続誤答アラート
     if(session.wrongStreak===3){
-      const msgs=['大丈夫、間違えることで記憶に残るよ。解説をしっかり読んで次へ進もう。','難しい問題が続いているね。焦らずゆっくり考えて。ヒカリが応援してるよ🌸','少し立ち止まって。苦手に絞るモードに切り替えると効率がいいかも。'];
+      const msgs=[getPersonalityMsg('wrong'),'難しい問題が続いているね。焦らずゆっくり考えて。','少し立ち止まって。苦手に絞るモードに切り替えると効率がいいかも。'];
       setTimeout(()=>{
         const toast=document.createElement('div');
         toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,rgba(245,239,232,0.97),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.6);border-radius:16px;padding:12px 16px;font-size:12px;color:#4A3828;font-family:"Noto Sans JP",sans-serif;text-align:center;z-index:9000;box-shadow:0 4px 20px rgba(184,144,122,0.25);max-width:280px;width:90%';
@@ -5915,6 +5927,11 @@ function renderStats(){
         </div>
       </div>`;
     })()}
+    <div style="margin-top:16px;padding:14px;background:rgba(255,255,255,0.85);border-radius:16px;border:1.5px solid rgba(217,197,178,0.3)">
+      <div style="font-size:12px;font-weight:700;color:#8A6A50;margin-bottom:10px">🌸 ヒカリの話し方</div>
+      <div id="personalityTypeBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      <div style="font-size:10px;color:#aaa;margin-top:8px;text-align:center">タップして変更できます</div>
+    </div>
     <div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
       <button onclick="exportData()" style="padding:7px 14px;background:rgba(59,130,246,0.1);color:#1d4ed8;border:1.5px solid rgba(59,130,246,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📤 JSONエクスポート</button>
       <button onclick="exportCSV()" style="padding:7px 14px;background:rgba(22,163,74,0.1);color:#15803d;border:1.5px solid rgba(22,163,74,0.25);border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif">📊 CSVエクスポート</button>
@@ -6730,6 +6747,113 @@ function initDailyMessage(){
   _setText('dailyMsgCountdown',diffDays>0?`国試まで${diffDays}日、一緒に頑張ろう✨`:'今日も一歩ずつ、一緒に歩いていこう✨');
 }
 
+// ===== 性格タイプ診断システム =====
+var PERSONALITY_TYPES={
+  hikari_empathy:{label:'🌸 共感型',desc:'そっと寄り添う'},
+  hikari_rival:  {label:'🔥 競争型',desc:'熱く煽ってくれる'},
+  hikari_praise: {label:'⭐ 承認型',desc:'褒めて伸ばす'},
+  hikari_growth: {label:'📊 成長型',desc:'データで励ます'}
+};
+var PERSONALITY_MSGS={
+  correct:{
+    hikari_empathy:['やったね！一緒に喜ぶよ🌸','その調子！ヒカリも嬉しい✨','一緒に積み上げてるね🌸'],
+    hikari_rival:  ['正解！でもまだまだ行けるよ🔥','その勢い、止めるな！','次も来い！🔥'],
+    hikari_praise: ['すごい！！天才かも⭐','さすがすぎる！！！⭐','あなたって本当に頭いいね⭐'],
+    hikari_growth: ['また1つ正解が増えたね📊','着実に力がついてるよ','昨日より確実に成長してる📊']
+  },
+  wrong:{
+    hikari_empathy:['大丈夫、一緒に覚えよう🌸','焦らなくていいよ、ゆっくりで大丈夫','ヒカリも一緒に確認するね🌸'],
+    hikari_rival:  ['ここで終わるの？もう1回！🔥','これを糧にしよう','悔しくない？次は絶対！🔥'],
+    hikari_praise: ['次は絶対できる！信じてるよ⭐','あなたならできる！','ちょっとしたミスだよ、大丈夫⭐'],
+    hikari_growth: ['この問題が弱点だったね📊','次は必ず正解できる','弱点を発見できた！これが成長📊']
+  },
+  levelup:{
+    hikari_empathy:'ヒカリも一緒に成長できて嬉しい🌸',
+    hikari_rival:  'レベルアップ！次のレベルも倒すぞ🔥',
+    hikari_praise: 'やっぱり天才だった⭐ レベルアップおめでとう！',
+    hikari_growth: '努力が実った瞬間だよ📊 素晴らしい成長！'
+  }
+};
+function getPersonalityType(){
+  return localStorage.getItem('personality_type')||'hikari_empathy';
+}
+function getPersonalityMsg(category){
+  var type=getPersonalityType();
+  var msgs=PERSONALITY_MSGS[category][type];
+  if(Array.isArray(msgs)) return msgs[Math.floor(Math.random()*msgs.length)];
+  return msgs||'';
+}
+function setPersonalityType(type){
+  localStorage.setItem('personality_type',type);
+  renderPersonalityTypeBtns();
+}
+function renderPersonalityTypeBtns(){
+  var el=document.getElementById('personalityTypeBtns');
+  if(!el) return;
+  var cur=getPersonalityType();
+  el.innerHTML=Object.entries(PERSONALITY_TYPES).map(function(e){
+    var key=e[0],info=e[1];
+    var active=cur===key?' active':'';
+    return '<button class="pt-btn'+active+'" onclick="setPersonalityType(\''+key+'\')">'
+      +'<div>'+info.label+'</div><div style="font-size:10px;opacity:0.75;font-weight:400;margin-top:2px">'+info.desc+'</div>'
+      +'</button>';
+  }).join('');
+}
+
+// 診断画面
+var _pqPoints={hikari_empathy:0,hikari_rival:0,hikari_praise:0,hikari_growth:0};
+var _pqStep=0;
+var _pqQuestions=[
+  {q:'落ち込んだとき、どっちが嬉しい？',
+   a:[{t:'そっと励ましてほしい',p:'hikari_empathy'},{t:'ガツンと言ってほしい',p:'hikari_rival'}]},
+  {q:'やる気が出るのは？',
+   a:[{t:'ほめられると燃える！',p:'hikari_praise'},{t:'危機感があると燃える！',p:'hikari_rival'}]},
+  {q:'勉強スタイルは？',
+   a:[{t:'コツコツ毎日続けたい',p:'hikari_growth'},{t:'とにかく褒めて伸ばして',p:'hikari_praise'}]}
+];
+function showPersonalityQuiz(){
+  _pqPoints={hikari_empathy:0,hikari_rival:0,hikari_praise:0,hikari_growth:0};
+  _pqStep=0;
+  var overlay=document.createElement('div');
+  overlay.id='pqScreen';
+  overlay.className='pq-screen';
+  document.body.appendChild(overlay);
+  _renderPqStep(overlay);
+}
+function _renderPqStep(overlay){
+  var lv=getHikariLevel();
+  var img=HIKARI_IMG_PATHS[lv];
+  if(_pqStep>=_pqQuestions.length){
+    // 判定
+    var best='hikari_empathy',bestPt=0;
+    Object.entries(_pqPoints).forEach(function(e){if(e[1]>bestPt){bestPt=e[1];best=e[0];}});
+    setPersonalityType(best);
+    var info=PERSONALITY_TYPES[best];
+    overlay.innerHTML=
+      '<img class="pq-avatar" src="'+img+'">'
+      +'<div class="pq-bubble">ヒカリがあなたのタイプを覚えたよ！<br><br>'
+      +'<span style="font-size:18px">'+info.label+'</span><br>'
+      +'<span style="font-size:12px;color:#8A6A50">'+info.desc+'</span></div>'
+      +'<button class="pq-btn" style="text-align:center;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:#fff;border:none" '
+      +'onclick="document.getElementById(\'pqScreen\').remove()">はじめよう ✨</button>';
+    return;
+  }
+  var q=_pqQuestions[_pqStep];
+  overlay.innerHTML=
+    '<div class="pq-step">Q'.concat(_pqStep+1,'／',_pqQuestions.length,'</div>')
+    +'<img class="pq-avatar" src="'+img+'">'
+    +'<div class="pq-bubble">'+q.q+'</div>'
+    +q.a.map(function(a){
+      return '<button class="pq-btn" onclick="_pqAnswer(\''+a.p+'\')">'+a.t+'</button>';
+    }).join('');
+}
+function _pqAnswer(type){
+  _pqPoints[type]++;
+  _pqStep++;
+  var overlay=document.getElementById('pqScreen');
+  if(overlay) _renderPqStep(overlay);
+}
+
 // 初回起動時APIキーモーダル（キー未設定かつ初回のみ）
 if(!localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen')){
   setTimeout(showApiKeyModal, 900);
@@ -6831,6 +6955,11 @@ updateStreakDisplay();
 })();
 renderHomeSummary();
 updateBnWeakBadge();
+renderPersonalityTypeBtns();
+// 初回診断（personality_type 未設定時）
+if(!localStorage.getItem('personality_type')){
+  setTimeout(showPersonalityQuiz, 600);
+}
 renderExamCountdown();
 renderHikariHint();updateModeSwitch();renderGoalBar();renderHikariCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();renderSearchHistoryChips();renderPassGauge();
 showResumeBanner();
