@@ -401,6 +401,12 @@ body.font-xl .explanation{font-size:16px}
 .hikari-msg-body{font-size:15px;color:#4A3828;font-weight:500;line-height:1.55;font-family:'Noto Sans JP',sans-serif;}
 #streakHomeBadge{text-align:center;font-size:12px;font-weight:700;color:#B8907A;letter-spacing:.3px;margin-bottom:10px;display:none;}
 @keyframes xpPop{0%{transform:scaleY(1)}30%{transform:scaleY(1.45)}60%{transform:scaleY(0.9)}100%{transform:scaleY(1)}}
+@keyframes comboBannerIn{0%{opacity:0;transform:translate(-50%,-110%)}100%{opacity:1;transform:translate(-50%,0)}}
+@keyframes comboBannerOut{0%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-110%)}}
+.combo-banner{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#f5c518,#e6a800);color:#fff;font-weight:900;font-size:17px;padding:10px 28px;border-radius:28px;z-index:9800;text-shadow:0 1px 4px rgba(0,0,0,0.25);box-shadow:0 4px 20px rgba(245,197,24,0.55);white-space:nowrap;animation:comboBannerIn 0.35s cubic-bezier(.17,.67,.35,1.3) forwards;font-family:'Zen Kaku Gothic New',sans-serif;pointer-events:none}
+.streak-warn{background:linear-gradient(135deg,rgba(254,243,199,0.98),rgba(253,230,138,0.95));border:1.5px solid rgba(245,158,11,0.45);border-radius:14px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:'Noto Sans JP',sans-serif}
+.streak-warn-icon{font-size:22px;flex-shrink:0}
+.streak-warn-text{font-size:12px;color:#92400e;font-weight:700;line-height:1.4}
 .hikari-xp-track{height:6px;background:rgba(217,197,178,0.3);border-radius:10px;overflow:hidden;margin:4px 0 3px}
 .hikari-xp-fill{height:100%;background:linear-gradient(90deg,#f0c040,#f5a020);border-radius:10px;width:0%;transition:width 0.6s ease;transform-origin:left center}
 .hikari-xp-fill.pop{animation:xpPop 0.35s ease}
@@ -469,6 +475,7 @@ body.font-xl .explanation{font-size:16px}
       </div>
     </div>
     <div id="streakHomeBadge"></div>
+    <div id="streakWarnBanner"></div>
     <!-- エリア3: モード切替 -->
     <div class="mode-switch-wrap" id="modeSwitchBar" style="margin-bottom:18px">
       <button class="mode-switch-btn active hikari" id="modeBtnHikari" onclick="setQuizMode('hikari')">🌸 やさしく</button>
@@ -2052,10 +2059,15 @@ function updateDailyStats(){
       streakData.best=streakData.streak;
       if(streakData.streak>1) setTimeout(()=>{showToast(`🏆 連続学習記録更新！${streakData.streak}日（自己最高）`);launchConfetti();},600);
     }
-    // ストリーク節目でトースト
+    // ストリーク節目バナー
     const milestones=[3,7,14,30,60,100];
-    if(milestones.includes(streakData.streak)&&streakData.streak<=prevBest){
-      setTimeout(()=>{showToast(`🔥 ${streakData.streak}日連続！すごい！`);if(streakData.streak>=7)launchConfetti();},500);
+    if(milestones.includes(streakData.streak)){
+      const specialMilestones=[7,14,30,100];
+      if(specialMilestones.includes(streakData.streak)){
+        setTimeout(function(){showStreakMilestoneBanner(streakData.streak);},500);
+      } else {
+        setTimeout(()=>{showToast(`🔥 ${streakData.streak}日連続！すごい！`);},500);
+      }
     }
   }
   localStorage.setItem('np_weekly',JSON.stringify(weeklyData));
@@ -3612,12 +3624,67 @@ function showHikariMsg(text,duration){
   document.body.appendChild(d);
   setTimeout(function(){d.style.transition='opacity .4s ease';d.style.opacity='0';setTimeout(function(){if(d.parentNode)d.remove();},420);},duration);
 }
+function showComboBanner(combo){
+  document.querySelectorAll('.combo-banner').forEach(function(e){e.remove();});
+  var map={3:'🔥 3連続正解！',5:'⚡ 5連続！すごい！',10:'👑 10連続！天才！',20:'🌟 20連続！神ってる！'};
+  var msg=map[combo];
+  if(!msg) return;
+  var b=document.createElement('div');
+  b.className='combo-banner';
+  b.textContent=msg;
+  document.body.appendChild(b);
+  setTimeout(function(){
+    b.style.animation='comboBannerOut 0.3s ease forwards';
+    setTimeout(function(){if(b.parentNode)b.remove();},320);
+  },2000);
+}
+function showStreakMilestoneBanner(days){
+  var msgs={7:'🎉 7日連続達成！継続は力なり！',14:'🎉 14日連続達成！もう習慣だね！',30:'🏆 30日連続達成！本当にすごい！',100:'👑 100日連続達成！伝説！'};
+  var msg=msgs[days];
+  if(!msg) return;
+  var b=document.createElement('div');
+  b.className='combo-banner';
+  b.style.background='linear-gradient(135deg,#e879f9,#a855f7)';
+  b.style.boxShadow='0 4px 20px rgba(168,85,247,0.5)';
+  b.style.fontSize='15px';
+  b.textContent=msg;
+  document.body.appendChild(b);
+  launchConfetti();
+  setTimeout(function(){
+    b.style.animation='comboBannerOut 0.3s ease forwards';
+    setTimeout(function(){if(b.parentNode)b.remove();},320);
+  },3500);
+}
 function updateStreakDisplay(){
   var el=document.getElementById('streakHomeBadge');
-  if(!el) return;
+  var wb=document.getElementById('streakWarnBanner');
   var s=streakData.streak||0;
-  if(s>=2){el.textContent='🔥 '+s+'日連続学習中！';el.style.display='block';}
-  else el.style.display='none';
+  // ストリークバッジ
+  if(el){
+    if(s>=2){
+      el.innerHTML='<span style="font-size:22px;vertical-align:middle">🔥</span>'
+        +' <span style="font-size:20px;font-weight:900;vertical-align:middle;color:#dc2626">'+s+'</span>'
+        +' <span style="font-size:12px;vertical-align:middle;color:#B8907A">日連続学習中！</span>';
+      el.style.display='block';
+    } else {
+      el.style.display='none';
+    }
+  }
+  // 警告バナー：今日まだ学習していない + ストリーク継続中
+  if(wb){
+    var lastTs=parseInt(localStorage.getItem('np_last_study_ts')||'0');
+    var hoursAgo=lastTs?(Date.now()-lastTs)/3600000:999;
+    var studiedToday=streakData.lastDate===todayKey;
+    if(!studiedToday && s>0 && hoursAgo>=20){
+      wb.innerHTML='<div class="streak-warn">'
+        +'<div class="streak-warn-icon">🔥</div>'
+        +'<div class="streak-warn-text">今日もやろう！ストリークが途切れそう🔥<br>'
+        +'<span style="font-weight:400;font-size:11px">'+s+'日連続を守るために今日も1問だけ！</span></div>'
+        +'</div>';
+    } else {
+      wb.innerHTML='';
+    }
+  }
 }
 function showAnswerFeedback(correct){
   document.querySelectorAll('.answer-feedback-wrap').forEach(e=>e.remove());
@@ -3714,9 +3781,10 @@ function answer(key){
     session.correct++;
     session.combo=(session.combo||0)+1;
     if(session.combo>bestCombo){bestCombo=session.combo;localStorage.setItem('np_best_combo',bestCombo);}
-    const milestones=[3,5,10,15,20];
-    if(milestones.includes(session.combo)) setTimeout(()=>{showToast(`🔥 ${session.combo}連続正解！コンボ継続中！`);if(session.combo>=5)launchConfetti();},100);
+    const milestones=[3,5,10,20];
+    if(milestones.includes(session.combo)){setTimeout(function(){showComboBanner(session.combo);},200);if(session.combo>=5)setTimeout(launchConfetti,400);}
     if(session.combo===3){var _cm=['止まらないね！この調子！','すごい、どんどん伸びてる！'];setTimeout(function(){showHikariMsg(_cm[Math.floor(Math.random()*2)]);},1300);}
+    localStorage.setItem('np_last_study_ts',Date.now());
   } else {
     session.combo=0;
     session.wrongStreak=(session.wrongStreak||0)+1;
