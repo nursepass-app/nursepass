@@ -6835,7 +6835,7 @@ function _renderPqStep(overlay){
       +'<span style="font-size:18px">'+info.label+'</span><br>'
       +'<span style="font-size:12px;color:#8A6A50">'+info.desc+'</span></div>'
       +'<button class="pq-btn" style="text-align:center;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:#fff;border:none" '
-      +'onclick="document.getElementById(\'pqScreen\').remove()">はじめよう ✨</button>';
+      +'onclick="document.getElementById(\'pqScreen\').remove();if(!localStorage.getItem(\'np_openai_key\')&&!localStorage.getItem(\'np_api_seen\')){setTimeout(showApiKeyModal,500);}">はじめよう ✨</button>';
     return;
   }
   var q=_pqQuestions[_pqStep];
@@ -6854,8 +6854,8 @@ function _pqAnswer(type){
   if(overlay) _renderPqStep(overlay);
 }
 
-// 初回起動時APIキーモーダル（キー未設定かつ初回のみ）
-if(!localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen')){
+// 初回起動時APIキーモーダル（personality_type設定済み、かつキー未設定かつ初回のみ）
+if(localStorage.getItem('personality_type') && !localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen')){
   setTimeout(showApiKeyModal, 900);
 }
 
@@ -6956,9 +6956,11 @@ updateStreakDisplay();
 renderHomeSummary();
 updateBnWeakBadge();
 renderPersonalityTypeBtns();
-// 初回診断（personality_type 未設定時）
+// 初回診断（personality_type 未設定時）→ 完了後にAPIキーモーダルへチェーン
 if(!localStorage.getItem('personality_type')){
-  setTimeout(showPersonalityQuiz, 600);
+  setTimeout(showPersonalityQuiz, 400);
+} else if(!localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen')){
+  setTimeout(showApiKeyModal, 900);
 }
 renderExamCountdown();
 renderHikariHint();updateModeSwitch();renderGoalBar();renderHikariCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();renderSearchHistoryChips();renderPassGauge();
