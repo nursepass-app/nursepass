@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nursepass-v1';
+const CACHE_NAME = 'nursepass-v2';
 const CACHE_FILES = [
   '/nursepass/',
   '/nursepass/index.html',
