@@ -400,6 +400,10 @@ body.font-xl .explanation{font-size:16px}
 .hikari-msg-av img{width:100%;height:100%;object-fit:contain;}
 .hikari-msg-body{font-size:15px;color:#4A3828;font-weight:500;line-height:1.55;font-family:'Noto Sans JP',sans-serif;}
 #streakHomeBadge{text-align:center;font-size:12px;font-weight:700;color:#B8907A;letter-spacing:.3px;margin-bottom:10px;display:none;}
+@keyframes xpPop{0%{transform:scaleY(1)}30%{transform:scaleY(1.45)}60%{transform:scaleY(0.9)}100%{transform:scaleY(1)}}
+.hikari-xp-track{height:6px;background:rgba(217,197,178,0.3);border-radius:10px;overflow:hidden;margin:4px 0 3px}
+.hikari-xp-fill{height:100%;background:linear-gradient(90deg,#f0c040,#f5a020);border-radius:10px;width:0%;transition:width 0.6s ease;transform-origin:left center}
+.hikari-xp-fill.pop{animation:xpPop 0.35s ease}
 @keyframes lv1Spark{0%,100%{box-shadow:0 3px 10px rgba(217,197,178,0.3);}50%{box-shadow:0 0 12px 5px rgba(255,220,130,0.55),0 0 20px 8px rgba(255,220,130,0.18);}}
 @keyframes lv2Gold{0%,100%{box-shadow:0 0 8px 3px rgba(212,175,55,0.5);}50%{box-shadow:0 0 20px 8px rgba(212,175,55,0.9),0 0 32px 14px rgba(212,175,55,0.22);}}
 @keyframes lv3Rainbow{0%{box-shadow:0 0 14px 5px rgba(255,80,80,0.7);}17%{box-shadow:0 0 14px 5px rgba(255,155,40,0.7);}34%{box-shadow:0 0 14px 5px rgba(240,220,40,0.7);}50%{box-shadow:0 0 14px 5px rgba(50,200,80,0.7);}67%{box-shadow:0 0 14px 5px rgba(60,130,255,0.7);}84%{box-shadow:0 0 14px 5px rgba(170,60,255,0.7);}100%{box-shadow:0 0 14px 5px rgba(255,80,80,0.7);}}
@@ -442,7 +446,8 @@ body.font-xl .explanation{font-size:16px}
       <div style="position:relative;flex-shrink:0"><div class="daily-msg-avatar" id="dailyMsgAvDiv"><img class="hikari-av-img" id="dailyAvImg" src="" alt="ヒカリ"></div><span id="hikariCrown" style="display:none;position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:15px;line-height:1;z-index:2">👑</span></div>
       <div class="daily-msg-content">
         <div class="daily-msg-label">ヒカリより <span id="hikariLvBadge" style="background:rgba(138,106,80,0.15);color:#8A6A50;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px">Lv.1</span></div>
-        <div id="hikariLvName" style="font-size:11px;color:#B8907A;font-weight:700;margin-bottom:3px">小さなヒカリ</div>
+        <div id="hikariLvName" style="font-size:11px;color:#B8907A;font-weight:700;margin-bottom:2px">小さなヒカリ</div>
+        <div class="hikari-xp-track"><div class="hikari-xp-fill" id="hikariXpFill"></div></div>
         <div id="hikariLvNext" style="font-size:10px;color:#aaa;margin-bottom:3px"></div>
         <div class="daily-msg-text" id="dailyMsgText"></div>
         <div class="daily-msg-footer">
@@ -3478,8 +3483,14 @@ function updateHikariLevel(){
   if(badge) badge.textContent='Lv.'+lv;
   if(nameEl) nameEl.textContent=HIKARI_LV_NAMES[lv];
   if(nextEl){
-    if(lv<5){var rem=HIKARI_LV_REQ[lv+1]-t;nextEl.textContent='Lv.'+(lv+1)+'まであと'+rem+'問';}
-    else{nextEl.textContent='最高レベル達成！';}
+    if(lv<5){var rem=HIKARI_LV_REQ[lv+1]-t;nextEl.textContent='あと'+rem+'問でLv.'+(lv+1)+'！';}
+    else{nextEl.textContent='最高レベル達成！✨';}
+  }
+  // XP bar
+  var xpFill=document.getElementById('hikariXpFill');
+  if(xpFill){
+    var pct=lv<5?Math.min(100,Math.round((t-HIKARI_LV_REQ[lv])/(HIKARI_LV_REQ[lv+1]-HIKARI_LV_REQ[lv])*100)):100;
+    xpFill.style.width=pct+'%';
   }
   // level-up event
   if(_hikariLvPrev>=0&&lv>_hikariLvPrev) showLevelUp(lv);
@@ -3653,6 +3664,9 @@ function answer(key){
   playAnswerSound(correct);
   showAnswerFeedback(correct);
   if(correct){
+    // XPバーのpopアニメーション
+    var _xp=document.getElementById('hikariXpFill');
+    if(_xp){_xp.classList.remove('pop');void _xp.offsetWidth;_xp.classList.add('pop');setTimeout(function(){_xp.classList.remove('pop');},400);}
     session.correct++;
     session.combo=(session.combo||0)+1;
     if(session.combo>bestCombo){bestCombo=session.combo;localStorage.setItem('np_best_combo',bestCombo);}
