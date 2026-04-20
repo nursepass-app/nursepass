@@ -3430,13 +3430,13 @@ function renderQuestion(){
       </div>
       ${session.mode==='mock'?`<div id="mockElapsed" style="font-size:10px;color:#8A6A50;text-align:right;padding:2px 20px 0;font-variant-numeric:tabular-nums">⏱ 00:00</div>`:''}
       ${isTime?`<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div class="timer-count" id="timerCnt">${session.timeLimit}秒</div>`:''}
-      <div class="q-field" style="display:flex;justify-content:space-between;align-items:center"><span>${q.category} ▸ ${q.field} <span style="color:#C0B0A0;font-size:9px">#${q.id}</span></span><span style="display:flex;align-items:center;gap:8px">${!isTime&&total-session.idx>1?`<button onclick="skipQuestion()" style="padding:2px 8px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">スキップ↓</button>`:''}<button id="autoAdvBtn" onclick="toggleAutoAdvance()" style="padding:2px 8px;background:${autoAdvance?'rgba(217,160,96,0.25)':'rgba(240,232,222,0.8)'};border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:${autoAdvance?'#c2410c':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">${autoAdvance?'⚡自動送りON':'⚡自動送りOFF'}</button><span style="color:#C0B0A0;font-size:9px;letter-spacing:0">A/B/C/D キー</span><span style="font-size:12px;letter-spacing:1px"><span style="color:#e53935">${'★'.repeat(q.stars||1)}</span><span style="color:#D9C5B2">${'☆'.repeat(3-(q.stars||1))}</span></span></span></div>
+      <div class="q-field" style="display:flex;justify-content:space-between;align-items:center"><span>${q.category} ▸ ${q.field} <span style="color:#C0B0A0;font-size:9px">#${q.id}</span></span><span style="display:flex;align-items:center;gap:8px">${!isTime&&total-session.idx>1?`<button onclick="skipQuestion()" style="padding:2px 8px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">スキップ↓</button>`:''}<button id="autoAdvBtn" onclick="toggleAutoAdvance()" style="padding:2px 8px;background:${autoAdvance?'rgba(217,160,96,0.25)':'rgba(240,232,222,0.8)'};border:1px solid rgba(85,80,77,0.2);border-radius:8px;font-size:10px;color:${autoAdvance?'#c2410c':'#8A6A50'};cursor:pointer;font-family:'Noto Sans JP',sans-serif">${autoAdvance?'⚡自動送りON':'⚡自動送りOFF'}</button><span style="color:#C0B0A0;font-size:9px;letter-spacing:0">1/2/3/4 キー</span><span style="font-size:12px;letter-spacing:1px"><span style="color:#e53935">${'★'.repeat(q.stars||1)}</span><span style="color:#D9C5B2">${'☆'.repeat(3-(q.stars||1))}</span></span></span></div>
       <div class="q-text">${q.question}</div>
       ${!isTime?`<div id="hintArea" style="margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button></div>`:''}
       <div class="choices">
         ${Object.entries(q.choices).map(([k,v])=>`
           <button class="choice-btn" onclick="answer('${k}')" id="ch${k}">
-            <span class="choice-key">${k}</span>${v}
+            ${v}
           </button>`).join('')}
       </div>
     </div>`;
@@ -3745,8 +3745,8 @@ function answer(key){
   const nmsg=correct?msgs_ok[Math.floor(Math.random()*msgs_ok.length)]:msgs_ng[Math.floor(Math.random()*msgs_ng.length)];
   const isBm=!!bookmarks[q.id];
   const hasMemo=!!memoData[q.id];
-  const wrongAns=!correct?`<div style="font-size:11px;color:#991b1b;margin:4px 0;padding:3px 8px;background:rgba(248,113,113,0.06);border-radius:6px">あなたの答え: <strong>${key}. ${q.choices[key]}</strong></div>`:'';
-  const correctAns=!correct?`<div style="font-size:11px;color:#16a34a;margin:2px 0 4px;padding:3px 8px;background:rgba(74,222,128,0.06);border-radius:6px">正解: <strong>${q.answer}. ${q.choices[q.answer]}</strong></div>`:'';
+  const wrongAns=!correct?`<div style="font-size:11px;color:#991b1b;margin:4px 0;padding:3px 8px;background:rgba(248,113,113,0.06);border-radius:6px">あなたの答え: <strong>${q.choices[key]}</strong></div>`:'';
+  const correctAns=!correct?`<div style="font-size:11px;color:#16a34a;margin:2px 0 4px;padding:3px 8px;background:rgba(74,222,128,0.06);border-radius:6px">正解: <strong>${q.choices[q.answer]}</strong></div>`:'';
   // ── res: 正解/不正解ヘッダーのみ（ラベル・メッセージ・誤答表示）──
   res.innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
     <div class="result-label">${correct?'✓ 正解！':'✗ 不正解'}</div>
@@ -5863,7 +5863,7 @@ function drawJok(){
   var ch='';
   var ks=Object.keys(q.choices);
   for(var n=0;n<ks.length;n++){
-    ch=ch+'<button class="choice-btn" id="jokb'+ks[n]+'"><span class="choice-key">'+ks[n]+'</span>'+q.choices[ks[n]]+'</button>';
+    ch=ch+'<button class="choice-btn" id="jokb'+ks[n]+'">'+q.choices[ks[n]]+'</button>';
   }
   ja.innerHTML='<div style="animation:fadein .3s ease"><div class="card">'+
     '<div class="quiz-header">'+
@@ -6672,8 +6672,8 @@ document.addEventListener('keydown', function(e){
   const chA=document.getElementById('chA');
   const answered=chA&&chA.disabled;
   if(!answered){
-    // A/B/C/D または 1/2/3/4 で選択
-    const map={'1':'A','2':'B','3':'C','4':'D','A':'A','B':'B','C':'C','D':'D'};
+    // 1/2/3/4 で選択
+    const map={'1':'A','2':'B','3':'C','4':'D'};
     if(map[key]){
       const btn=document.getElementById('ch'+map[key]);
       if(btn&&!btn.disabled){e.preventDefault();answer(map[key]);}
