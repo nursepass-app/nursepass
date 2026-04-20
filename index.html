@@ -3600,6 +3600,11 @@ function showAnswerFeedback(correct){
   }
 }
 function answer(key){
+  // 全選択肢を即座に無効化（複数クリック防止）
+  ['A','B','C','D'].forEach(function(k){
+    var b=document.getElementById('ch'+k);
+    if(b){b.disabled=true;b.style.pointerEvents='none';}
+  });
   clearQuizTimer();
   const elapsedMs=questionStartTime?Date.now()-questionStartTime:0;
   if(!session.answerLog) session.answerLog=[];
