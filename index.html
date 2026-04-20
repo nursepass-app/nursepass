@@ -3437,20 +3437,21 @@ function renderQuestion(){
 
 // ===== HIKARI LEVEL SYSTEM =====
 var HIKARI_IMG_PATHS=[
+  'images/hikari/hikari_lv0.png',
   'images/hikari/hikari_lv1.png',
   'images/hikari/hikari_lv2.png',
   'images/hikari/hikari_lv3.png',
   'images/hikari/hikari_lv4.png',
   'images/hikari/hikari_lv5.png'
 ];
-var HIKARI_LV_NAMES=['小さなヒカリ','めざめたヒカリ','かがやくヒカリ','うつくしいヒカリ','めがみヒカリ'];
-var HIKARI_LV_REQ=[0,100,300,600,1000];
+var HIKARI_LV_NAMES=['たまごのヒカリ','小さなヒカリ','めざめたヒカリ','かがやくヒカリ','うつくしいヒカリ','めがみヒカリ'];
+var HIKARI_LV_REQ=[0,1,10,30,100,300];
 function getTotalAnswered(){
   return Object.values(history).reduce(function(s,h){return s+h.correct+h.wrong;},0);
 }
 function getHikariLevel(){
   var t=getTotalAnswered();
-  if(t>=1000)return 4;if(t>=600)return 3;if(t>=300)return 2;if(t>=100)return 1;return 0;
+  if(t>=300)return 5;if(t>=100)return 4;if(t>=30)return 3;if(t>=10)return 2;if(t>=1)return 1;return 0;
 }
 function getHikariImgSrc(){return HIKARI_IMG_PATHS[getHikariLevel()];}
 var _hikariLvPrev=-1;
@@ -3461,7 +3462,7 @@ function updateHikariLevel(){
   var av=document.getElementById('dailyMsgAvDiv');
   var crown=document.getElementById('hikariCrown');
   if(av) av.className='daily-msg-avatar'+(lv>0?' hikari-av-lv'+lv:'');
-  if(crown) crown.style.display=lv>=4?'':'none';
+  if(crown) crown.style.display=lv>=5?'':'none';
   // image swap
   var src=HIKARI_IMG_PATHS[lv];
   var imgs=['dailyAvImg','hikariAvLg'];
@@ -3470,10 +3471,10 @@ function updateHikariLevel(){
   var badge=document.getElementById('hikariLvBadge');
   var nameEl=document.getElementById('hikariLvName');
   var nextEl=document.getElementById('hikariLvNext');
-  if(badge) badge.textContent='Lv.'+(lv+1);
+  if(badge) badge.textContent='Lv.'+lv;
   if(nameEl) nameEl.textContent=HIKARI_LV_NAMES[lv];
   if(nextEl){
-    if(lv<4){var rem=HIKARI_LV_REQ[lv+1]-t;nextEl.textContent='Lv.'+(lv+2)+'まであと'+rem+'問';}
+    if(lv<5){var rem=HIKARI_LV_REQ[lv+1]-t;nextEl.textContent='Lv.'+(lv+1)+'まであと'+rem+'問';}
     else{nextEl.textContent='最高レベル達成！';}
   }
   // level-up event
@@ -3487,14 +3488,14 @@ function showLevelUp(lv){
   o.innerHTML='<div style="background:rgba(0,0,0,.55);border-radius:24px;padding:28px 32px;backdrop-filter:blur(8px)">'
     +'<img class="lv-up-img" src="'+HIKARI_IMG_PATHS[lv]+'" alt="ヒカリ">'
     +'<div class="lv-up-title">✨ ヒカリがレベルアップ！ ✨</div>'
-    +'<div class="lv-up-name">Lv.'+(lv+1)+' '+HIKARI_LV_NAMES[lv]+'</div>'
+    +'<div class="lv-up-name">Lv.'+lv+' '+HIKARI_LV_NAMES[lv]+'</div>'
     +'</div>';
   document.body.appendChild(o);
   setTimeout(function(){
     o.style.transition='opacity .5s ease';o.style.opacity='0';
     setTimeout(function(){if(o.parentNode)o.remove();},500);
   },3000);
-  setTimeout(launchConfetti,400);if(lv>=3)setTimeout(launchConfetti,900);
+  setTimeout(launchConfetti,400);if(lv>=4)setTimeout(launchConfetti,900);
 }
 // ===== HIKARI SCENE MESSAGES =====
 function showHikariMsg(text,duration){
