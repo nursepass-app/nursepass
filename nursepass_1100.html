@@ -411,6 +411,8 @@ body.font-xl .explanation{font-size:16px}
 @keyframes lvUpZoom{0%{opacity:0;transform:translate(-50%,-50%) scale(.4);}40%{opacity:1;transform:translate(-50%,-50%) scale(1.1);}70%{transform:translate(-50%,-50%) scale(.96);}100%{opacity:1;transform:translate(-50%,-50%) scale(1);}}
 @keyframes eggFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes eggShake{0%,100%{transform:rotate(0deg)}20%{transform:rotate(-12deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(8deg)}}
+@keyframes eggBurst{0%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:0.6}100%{transform:scale(0.2);opacity:0}}
+@keyframes eggImgIn{0%{opacity:0;transform:scale(0.5) translateY(20px)}60%{opacity:1;transform:scale(1.08) translateY(-4px)}100%{opacity:1;transform:scale(1) translateY(0)}}
 .lv-up-overlay{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;text-align:center;pointer-events:none;animation:lvUpZoom .6s cubic-bezier(.17,.67,.35,1.3) forwards;opacity:0;}
 .lv-up-img{width:150px;height:150px;object-fit:contain;border-radius:50%;display:block;margin:0 auto 10px;}
 .lv-up-title{font-size:22px;font-weight:900;color:#FFD700;text-shadow:0 2px 10px rgba(0,0,0,.5);letter-spacing:.03em;margin-bottom:4px;}
@@ -3503,20 +3505,47 @@ function showLevelUp(lv){
 function showLevelUpAnimation(newLevel){
   if(newLevel!==1) return;
   var overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999';
-  overlay.innerHTML='<div style="position:fixed;top:0;left:0;width:100%;height:100%;'
-    +'background:rgba(255,255,200,0.95);z-index:9999;'
-    +'display:flex;flex-direction:column;align-items:center;'
-    +'justify-content:center;animation:eggFadeIn 0.5s ease">'
-    +'<div style="font-size:80px;animation:eggShake 0.5s ease 3">🥚</div>'
-    +'<div style="font-size:40px;margin-top:20px">✨🐣✨</div>'
-    +'<div style="font-size:24px;font-weight:bold;margin-top:16px;color:#e67e22;font-family:\'Noto Sans JP\',sans-serif">'
-    +'ヒカリが孵化した！'
-    +'</div>'
-    +'<div style="font-size:16px;margin-top:8px;color:#888;font-family:\'Noto Sans JP\',sans-serif">タップして続ける</div>'
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;cursor:pointer';
+  // Phase 1: egg shaking
+  overlay.innerHTML='<div id="_eggScene" style="position:fixed;top:0;left:0;width:100%;height:100%;'
+    +'background:rgba(255,255,210,0.97);display:flex;flex-direction:column;align-items:center;'
+    +'justify-content:center;animation:eggFadeIn 0.4s ease">'
+    +'<div id="_eggEmoji" style="font-size:90px;animation:eggShake 0.4s ease 3;display:block">🥚</div>'
+    +'<div id="_eggBurst" style="font-size:60px;margin-top:8px;display:none">💥</div>'
+    +'<div id="_eggHatch" style="font-size:60px;margin-top:8px;display:none">🐣</div>'
+    +'<img id="_eggImg" src="images/hikari/hikari_lv1.png" alt="小さなヒカリ" '
+    +'style="width:140px;height:140px;object-fit:contain;border-radius:50%;margin-top:12px;display:none;'
+    +'animation:eggImgIn 0.6s cubic-bezier(.17,.67,.35,1.3) forwards">'
+    +'<div id="_eggTitle" style="font-size:22px;font-weight:bold;margin-top:14px;color:#e67e22;'
+    +'font-family:\'Noto Sans JP\',sans-serif;display:none">ヒカリが孵化した！✨</div>'
+    +'<div id="_eggSub" style="font-size:13px;margin-top:6px;color:#B8907A;'
+    +'font-family:\'Noto Sans JP\',sans-serif;display:none">小さなヒカリ</div>'
+    +'<div id="_eggTap" style="font-size:13px;margin-top:16px;color:#aaa;'
+    +'font-family:\'Noto Sans JP\',sans-serif;display:none">タップして続ける</div>'
     +'</div>';
   overlay.onclick=function(){overlay.remove();};
   document.body.appendChild(overlay);
+  // sequence: shake(1.2s) → burst(0.3s) → hatch + img + text(0.6s)
+  setTimeout(function(){
+    var egg=document.getElementById('_eggEmoji');
+    var burst=document.getElementById('_eggBurst');
+    if(egg) egg.style.animation='eggBurst 0.3s ease forwards';
+    if(burst){burst.style.display='block';}
+  },1200);
+  setTimeout(function(){
+    var burst=document.getElementById('_eggBurst');
+    var hatch=document.getElementById('_eggHatch');
+    var img=document.getElementById('_eggImg');
+    var title=document.getElementById('_eggTitle');
+    var sub=document.getElementById('_eggSub');
+    var tap=document.getElementById('_eggTap');
+    if(burst) burst.style.display='none';
+    if(hatch) hatch.style.display='block';
+    if(img) img.style.display='block';
+    if(title) title.style.display='block';
+    if(sub) sub.style.display='block';
+    if(tap) tap.style.display='block';
+  },1500);
 }
 // ===== HIKARI SCENE MESSAGES =====
 function showHikariMsg(text,duration){
