@@ -451,6 +451,43 @@ body.font-xl .explanation{font-size:16px}
 .lv-up-tap{font-size:12px;color:rgba(255,255,255,0.45);margin-top:24px;font-family:'Noto Sans JP',sans-serif}
 .lv-up-particle{position:fixed;width:10px;height:10px;border-radius:3px;pointer-events:none;z-index:10001;animation:lvParticle 1.2s ease-out forwards}
 @supports (-webkit-touch-callout:none){input,textarea,select{font-size:16px!important}}
+/* ===== SETTINGS TAB ===== */
+.settings-wrap{padding:4px 0 12px}
+.settings-section{background:rgba(255,255,255,0.96);border-radius:18px;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 14px rgba(184,160,144,0.1);border:1px solid rgba(85,80,77,0.1)}
+.settings-section-title{font-size:11px;font-weight:700;color:#B8907A;letter-spacing:.1em;padding:10px 16px 8px;background:rgba(245,239,232,0.7);border-bottom:1px solid rgba(85,80,77,0.08)}
+.settings-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(85,80,77,0.07);cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.settings-row:last-child{border-bottom:none}
+.settings-row:active{background:rgba(240,232,222,0.6)}
+.settings-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.settings-label{flex:1;font-size:14px;color:#3C3530;font-weight:500}
+.settings-sub{font-size:11px;color:#B8907A;margin-right:4px;font-weight:600}
+.settings-chevron{font-size:18px;color:#C0B0A0;line-height:1}
+.stg-toggle{position:relative;width:50px;height:28px;flex-shrink:0;background:#D9C5B2;border-radius:14px;transition:.25s;cursor:pointer}
+.stg-toggle.on{background:#22c55e}
+.stg-toggle::before{content:'';position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,0.18)}
+.stg-toggle.on::before{transform:translateX(22px)}
+/* 性格タイプ選択サブ画面 */
+.stg-type-screen{position:fixed;inset:0;z-index:900;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);overflow-y:auto;display:none;animation:fadein .2s ease}
+.stg-type-inner{max-width:520px;margin:0 auto;padding:16px 16px calc(90px + env(safe-area-inset-bottom,0px))}
+.stg-type-header{display:flex;align-items:center;gap:12px;padding:8px 0 20px}
+.stg-type-title{font-size:17px;font-weight:700;color:#3C3530;font-family:'Zen Kaku Gothic New',sans-serif}
+.stg-type-btn{width:100%;padding:16px;border:2px solid rgba(85,80,77,0.15);border-radius:16px;background:rgba(255,255,255,0.95);text-align:left;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:14px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:.2s}
+.stg-type-btn.active{border-color:#22c55e;background:rgba(34,197,94,0.07)}
+.stg-type-emoji{font-size:30px;flex-shrink:0;line-height:1}
+.stg-type-info{flex:1}
+.stg-type-name{font-size:15px;font-weight:700;color:#3C3530;margin-bottom:2px}
+.stg-type-desc{font-size:12px;color:#8A7060;line-height:1.5}
+.stg-type-check{font-size:20px;color:#22c55e;font-weight:900;opacity:0;transition:.2s;flex-shrink:0}
+.stg-type-btn.active .stg-type-check{opacity:1}
+body.dark .settings-section{background:rgba(35,28,24,0.95);border-color:rgba(180,160,140,0.1)}
+body.dark .settings-section-title{background:rgba(45,35,28,0.8);color:#D9A880}
+body.dark .settings-row{border-color:rgba(180,160,140,0.08)}
+body.dark .settings-row:active{background:rgba(60,46,36,0.6)}
+body.dark .settings-label{color:#D8C8B8}
+body.dark .stg-type-screen{background:linear-gradient(135deg,#1a1614 0%,#251e1a 50%,#2a2018 100%)}
+body.dark .stg-type-btn{background:rgba(40,30,22,0.95);border-color:rgba(180,160,140,0.15)}
+body.dark .stg-type-name{color:#D8C8B8}
+body.dark .stg-type-desc{color:#A8988A}
 </style>
 </head>
 <body ontouchstart="">
@@ -614,6 +651,65 @@ body.font-xl .explanation{font-size:16px}
   <div id="quizArea" style="display:none;margin-top:0"></div>
   <div id="jokyoArea" style="display:none;margin-top:0"></div>
   <div id="flashArea" style="display:none;margin-top:0"></div>
+
+  <div id="tabSettings" style="display:none">
+    <div class="settings-wrap">
+      <div class="settings-section">
+        <div class="settings-section-title">学習設定</div>
+        <div class="settings-row" onclick="toggleSettingEasy()">
+          <span class="settings-icon">🌸</span>
+          <span class="settings-label">やさしくモード</span>
+          <div class="stg-toggle" id="stgEasy"></div>
+        </div>
+        <div class="settings-row" onclick="toggleSettingSpeed()">
+          <span class="settings-icon">⚡</span>
+          <span class="settings-label">スピードモード</span>
+          <div class="stg-toggle" id="stgSpeed"></div>
+        </div>
+        <div class="settings-row" onclick="toggleSettingShuffle()">
+          <span class="settings-icon">🔀</span>
+          <span class="settings-label">選択肢の並び順をシャッフル</span>
+          <div class="stg-toggle" id="stgShuffle"></div>
+        </div>
+        <div class="settings-row" onclick="toggleSettingSound()">
+          <span class="settings-icon">🔔</span>
+          <span class="settings-label">サウンド</span>
+          <div class="stg-toggle" id="stgSound"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">ヒカリ設定</div>
+        <div class="settings-row" onclick="showStgTypeScreen()">
+          <span class="settings-icon">💬</span>
+          <span class="settings-label">性格タイプを変更する</span>
+          <span class="settings-sub" id="stgCurrentType"></span>
+          <span class="settings-chevron">›</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">データ管理</div>
+        <div class="settings-row" onclick="showDataMgmtModal()">
+          <span class="settings-icon">💾</span>
+          <span class="settings-label">バックアップ・復元・初期化</span>
+          <span class="settings-chevron">›</span>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">ヘルプ</div>
+        <div class="settings-row" onclick="showFaqModal()">
+          <span class="settings-icon">❓</span>
+          <span class="settings-label">よくある質問</span>
+          <span class="settings-chevron">›</span>
+        </div>
+        <div class="settings-row" onclick="location.href='mailto:yunoa.japan.info@gmail.com?subject=NursePass%20不具合・改善要望'">
+          <span class="settings-icon">📧</span>
+          <span class="settings-label">不具合・改善要望を報告</span>
+          <span class="settings-chevron">›</span>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:10px;color:#C0B0A0;padding:4px 0 12px">NursePass v1.1.0</div>
+    </div>
+  </div>
 </div>
 <div id="subjectScreen" class="subject-screen">
   <div class="subject-screen-inner">
@@ -638,6 +734,9 @@ body.font-xl .explanation{font-size:16px}
   </button>
   <button class="bn-btn" data-tab="hikari" onclick="switchTab('hikari')">
     <span class="bn-icon">✨</span><span class="bn-label">ヒカリ</span>
+  </button>
+  <button class="bn-btn" data-tab="settings" onclick="switchTab('settings')">
+    <span class="bn-icon">⚙️</span><span class="bn-label">設定</span>
   </button>
 </nav>
 
@@ -2630,6 +2729,7 @@ function switchTab(t){
   document.getElementById('tabWeak').style.display=t==='weak'?'block':'none';
   document.getElementById('tabStats').style.display=t==='stats'?'block':'none';
   document.getElementById('tabHikari').style.display=t==='hikari'?'block':'none';
+  document.getElementById('tabSettings').style.display=t==='settings'?'block':'none';
   document.querySelectorAll('.bn-btn').forEach(b=>{
     b.classList.toggle('active',b.dataset.tab===t);
   });
@@ -2638,6 +2738,7 @@ function switchTab(t){
   if(t==='weak'){renderWeak();updateBnWeakBadge();}
   if(t==='stats') renderStats();
   if(t==='hikari') initChat();
+  if(t==='settings') renderSettingsTab();
   document.getElementById('quizArea').style.display='none';
   // Refresh home widgets when returning
   if(t==='home'){showResumeBanner();renderTodayPlan();renderTodayTimeline();renderMiniReview();renderPassGauge();}
@@ -3481,10 +3582,7 @@ function renderQuestion(){
       <div class="q-text">${q.question}</div>
       ${!isTime?`<div id="hintArea" style="margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button></div>`:''}
       <div class="choices">
-        ${Object.entries(q.choices).map(([k,v])=>`
-          <button class="choice-btn" onclick="answer('${k}')" id="ch${k}">
-            ${v}
-          </button>`).join('')}
+        ${(()=>{let ks=Object.keys(q.choices);if(localStorage.getItem('np_shuffle')==='1'){ks=ks.slice().sort(()=>Math.random()-0.5);}return ks.map(k=>`<button class="choice-btn" onclick="answer('${k}')" id="ch${k}">${q.choices[k]}</button>`).join('');})()}
       </div>
     </div>`;
   if(isTime) startQuizTimer();
@@ -7042,6 +7140,110 @@ renderTodayPlan();
   });
   obs.observe(document.body,{childList:true,subtree:true});
 })();
+
+// ===== SETTINGS TAB =====
+function _stgOn(id,on){var el=document.getElementById(id);if(el){if(on)el.classList.add('on');else el.classList.remove('on');}}
+function renderSettingsTab(){
+  var mode=localStorage.getItem('np_quiz_mode')||'hikari';
+  _stgOn('stgEasy',mode==='hikari');
+  _stgOn('stgSpeed',mode==='gachi');
+  _stgOn('stgShuffle',localStorage.getItem('np_shuffle')==='1');
+  _stgOn('stgSound',soundEnabled);
+  var t=document.getElementById('stgCurrentType');
+  if(t){var info=PERSONALITY_TYPES[getPersonalityType()];t.textContent=info?info.label:'';}
+}
+function toggleSettingEasy(){
+  var cur=localStorage.getItem('np_quiz_mode')||'hikari';
+  var next=cur==='hikari'?'gachi':'hikari';
+  setQuizMode(next);renderSettingsTab();
+  showToast(next==='hikari'?'🌸 やさしくモードON':'⚡ スピードモードON');
+}
+function toggleSettingSpeed(){
+  var cur=localStorage.getItem('np_quiz_mode')||'hikari';
+  var next=cur==='gachi'?'hikari':'gachi';
+  setQuizMode(next);renderSettingsTab();
+  showToast(next==='gachi'?'⚡ スピードモードON':'🌸 やさしくモードON');
+}
+function toggleSettingShuffle(){
+  var on=localStorage.getItem('np_shuffle')!=='1';
+  localStorage.setItem('np_shuffle',on?'1':'0');
+  renderSettingsTab();
+  showToast(on?'🔀 シャッフルON':'シャッフルOFF');
+}
+function toggleSettingSound(){
+  toggleSound();renderSettingsTab();
+}
+function showStgTypeScreen(){
+  var s=document.getElementById('stgTypeScreen');if(!s) return;
+  renderStgTypeBtns();
+  s.style.display='block';
+  var bn=document.getElementById('bottomNav');if(bn) bn.style.display='none';
+}
+function hideStgTypeScreen(){
+  var s=document.getElementById('stgTypeScreen');if(s) s.style.display='none';
+  var bn=document.getElementById('bottomNav');if(bn) bn.style.display='';
+  renderSettingsTab();
+}
+function renderStgTypeBtns(){
+  var el=document.getElementById('stgTypeBtns');if(!el) return;
+  var cur=getPersonalityType();
+  var defs=[
+    {key:'hikari_empathy',emoji:'💗',name:'共感型',desc:'そっと寄り添い、一緒に喜んでくれる'},
+    {key:'hikari_rival',  emoji:'🏆',name:'競争型',desc:'熱く煽り、やる気に火をつける'},
+    {key:'hikari_praise', emoji:'⭐',name:'承認型',desc:'たくさん褒めて伸ばしてくれる'},
+    {key:'hikari_growth', emoji:'🌱',name:'成長型',desc:'データで成長を見える化してくれる'}
+  ];
+  el.innerHTML=defs.map(function(d){
+    var act=cur===d.key?' active':'';
+    return '<button class="stg-type-btn'+act+'" onclick="changeStgType(\''+d.key+'\')">'
+      +'<span class="stg-type-emoji">'+d.emoji+'</span>'
+      +'<div class="stg-type-info"><div class="stg-type-name">'+d.name+'型</div><div class="stg-type-desc">'+d.desc+'</div></div>'
+      +'<span class="stg-type-check">✓</span></button>';
+  }).join('');
+}
+function changeStgType(type){
+  setPersonalityType(type);
+  var info=PERSONALITY_TYPES[type];
+  if(info) showToast(info.label+'に変更しました！');
+  renderStgTypeBtns();
+}
+function showDataMgmtModal(){
+  var m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  m.innerHTML='<div style="width:100%;max-width:480px;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px calc(28px + env(safe-area-inset-bottom,0px));font-family:\'Noto Sans JP\',sans-serif">'
+    +'<div style="font-size:16px;font-weight:700;color:#3C3530;margin-bottom:16px;font-family:\'Zen Kaku Gothic New\',sans-serif">💾 データ管理</div>'
+    +'<button onclick="exportData()" style="width:100%;padding:13px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'Noto Sans JP\',sans-serif;margin-bottom:8px;touch-action:manipulation">📤 バックアップを書き出す</button>'
+    +'<button onclick="importData()" style="width:100%;padding:13px;background:rgba(240,232,222,0.9);color:#55504D;border:1px solid rgba(85,80,77,0.25);border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'Noto Sans JP\',sans-serif;margin-bottom:8px;touch-action:manipulation">📥 バックアップから復元する</button>'
+    +'<button onclick="confirmStgResetAll()" style="width:100%;padding:13px;background:rgba(248,113,113,0.1);color:#dc2626;border:1px solid rgba(248,113,113,0.3);border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:\'Noto Sans JP\',sans-serif;margin-bottom:16px;touch-action:manipulation">🗑️ 全データを初期化する</button>'
+    +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="width:100%;padding:10px;background:transparent;border:none;color:#aaa;font-size:13px;cursor:pointer;font-family:\'Noto Sans JP\',sans-serif;touch-action:manipulation">閉じる</button>'
+    +'</div>';
+  document.body.appendChild(m);
+  m.addEventListener('click',function(e){if(e.target===m) m.remove();});
+}
+function confirmStgResetAll(){
+  if(!confirm('全ての学習データを初期化しますか？\nこの操作は取り消せません。')) return;
+  ['np_history','np_streak','np_weekly','np_badges','np_bookmarks','np_goal',
+   'np_memos','np_best','np_daily_acc','np_wrong_choices','np_srs','np_examdate',
+   'np_mock_history','np_flash_progress'].forEach(function(k){localStorage.removeItem(k);});
+  location.reload();
+}
+function showFaqModal(){
+  var m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  var faq=[
+    {q:'問題数はどのくらいありますか？',a:'必修807問・一般1,200問・状況設定1,000問の計3,007問が収録されています。'},
+    {q:'ヒカリとチャットするには？',a:'OpenAI APIキーが必要です。ヒカリタブの⚙️アイコンからAPIキーを登録できます。'},
+    {q:'学習データはどこに保存されますか？',a:'全てのデータはお使いの端末のlocalStorageに保存されます。サーバーには送信されません。'},
+    {q:'バックアップするには？',a:'設定 → データ管理 → バックアップを書き出す でJSONファイルとして保存できます。'},
+    {q:'オフラインでも使えますか？',a:'ヒカリチャット以外の全機能はオフラインで使用できます。'}
+  ];
+  m.innerHTML='<div style="width:100%;max-width:480px;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px calc(28px + env(safe-area-inset-bottom,0px));max-height:82vh;overflow-y:auto;font-family:\'Noto Sans JP\',sans-serif">'
+    +'<div style="font-size:16px;font-weight:700;color:#3C3530;margin-bottom:14px;font-family:\'Zen Kaku Gothic New\',sans-serif">❓ よくある質問</div>'
+    +faq.map(function(f){return '<div style="margin-bottom:12px;padding:12px 14px;background:rgba(245,239,232,0.8);border-radius:12px"><div style="font-size:13px;font-weight:700;color:#3C3530;margin-bottom:4px">Q. '+f.q+'</div><div style="font-size:12px;color:#6B5040;line-height:1.7">A. '+f.a+'</div></div>';}).join('')
+    +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="width:100%;padding:10px;background:transparent;border:none;color:#aaa;font-size:13px;cursor:pointer;font-family:\'Noto Sans JP\',sans-serif;touch-action:manipulation">閉じる</button></div>';
+  document.body.appendChild(m);
+  m.addEventListener('click',function(e){if(e.target===m) m.remove();});
+}
 </script>
 <script>
 if ('serviceWorker' in navigator) {
@@ -7055,5 +7257,15 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<div id="stgTypeScreen" class="stg-type-screen">
+  <div class="stg-type-inner">
+    <div class="stg-type-header">
+      <button class="back-btn" onclick="hideStgTypeScreen()" style="touch-action:manipulation">← 戻る</button>
+      <div class="stg-type-title">💬 性格タイプを選ぶ</div>
+      <div style="width:56px"></div>
+    </div>
+    <div id="stgTypeBtns"></div>
+  </div>
+</div>
 </body>
 </html>
