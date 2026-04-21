@@ -2697,7 +2697,7 @@ function renderHomeSummary(){
   const ps=calcPassScore();
   const pe=document.getElementById('passScoreDisp');
   if(pe){
-    if(ps===null){pe.textContent='--';pe.parentElement.querySelector('.pass-lbl-sub').textContent='';}
+    if(ps===null){pe.textContent='--';const _sub0=pe.parentElement&&pe.parentElement.querySelector('.pass-lbl-sub');if(_sub0)_sub0.textContent='';}
     else{
       pe.textContent=ps+'%';
       const sub=pe.parentElement.querySelector('.pass-lbl-sub');
@@ -2722,7 +2722,8 @@ function getRate(){
 
 function updateScoreBadge(){
   const r=getRate();
-  document.getElementById('rateDisp').textContent=r!==null?r+'%':'--%';
+  const el=document.getElementById('rateDisp');
+  if(el) el.textContent=r!==null?r+'%':'--%';
 }
 
 // TABS
@@ -7153,10 +7154,10 @@ renderHomeSummary();
 updateBnWeakBadge();
 renderPersonalityTypeBtns();
 // 初回診断（personality_type 未設定時）→ 完了後にAPIキーモーダルへチェーン
-if(!localStorage.getItem('personality_type')){
-  setTimeout(showPersonalityQuiz, 400);
-} else if(!localStorage.getItem('hatchingDone')){
+if(!localStorage.getItem('hatchingDone')){
   setTimeout(showInitialHatchScene, 600);
+} else if(!localStorage.getItem('personality_type')){
+  setTimeout(showPersonalityQuiz, 400);
 } else if(!localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen')){
   setTimeout(showApiKeyModal, 900);
 }
