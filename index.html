@@ -438,6 +438,12 @@ body.font-xl .explanation{font-size:16px}
 @keyframes lvNewImg{0%{opacity:0;transform:translateX(80px) scale(0.7)}60%{transform:translateX(-8px) scale(1.08)}100%{opacity:1;transform:translateX(0) scale(1)}}
 @keyframes lvNameIn{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:translateY(0)}}
 @keyframes lvParticle{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0deg)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0) rotate(var(--pr))}}
+@keyframes hatchWiggle{0%,100%{transform:rotate(0deg) scale(1)}15%{transform:rotate(-8deg) scale(1.04)}30%{transform:rotate(8deg) scale(1.04)}45%{transform:rotate(-6deg) scale(1.02)}60%{transform:rotate(6deg) scale(1.02)}75%{transform:rotate(-3deg) scale(1.01)}}
+@keyframes hatchShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes hatchPop{0%{opacity:0;transform:scale(0.6)}60%{transform:scale(1.22)}80%{transform:scale(0.96)}100%{opacity:1;transform:scale(1)}}
+@keyframes hatchScaleUp{0%{transform:scale(1)}100%{transform:scale(1.2)}}
+@keyframes hatchTextIn{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes hatchSparkle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}}
 .lv-up-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;animation:eggFadeIn 0.3s ease}
 .lv-up-screen-title{font-size:38px;font-weight:900;color:#FFD700;letter-spacing:.06em;text-shadow:0 0 20px rgba(255,215,0,0.7),0 2px 8px rgba(0,0,0,0.8);animation:lvTitle 0.5s cubic-bezier(.17,.67,.35,1.3) forwards;margin-bottom:24px;font-family:'Zen Kaku Gothic New',sans-serif}
 .lv-up-imgs{display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:20px}
@@ -3701,48 +3707,121 @@ function spawnLvUpParticles(container){
     })();
   }
 }
-function showHatchAnimation(){
+function _spawnHatchSparkles(cx,cy){
+  var emojis=['✨','⭐','💫','🌟'];
+  for(var i=0;i<12;i++){
+    (function(){
+      var s=document.createElement('div');
+      s.style.cssText='position:fixed;font-size:'+(16+Math.random()*14)+'px;z-index:10002;pointer-events:none;'
+        +'left:'+(cx-12)+'px;top:'+(cy-12)+'px;animation:hatchSparkle '+(0.7+Math.random()*0.6)+'s ease forwards;'
+        +'animation-delay:'+(Math.random()*0.4)+'s';
+      var angle=Math.random()*Math.PI*2;var dist=60+Math.random()*120;
+      s.style.setProperty('--sx',Math.round(Math.cos(angle)*dist)+'px');
+      s.style.setProperty('--sy',Math.round(Math.sin(angle)*dist)+'px');
+      s.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+      document.body.appendChild(s);
+      setTimeout(function(){if(s.parentNode)s.remove();},1400);
+    })();
+  }
+}
+function showInitialHatchScene(){
+  // 初回起動のみ：hatchingDone 未設定時に表示
   var overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;cursor:pointer';
-  overlay.innerHTML='<div id="_eggScene" style="position:fixed;top:0;left:0;width:100%;height:100%;'
-    +'background:rgba(255,255,210,0.97);display:flex;flex-direction:column;align-items:center;'
-    +'justify-content:center;animation:eggFadeIn 0.4s ease">'
-    +'<div id="_eggEmoji" style="font-size:90px;animation:eggShake 0.4s ease 3;display:block">🥚</div>'
-    +'<div id="_eggBurst" style="font-size:60px;margin-top:8px;display:none">💥</div>'
-    +'<div id="_eggHatch" style="font-size:60px;margin-top:8px;display:none">🐣</div>'
-    +'<img id="_eggImg" src="images/hikari/hikari_lv1.png" alt="小さなヒカリ" '
-    +'style="width:140px;height:140px;object-fit:contain;border-radius:50%;margin-top:12px;display:none;'
-    +'animation:eggImgIn 0.6s cubic-bezier(.17,.67,.35,1.3) forwards">'
-    +'<div id="_eggTitle" style="font-size:22px;font-weight:bold;margin-top:14px;color:#e67e22;'
-    +'font-family:\'Noto Sans JP\',sans-serif;display:none">ヒカリが孵化した！✨</div>'
-    +'<div id="_eggSub" style="font-size:13px;margin-top:6px;color:#B8907A;'
-    +'font-family:\'Noto Sans JP\',sans-serif;display:none">小さなヒカリ</div>'
-    +'<div id="_eggTap" style="font-size:13px;margin-top:16px;color:#aaa;'
-    +'font-family:\'Noto Sans JP\',sans-serif;display:none">タップして続ける</div>'
-    +'</div>';
-  overlay.onclick=function(){overlay.remove();};
+  overlay.id='_initHatch';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:11500;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:eggFadeIn 0.5s ease';
+  overlay.innerHTML=
+    '<img id="_ihImg" src="images/hikari/hikari_lv0birth1.png" alt="たまご" '
+    +'style="width:200px;height:200px;object-fit:contain;transition:opacity .3s ease">'
+    +'<div id="_ihTitle" style="font-size:24px;font-weight:900;color:#FFD700;margin-top:24px;'
+    +'font-family:\'Zen Kaku Gothic New\',sans-serif;text-shadow:0 0 20px rgba(255,215,0,.8);'
+    +'opacity:0;animation:none">ヒカリが生まれた！✨</div>'
+    +'<div id="_ihSub" style="font-size:14px;color:rgba(255,255,255,0.8);margin-top:8px;'
+    +'font-family:\'Noto Sans JP\',sans-serif;line-height:1.7;text-align:center;opacity:0;animation:none">いっしょに看護師国試を乗り越えよう。</div>'
+    +'<div id="_ihTap" style="font-size:13px;color:rgba(255,255,255,0.45);margin-top:32px;'
+    +'font-family:\'Noto Sans JP\',sans-serif;opacity:0;animation:none">タップして続ける</div>';
+  var tapped=false;
+  function closeFn(){
+    if(tapped) return;tapped=true;
+    localStorage.setItem('hatchingDone','true');
+    overlay.style.transition='opacity .5s ease';overlay.style.opacity='0';
+    setTimeout(function(){if(overlay.parentNode)overlay.remove();},500);
+  }
+  overlay.addEventListener('click',closeFn);
   document.body.appendChild(overlay);
+  var img=document.getElementById('_ihImg');
+  // ③ 1.5秒後：ぷるぷる
   setTimeout(function(){
-    var egg=document.getElementById('_eggEmoji');
-    var burst=document.getElementById('_eggBurst');
-    if(egg) egg.style.animation='eggBurst 0.3s ease forwards';
-    if(burst) burst.style.display='block';
-  },1200);
-  setTimeout(function(){
-    var burst=document.getElementById('_eggBurst');
-    var hatch=document.getElementById('_eggHatch');
-    var img=document.getElementById('_eggImg');
-    var title=document.getElementById('_eggTitle');
-    var sub=document.getElementById('_eggSub');
-    var tap=document.getElementById('_eggTap');
-    if(burst) burst.style.display='none';
-    if(hatch) hatch.style.display='block';
-    if(img) img.style.display='block';
-    if(title) title.style.display='block';
-    if(sub) sub.style.display='block';
-    if(tap) tap.style.display='block';
-    spawnLvUpParticles(overlay);
+    if(img) img.style.animation='hatchWiggle 0.6s ease 3';
   },1500);
+  // ④ 3秒後：亀裂画像に切替 + 画面揺らし
+  setTimeout(function(){
+    if(img){img.style.animation='';img.src='images/hikari/hikari_lv0birth2.png';}
+    overlay.style.animation='hatchShake 0.5s ease';
+    setTimeout(function(){overlay.style.animation='';},500);
+  },3000);
+  // ⑤ 4秒後：hikari_lv0 に切替 + スケールアップ + キラキラ
+  setTimeout(function(){
+    if(img){
+      img.src='images/hikari/hikari_lv0.png';
+      img.style.animation='hatchPop 0.7s cubic-bezier(.17,.67,.35,1.3) forwards';
+      setTimeout(function(){img.style.animation='hatchScaleUp 0.4s ease forwards';},700);
+    }
+    var cx=window.innerWidth/2,cy=window.innerHeight/3;
+    _spawnHatchSparkles(cx,cy);
+  },4000);
+  // ⑥ 4.5秒後：「ヒカリが生まれた！✨」フェードイン
+  setTimeout(function(){
+    var t=document.getElementById('_ihTitle');var s=document.getElementById('_ihSub');
+    if(t){t.style.animation='hatchTextIn 0.5s ease forwards';t.style.opacity='1';}
+    if(s){s.style.animation='hatchTextIn 0.5s ease 0.2s forwards';s.style.opacity='1';}
+  },4500);
+  // ⑦ 6秒後：「タップして続ける」表示
+  setTimeout(function(){
+    var tap=document.getElementById('_ihTap');
+    if(tap){tap.style.animation='hatchTextIn 0.4s ease forwards';tap.style.opacity='1';}
+  },6000);
+}
+function showHatchAnimation(){
+  // Lv0→Lv1 レベルアップ時の孵化演出
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:eggFadeIn 0.3s ease;cursor:pointer';
+  overlay.innerHTML=
+    '<img id="_hImg" src="images/hikari/hikari_lv0.png" alt="ヒカリ" style="width:160px;height:160px;object-fit:contain;transition:opacity .3s ease">'
+    +'<div id="_hTitle" style="font-size:22px;font-weight:900;color:#FFD700;margin-top:20px;font-family:\'Zen Kaku Gothic New\',sans-serif;text-shadow:0 0 16px rgba(255,215,0,.7);opacity:0">レベルアップ！🎉</div>'
+    +'<div id="_hSub" style="font-size:14px;color:rgba(255,255,255,0.85);margin-top:6px;font-family:\'Noto Sans JP\',sans-serif;opacity:0">小さなヒカリになったよ！</div>'
+    +'<div id="_hTap" style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:24px;font-family:\'Noto Sans JP\',sans-serif;opacity:0">タップして続ける</div>';
+  document.body.appendChild(overlay);
+  var img=document.getElementById('_hImg');
+  // ①殻割れ: hikari_lv01 に切替
+  setTimeout(function(){
+    if(img){img.style.animation='hatchWiggle 0.5s ease 2';
+      setTimeout(function(){
+        img.style.animation='';img.src='images/hikari/hikari_lv01.png';
+        overlay.style.animation='hatchShake 0.4s ease';
+        setTimeout(function(){overlay.style.animation='';},400);
+      },1000);}
+  },400);
+  // ②完全孵化: hikari_lv1 に切替 + スケールアップ
+  setTimeout(function(){
+    if(img){img.src='images/hikari/hikari_lv1.png';img.style.animation='hatchPop 0.6s cubic-bezier(.17,.67,.35,1.3) forwards';}
+    spawnLvUpParticles(overlay);
+    var t=document.getElementById('_hTitle');var s=document.getElementById('_hSub');
+    if(t){t.style.animation='hatchTextIn 0.4s ease forwards';t.style.opacity='1';}
+    if(s){s.style.animation='hatchTextIn 0.4s ease 0.15s forwards';s.style.opacity='1';}
+  },1800);
+  setTimeout(function(){
+    var tap=document.getElementById('_hTap');
+    if(tap){tap.style.animation='hatchTextIn 0.4s ease forwards';tap.style.opacity='1';}
+    launchConfetti();
+  },2800);
+  overlay.onclick=function(){
+    overlay.style.transition='opacity .4s ease';overlay.style.opacity='0';
+    setTimeout(function(){if(overlay.parentNode)overlay.remove();},420);
+  };
+  setTimeout(function(){
+    if(overlay.parentNode){overlay.style.transition='opacity .5s ease';overlay.style.opacity='0';
+      setTimeout(function(){if(overlay.parentNode)overlay.remove();},500);}
+  },5000);
 }
 // ===== HIKARI SCENE MESSAGES =====
 function showHikariMsg(text,duration){
@@ -7076,6 +7155,8 @@ renderPersonalityTypeBtns();
 // 初回診断（personality_type 未設定時）→ 完了後にAPIキーモーダルへチェーン
 if(!localStorage.getItem('personality_type')){
   setTimeout(showPersonalityQuiz, 400);
+} else if(!localStorage.getItem('hatchingDone')){
+  setTimeout(showInitialHatchScene, 600);
 } else if(!localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen')){
   setTimeout(showApiKeyModal, 900);
 }
