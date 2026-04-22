@@ -2750,8 +2750,15 @@ function switchTab(t){
   if(t==='hikari') initChat();
   if(t==='settings') renderSettingsTab();
   document.getElementById('quizArea').style.display='none';
-  // Refresh home widgets when returning
-  if(t==='home'){showResumeBanner();renderTodayPlan();renderTodayTimeline();renderMiniReview();renderPassGauge();}
+  // Refresh home widgets when returning + 残留オーバーレイをクリーンアップ
+  if(t==='home'){
+    document.querySelectorAll('.lv-up-screen,.pq-screen,#_initHatch').forEach(function(el){
+      el.style.pointerEvents='none';
+      el.style.transition='opacity .3s ease';el.style.opacity='0';
+      setTimeout(function(){if(el.parentNode)el.remove();},320);
+    });
+    showResumeBanner();renderTodayPlan();renderTodayTimeline();renderMiniReview();renderPassGauge();
+  }
 }
 
 // CATEGORY SELECT
@@ -3673,10 +3680,13 @@ function showLevelUp(lv){
     +'<div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:10px;font-family:\'Noto Sans JP\',sans-serif;text-align:center;line-height:1.5">'+getPersonalityMsg('levelup')+'</div>'
     +'</div>'
     +'<div class="lv-up-tap">タップして続ける</div>';
-  screen.onclick=function(){
+  function _lvClose(){
+    screen.style.pointerEvents='none';
     screen.style.transition='opacity .4s ease';screen.style.opacity='0';
     setTimeout(function(){if(screen.parentNode)screen.remove();},400);
-  };
+  }
+  screen.addEventListener('click',_lvClose);
+  screen.addEventListener('touchend',function(e){e.preventDefault();_lvClose();},{passive:false});
   document.body.appendChild(screen);
   // パーティクル
   setTimeout(function(){spawnLvUpParticles(screen);},300);
@@ -3685,6 +3695,7 @@ function showLevelUp(lv){
   // 自動クローズ
   setTimeout(function(){
     if(screen.parentNode){
+      screen.style.pointerEvents='none';
       screen.style.transition='opacity .5s ease';screen.style.opacity='0';
       setTimeout(function(){if(screen.parentNode)screen.remove();},500);
     }
@@ -3747,12 +3758,15 @@ function showInitialHatchScene(){
   function closeFn(){
     if(tapped) return;tapped=true;
     localStorage.setItem('hatchingDone','true');
+    overlay.style.pointerEvents='none';
     overlay.style.transition='opacity .5s ease';overlay.style.opacity='0';
     setTimeout(function(){
       if(overlay.parentNode)overlay.remove();
       if(!localStorage.getItem('personality_type')) showPersonalityQuiz();
     },500);
   }
+  // 15秒後のフォールバック自動クローズ（タップが届かない場合）
+  setTimeout(function(){if(!tapped) closeFn();},15000);
   overlay.addEventListener('click',closeFn);
   overlay.addEventListener('touchend',function(e){e.preventDefault();closeFn();},{passive:false});
   document.body.appendChild(overlay);
@@ -3839,6 +3853,7 @@ function showHatchAnimation(){
     if(tap){tap.style.animation='hatchTextIn 0.4s ease forwards';tap.style.opacity='1';}
   },3500);
   function _hatchClose(){
+    overlay.style.pointerEvents='none';
     overlay.style.transition='opacity .4s ease';overlay.style.opacity='0';
     setTimeout(function(){if(overlay.parentNode)overlay.remove();},420);
   }
@@ -3846,7 +3861,9 @@ function showHatchAnimation(){
   overlay.addEventListener('touchend',function(e){e.preventDefault();_hatchClose();},{passive:false});
   // 6秒後に自動消去
   setTimeout(function(){
-    if(overlay.parentNode){overlay.style.transition='opacity .5s ease';overlay.style.opacity='0';
+    if(overlay.parentNode){
+      overlay.style.pointerEvents='none';
+      overlay.style.transition='opacity .5s ease';overlay.style.opacity='0';
       setTimeout(function(){if(overlay.parentNode)overlay.remove();},500);}
   },6000);
 }
