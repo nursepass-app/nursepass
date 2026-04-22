@@ -64,10 +64,10 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .field-select{padding:12px 16px 0}
 .field-label{font-size:11px;color:#5A5450;margin-bottom:6px;letter-spacing:.05em}
 .field-chips{display:flex;flex-wrap:wrap;gap:5px;padding-bottom:12px;align-items:center}
-.chip{padding:4px 10px;border:1.5px solid rgba(85,80,77,0.35);border-radius:20px;font-size:10px;color:#55504D;cursor:pointer;background:rgba(255,255,255,0.92);transition:.15s;white-space:nowrap}
+.chip{padding:4px 10px;border:1.5px solid rgba(85,80,77,0.35);border-radius:20px;font-size:10px;color:#55504D;cursor:pointer;background:rgba(255,255,255,0.92);transition:.15s;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-user-select:none}
 .chip.selected{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border-color:transparent}
 .sub-tabs{display:flex;gap:8px;padding:12px 16px 8px}
-.sub-tab{flex:1;padding:8px 4px;border:1.5px solid rgba(85,80,77,0.25);border-radius:12px;background:rgba(240,232,222,.5);font-size:11px;font-weight:500;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:#55504D;transition:.2s;text-align:center;line-height:1.4}
+.sub-tab{flex:1;padding:8px 4px;border:1.5px solid rgba(85,80,77,0.25);border-radius:12px;background:rgba(240,232,222,.5);font-size:11px;font-weight:500;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:#55504D;transition:.2s;text-align:center;line-height:1.4;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-user-select:none}
 .sub-tab.active{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border-color:transparent;font-weight:700}
 .cat-count{font-size:10px;display:block;margin-top:2px;opacity:.85}
 .per-cat-stats{margin-top:16px}
@@ -519,7 +519,7 @@ body.dark .stg-type-desc{color:#A8988A}
   <div id="tabHome">
     <!-- エリア2: ヒカリのひとこと (daily-msg-card) -->
     <div id="hikariHintBar" class="daily-msg-card" style="margin-bottom:12px;display:flex!important">
-      <div style="position:relative;flex-shrink:0"><div class="daily-msg-avatar" id="dailyMsgAvDiv"><img class="hikari-av-img" id="dailyAvImg" src="" alt="ヒカリ"></div><span id="hikariCrown" style="display:none;position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:15px;line-height:1;z-index:2">👑</span></div>
+      <div style="position:relative;flex-shrink:0"><div class="daily-msg-avatar" id="dailyMsgAvDiv"><img class="hikari-av-img" id="dailyAvImg" src="images/hikari/hikari_lv0.png" alt="ヒカリ"></div><span id="hikariCrown" style="display:none;position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:15px;line-height:1;z-index:2">👑</span></div>
       <div class="daily-msg-content">
         <div class="daily-msg-label">ヒカリより <span id="hikariLvBadge" style="background:rgba(138,106,80,0.15);color:#8A6A50;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px">Lv.1</span></div>
         <div id="hikariLvName" style="font-size:11px;color:#B8907A;font-weight:700;margin-bottom:2px">小さなヒカリ</div>
@@ -627,7 +627,7 @@ body.dark .stg-type-desc{color:#A8988A}
     <div class="card">
       <div class="hikari-wrap">
         <div class="hikari-header">
-          <div class="hikari-avatar-lg"><img class="hikari-av-img" id="hikariAvLg" src="" alt="ヒカリ"></div>
+          <div class="hikari-avatar-lg"><img class="hikari-av-img" id="hikariAvLg" src="images/hikari/hikari_lv0.png" alt="ヒカリ"></div>
           <div class="hikari-info">
             <div class="hikari-name">ヒカリ</div>
             <div class="hikari-catchcopy">いつも隣でそっと照らすよ</div>
@@ -7224,10 +7224,9 @@ renderTodayPlan();
       var dx=0,dy=0;
       if(e.changedTouches){dx=Math.abs(e.changedTouches[0].clientX-(el._tsx||0));dy=Math.abs(e.changedTouches[0].clientY-(el._tsy||0));}
       if(dx>10||dy>10) return;// スクロールは除外
-      var attr=el.getAttribute('onclick');
-      if(!attr) return;
+      if(typeof el.onclick!=='function') return;
       e.preventDefault();
-      try{(new Function(attr))();}catch(err){}
+      try{el.onclick.call(el);}catch(err){}
     },{passive:false});
     el.addEventListener('touchstart',function(e){
       if(e.touches){el._tsx=e.touches[0].clientX;el._tsy=e.touches[0].clientY;}
