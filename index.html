@@ -30,7 +30,7 @@ if (navigator.userAgent.indexOf('Line/') > -1) {
 --text:#55504D;--text-mid:#5A5450;
 }
 html{touch-action:manipulation}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 button,[onclick]{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
 body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);font-family:'Noto Sans JP',sans-serif;padding:16px;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px));position:relative;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -504,7 +504,7 @@ body.dark .stg-type-desc{color:#A8988A}
 <div class="blob blob2"></div>
 <div class="wrap">
   <div class="nav">
-    <div onclick="switchTab('home')" style="cursor:pointer;-webkit-tap-highlight-color:transparent">
+    <div onclick="switchTab('home')" role="button" tabindex="0" style="cursor:pointer;-webkit-tap-highlight-color:transparent">
       <div class="logo">NursePass</div>
       <div class="logo-sub">看護師国試対策 - ヒカリ</div>
     </div>
@@ -665,22 +665,22 @@ body.dark .stg-type-desc{color:#A8988A}
     <div class="settings-wrap">
       <div class="settings-section">
         <div class="settings-section-title">学習設定</div>
-        <div class="settings-row" onclick="toggleSettingEasy()">
+        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingEasy()">
           <span class="settings-icon">🌸</span>
           <span class="settings-label">やさしくモード</span>
           <div class="stg-toggle" id="stgEasy"></div>
         </div>
-        <div class="settings-row" onclick="toggleSettingSpeed()">
+        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingSpeed()">
           <span class="settings-icon">⚡</span>
           <span class="settings-label">スピードモード</span>
           <div class="stg-toggle" id="stgSpeed"></div>
         </div>
-        <div class="settings-row" onclick="toggleSettingShuffle()">
+        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingShuffle()">
           <span class="settings-icon">🔀</span>
           <span class="settings-label">選択肢の並び順をシャッフル</span>
           <div class="stg-toggle" id="stgShuffle"></div>
         </div>
-        <div class="settings-row" onclick="toggleSettingSound()">
+        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingSound()">
           <span class="settings-icon">🔔</span>
           <span class="settings-label">サウンド</span>
           <div class="stg-toggle" id="stgSound"></div>
@@ -688,7 +688,7 @@ body.dark .stg-type-desc{color:#A8988A}
       </div>
       <div class="settings-section">
         <div class="settings-section-title">ヒカリ設定</div>
-        <div class="settings-row" onclick="showStgTypeScreen()">
+        <div class="settings-row" role="button" tabindex="0" onclick="showStgTypeScreen()">
           <span class="settings-icon">💬</span>
           <span class="settings-label">性格タイプを変更する</span>
           <span class="settings-sub" id="stgCurrentType"></span>
@@ -697,7 +697,7 @@ body.dark .stg-type-desc{color:#A8988A}
       </div>
       <div class="settings-section">
         <div class="settings-section-title">データ管理</div>
-        <div class="settings-row" onclick="showDataMgmtModal()">
+        <div class="settings-row" role="button" tabindex="0" onclick="showDataMgmtModal()">
           <span class="settings-icon">💾</span>
           <span class="settings-label">バックアップ・復元・初期化</span>
           <span class="settings-chevron">›</span>
@@ -705,12 +705,12 @@ body.dark .stg-type-desc{color:#A8988A}
       </div>
       <div class="settings-section">
         <div class="settings-section-title">ヘルプ</div>
-        <div class="settings-row" onclick="showFaqModal()">
+        <div class="settings-row" role="button" tabindex="0" onclick="showFaqModal()">
           <span class="settings-icon">❓</span>
           <span class="settings-label">よくある質問</span>
           <span class="settings-chevron">›</span>
         </div>
-        <div class="settings-row" onclick="location.href='mailto:yunoa.japan.info@gmail.com?subject=NursePass%20不具合・改善要望'">
+        <div class="settings-row" role="button" tabindex="0" onclick="location.href='mailto:yunoa.japan.info@gmail.com?subject=NursePass%20不具合・改善要望'">
           <span class="settings-icon">📧</span>
           <span class="settings-label">不具合・改善要望を報告</span>
           <span class="settings-chevron">›</span>
@@ -3064,7 +3064,7 @@ function renderFlash(){
       </div>
     </div>
     <div class="flash-category-tabs">${catBtns}</div>
-    <div class="flash-card-wrap" onclick="flashFlip()" title="タップで答えを見る">
+    <div class="flash-card-wrap" role="button" tabindex="0" onclick="flashFlip()" title="タップで答えを見る">
       <div class="flash-card-inner${flashState.flipped?' flipped':''}" id="flashInner">
         <div class="flash-face flash-front">
           <div class="flash-q-label">${card.cat}</div>
@@ -7270,50 +7270,6 @@ renderTodayPlan();
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),5000);
 })();
-// タッチ委譲: document レベルの単一 touchend で全クリッカブル要素をカバー
-// （MutationObserver 方式を廃止 — iOS 26 Safari で el.onclick.call が不安定なため）
-(function(){
-  var _tsx=0,_tsy=0;
-  document.addEventListener('touchstart',function(e){
-    if(e.touches){_tsx=e.touches[0].clientX;_tsy=e.touches[0].clientY;}
-  },{passive:true});
-  document.addEventListener('touchend',function(e){
-    var t=e.changedTouches&&e.changedTouches[0];
-    if(!t) return;
-    var dx=Math.abs(t.clientX-_tsx),dy=Math.abs(t.clientY-_tsy);
-    if(dx>10||dy>10) return; // スクロールを除外
-    var el=e.target.closest('[onclick], button, .choice-btn, .bn-btn, .home-main-btn, .home-mid-btn, .sub-tab, .chip, .pq-btn, .stg-type-btn, .settings-row, .back-btn, .next-btn, .gachi-next-btn, .c-btn');
-    if(!el) return;
-    e.preventDefault();
-    if(typeof el.onclick==='function'){
-      try{el.onclick.call(el,e);}catch(err){}
-    } else {
-      var attr=el.getAttribute('onclick');
-      if(attr) try{(new Function(attr)).call(el);}catch(err){}
-    }
-  },{passive:false});
-  // Pointer events: マウス・ペン入力（iPad外部デバイス等）補完
-  if(window.PointerEvent){
-    var _pdx=0,_pdy=0;
-    document.addEventListener('pointerdown',function(e){
-      if(e.pointerType==='touch') return;
-      _pdx=e.clientX;_pdy=e.clientY;
-    },{passive:true});
-    document.addEventListener('pointerup',function(e){
-      if(e.pointerType==='touch') return;
-      var dx=Math.abs(e.clientX-_pdx),dy=Math.abs(e.clientY-_pdy);
-      if(dx>10||dy>10) return;
-      var el=e.target.closest('[onclick], button, .choice-btn, .bn-btn, .home-main-btn, .home-mid-btn, .sub-tab, .chip, .pq-btn, .stg-type-btn, .settings-row, .back-btn, .next-btn, .gachi-next-btn, .c-btn');
-      if(!el) return;
-      if(typeof el.onclick==='function'){
-        try{el.onclick.call(el,e);}catch(err){}
-      } else {
-        var attr=el.getAttribute('onclick');
-        if(attr) try{(new Function(attr)).call(el);}catch(err){}
-      }
-    },{passive:false});
-  }
-})();
 
 // ===== SETTINGS TAB =====
 function _stgOn(id,on){var el=document.getElementById(id);if(el){if(on)el.classList.add('on');else el.classList.remove('on');}}
@@ -7441,23 +7397,5 @@ if ('serviceWorker' in navigator) {
     <div id="stgTypeBtns"></div>
   </div>
 </div>
-<button id="debugBtn" onclick="(function(){
-  var lines=[];
-  // localStorage
-  lines.push('=== localStorage ===');
-  for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);var v=localStorage.getItem(k);lines.push(k+': '+(v&&v.length>80?v.slice(0,80)+'…':v));}
-  // z-index >= 1000 の要素
-  lines.push('\\n=== z-index>=1000 の要素 ===');
-  var all=document.querySelectorAll('*');
-  var hi=[];
-  for(var j=0;j<all.length;j++){var el=all[j];var cs=getComputedStyle(el);var z=parseInt(cs.zIndex);if(z>=1000){var pe=cs.pointerEvents;hi.push('z='+z+' pe='+pe+' '+el.tagName+(el.id?'#'+el.id:'')+(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(' ')[0]:''));}}
-  hi.sort(function(a,b){return parseInt(b.split('z=')[1])-parseInt(a.split('z=')[1]);});
-  lines=lines.concat(hi.slice(0,20));
-  // pointer-events が none でなく z-index 高い要素
-  lines.push('\\n=== タッチ可能高z要素(pe!=none) ===');
-  var touchable=hi.filter(function(s){return s.indexOf('pe=none')===-1;});
-  lines=lines.concat(touchable.slice(0,10));
-  alert(lines.join('\\n'));
-})()" style="position:fixed;bottom:calc(90px + env(safe-area-inset-bottom,0px));right:12px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;border:none;font-size:18px;cursor:pointer;z-index:99999;touch-action:manipulation;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">🔍</button>
 </body>
 </html>
