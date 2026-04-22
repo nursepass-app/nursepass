@@ -415,7 +415,7 @@ body.font-xl .explanation{font-size:16px}
 .pq-bubble::after{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);border:8px solid transparent;border-bottom-color:rgba(217,197,178,0.4)}
 .pq-bubble::before{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);border:7px solid transparent;border-bottom-color:rgba(255,255,255,0.95);z-index:1}
 .pq-step{font-size:11px;color:#B8907A;font-weight:700;margin-bottom:8px;letter-spacing:.05em}
-.pq-btn{width:100%;max-width:300px;padding:13px 16px;background:rgba(255,255,255,0.95);border:1.5px solid rgba(217,197,178,0.5);border-radius:14px;font-size:13px;font-weight:700;color:#3C3530;font-family:'Noto Sans JP',sans-serif;cursor:pointer;touch-action:manipulation;margin-bottom:10px;transition:.15s;text-align:left}
+.pq-btn{width:100%;max-width:300px;padding:13px 16px;background:rgba(255,255,255,0.95);border:1.5px solid rgba(217,197,178,0.5);border-radius:14px;font-size:13px;font-weight:700;color:#3C3530;font-family:'Noto Sans JP',sans-serif;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;margin-bottom:10px;transition:.15s;text-align:left}
 .pq-btn:active{transform:scale(0.98);background:rgba(245,239,232,0.99)}
 .pt-btn{padding:8px 14px;border-radius:12px;border:1.5px solid rgba(217,197,178,0.5);background:rgba(240,232,222,0.8);font-size:12px;font-weight:700;color:#5A5450;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:.15s;touch-action:manipulation}
 .pt-btn.active{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(184,160,144,0.4)}
@@ -7276,17 +7276,32 @@ renderTodayPlan();
   function attachTouchEnd(el){
     if(el._te) return;
     el._te=true;
+    // Touch events（iOS/Android）
+    el.addEventListener('touchstart',function(e){
+      if(e.touches){el._tsx=e.touches[0].clientX;el._tsy=e.touches[0].clientY;}
+    },{passive:true});
     el.addEventListener('touchend',function(e){
       var dx=0,dy=0;
       if(e.changedTouches){dx=Math.abs(e.changedTouches[0].clientX-(el._tsx||0));dy=Math.abs(e.changedTouches[0].clientY-(el._tsy||0));}
-      if(dx>10||dy>10) return;// スクロールは除外
+      if(dx>10||dy>10) return;
       if(typeof el.onclick!=='function') return;
       e.preventDefault();
       try{el.onclick.call(el);}catch(err){}
     },{passive:false});
-    el.addEventListener('touchstart',function(e){
-      if(e.touches){el._tsx=e.touches[0].clientX;el._tsy=e.touches[0].clientY;}
-    },{passive:true});
+    // Pointer events（マウス・ペン / iOS 26+ でタッチ以外のポインターを補完）
+    if(window.PointerEvent){
+      el.addEventListener('pointerdown',function(e){
+        el._pdx=e.clientX;el._pdy=e.clientY;
+      },{passive:true});
+      el.addEventListener('pointerup',function(e){
+        if(e.pointerType==='touch') return; // タッチは touchend が担当（二重発火防止）
+        var dx=Math.abs(e.clientX-(el._pdx||0));
+        var dy=Math.abs(e.clientY-(el._pdy||0));
+        if(dx>10||dy>10) return;
+        if(typeof el.onclick!=='function') return;
+        try{el.onclick.call(el);}catch(err){}
+      },{passive:false});
+    }
   }
   // 静的要素（ページ読み込み時に存在するもの）
   function bindAll(){document.querySelectorAll('[onclick]').forEach(attachTouchEnd);}
