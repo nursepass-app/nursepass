@@ -3599,7 +3599,7 @@ function renderQuestion(){
       <div class="q-text">${q.question}</div>
       ${!isTime?`<div id="hintArea" style="margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button></div>`:''}
       <div class="choices">
-        ${(()=>{let ks=Object.keys(q.choices);if(localStorage.getItem('np_shuffle')==='1'){ks=ks.slice().sort(()=>Math.random()-0.5);}return ks.map((k,i)=>`<button class="choice-btn" onclick="answer('${k}')" id="ch${k}"><span style="font-weight:700;flex-shrink:0;margin-right:8px;color:#B8907A;font-size:14px">${i+1}.</span>${q.choices[k]}</button>`).join('');})()}
+        ${(()=>{let ks=Object.keys(q.choices);if(localStorage.getItem('np_shuffle')==='1'){ks=ks.slice().sort(()=>Math.random()-0.5);}return ks.map((k,i)=>`<button class="choice-btn" onclick="answer('${k}')" ontouchend="if(!this.disabled){event.preventDefault();answer('${k}');}" id="ch${k}"><span style="font-weight:700;flex-shrink:0;margin-right:8px;color:#B8907A;font-size:14px">${i+1}.</span>${q.choices[k]}</button>`).join('');})()}
       </div>
     </div>`;
   if(isTime) startQuizTimer();
@@ -3975,6 +3975,7 @@ function showAnswerFeedback(correct){
   }
 }
 function answer(key){
+  console.log('[NursePass] answer called:', key);
   // 全選択肢を即座に無効化（複数クリック防止）
   ['A','B','C','D'].forEach(function(k){
     var b=document.getElementById('ch'+k);
