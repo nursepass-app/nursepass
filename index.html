@@ -444,6 +444,8 @@ body.font-xl .explanation{font-size:16px}
 @keyframes hatchScaleUp{0%{transform:scale(1)}100%{transform:scale(1.2)}}
 @keyframes hatchTextIn{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
 @keyframes hatchSparkle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}}
+@keyframes hatchAppear{0%{opacity:0;transform:scale(0.8)}100%{opacity:1;transform:scale(1)}}
+@keyframes hatchBurst{0%{transform:scale(1)}40%{transform:scale(1.22)}70%{transform:scale(0.95)}100%{transform:scale(1)}}
 .lv-up-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;animation:eggFadeIn 0.3s ease}
 .lv-up-screen-title{font-size:38px;font-weight:900;color:#FFD700;letter-spacing:.06em;text-shadow:0 0 20px rgba(255,215,0,0.7),0 2px 8px rgba(0,0,0,0.8);animation:lvTitle 0.5s cubic-bezier(.17,.67,.35,1.3) forwards;margin-bottom:24px;font-family:'Zen Kaku Gothic New',sans-serif}
 .lv-up-imgs{display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:20px}
@@ -3784,45 +3786,62 @@ function showInitialHatchScene(){
 }
 function showHatchAnimation(){
   // Lv0→Lv1 レベルアップ時の孵化演出
+  // タイムライン: 0s=lv01表示 / 0.5s=殻テキスト / 2.5s=lv1切替+エフェクト / 3s=トースト
   var overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:eggFadeIn 0.3s ease;cursor:pointer';
   overlay.innerHTML=
-    '<img id="_hImg" src="images/hikari/hikari_lv0.png" alt="ヒカリ" style="width:160px;height:160px;object-fit:contain;transition:opacity .3s ease">'
-    +'<div id="_hTitle" style="font-size:22px;font-weight:900;color:#FFD700;margin-top:20px;font-family:\'Zen Kaku Gothic New\',sans-serif;text-shadow:0 0 16px rgba(255,215,0,.7);opacity:0">レベルアップ！🎉</div>'
-    +'<div id="_hSub" style="font-size:14px;color:rgba(255,255,255,0.85);margin-top:6px;font-family:\'Noto Sans JP\',sans-serif;opacity:0">小さなヒカリになったよ！</div>'
+    '<img id="_hImg" src="images/hikari/hikari_lv01.png" alt="ヒカリ" style="width:160px;height:160px;object-fit:contain;animation:hatchAppear 0.5s cubic-bezier(.17,.67,.35,1.3) forwards">'
+    +'<div id="_hCrack" style="font-size:18px;font-weight:700;color:#FFE8A0;margin-top:20px;font-family:\'Noto Sans JP\',sans-serif;text-shadow:0 0 12px rgba(255,215,0,.6);opacity:0">殻が割れてきた！✨</div>'
+    +'<div id="_hTitle" style="font-size:22px;font-weight:900;color:#FFD700;margin-top:20px;font-family:\'Zen Kaku Gothic New\',sans-serif;text-shadow:0 0 16px rgba(255,215,0,.7);opacity:0;display:none">レベルアップ！🎉</div>'
     +'<div id="_hTap" style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:24px;font-family:\'Noto Sans JP\',sans-serif;opacity:0">タップして続ける</div>';
   document.body.appendChild(overlay);
   var img=document.getElementById('_hImg');
-  // ①殻割れ: hikari_lv01 に切替
+  var crackTxt=document.getElementById('_hCrack');
+  var titleTxt=document.getElementById('_hTitle');
+  // 0.5s: 「殻が割れてきた！」ふわっと表示
   setTimeout(function(){
-    if(img){img.style.animation='hatchWiggle 0.5s ease 2';
+    if(crackTxt){crackTxt.style.animation='hatchTextIn 0.5s ease forwards';crackTxt.style.opacity='1';}
+  },500);
+  // 2.5s: hikari_lv1 に切替＋バーストアニメ＋キラキラ
+  setTimeout(function(){
+    if(img){
+      img.style.animation='none';
+      // フェードアウトしてから差し替え
+      img.style.transition='opacity 0.2s ease';
+      img.style.opacity='0';
       setTimeout(function(){
-        img.style.animation='';img.src='images/hikari/hikari_lv01.png';
-        overlay.style.animation='hatchShake 0.4s ease';
-        setTimeout(function(){overlay.style.animation='';},400);
-      },1000);}
-  },400);
-  // ②完全孵化: hikari_lv1 に切替 + スケールアップ
-  setTimeout(function(){
-    if(img){img.src='images/hikari/hikari_lv1.png';img.style.animation='hatchPop 0.6s cubic-bezier(.17,.67,.35,1.3) forwards';}
+        img.src='images/hikari/hikari_lv1.png';
+        img.style.opacity='1';
+        img.style.transition='';
+        img.style.animation='hatchBurst 0.6s cubic-bezier(.17,.67,.35,1.3) forwards';
+      },200);
+    }
+    // 殻テキストをフェードアウト
+    if(crackTxt){crackTxt.style.transition='opacity 0.3s ease';crackTxt.style.opacity='0';}
+    // キラキラパーティクル
     spawnLvUpParticles(overlay);
-    var t=document.getElementById('_hTitle');var s=document.getElementById('_hSub');
-    if(t){t.style.animation='hatchTextIn 0.4s ease forwards';t.style.opacity='1';}
-    if(s){s.style.animation='hatchTextIn 0.4s ease 0.15s forwards';s.style.opacity='1';}
-  },1800);
+    overlay.style.animation='hatchShake 0.4s ease';
+    setTimeout(function(){overlay.style.animation='';},400);
+  },2500);
+  // 3s: トースト「小さなヒカリになったよ！🎉」
+  setTimeout(function(){
+    showHikariMsg('小さなヒカリになったよ！🎉',3000);
+    launchConfetti();
+  },3000);
+  // 3.5s: タップ案内表示
   setTimeout(function(){
     var tap=document.getElementById('_hTap');
     if(tap){tap.style.animation='hatchTextIn 0.4s ease forwards';tap.style.opacity='1';}
-    launchConfetti();
-  },2800);
+  },3500);
   overlay.onclick=function(){
     overlay.style.transition='opacity .4s ease';overlay.style.opacity='0';
     setTimeout(function(){if(overlay.parentNode)overlay.remove();},420);
   };
+  // 6秒後に自動消去
   setTimeout(function(){
     if(overlay.parentNode){overlay.style.transition='opacity .5s ease';overlay.style.opacity='0';
       setTimeout(function(){if(overlay.parentNode)overlay.remove();},500);}
-  },5000);
+  },6000);
 }
 // ===== HIKARI SCENE MESSAGES =====
 function showHikariMsg(text,duration){
