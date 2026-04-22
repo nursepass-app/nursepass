@@ -3748,7 +3748,10 @@ function showInitialHatchScene(){
     if(tapped) return;tapped=true;
     localStorage.setItem('hatchingDone','true');
     overlay.style.transition='opacity .5s ease';overlay.style.opacity='0';
-    setTimeout(function(){if(overlay.parentNode)overlay.remove();},500);
+    setTimeout(function(){
+      if(overlay.parentNode)overlay.remove();
+      if(!localStorage.getItem('personality_type')) showPersonalityQuiz();
+    },500);
   }
   overlay.addEventListener('click',closeFn);
   document.body.appendChild(overlay);
