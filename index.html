@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
 <title>NursePass | 看護師国試対策</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#c4956a">
@@ -135,7 +135,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .hikari-name{font-size:14px;font-weight:700;color:#55504D;font-family:'Zen Kaku Gothic New',sans-serif}
 .hikari-catchcopy{font-size:10px;color:#5A5450;margin-top:1px}
 .hikari-limit{font-size:10px;color:#5A5450;background:rgba(255,255,255,0.8);padding:3px 9px;border-radius:10px;border:1px solid rgba(85,80,77,0.25);white-space:nowrap}
-.chat-history{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:2px 0 8px;min-height:0}
+.chat-history{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;padding:2px 0 8px;min-height:0}
 .chat-row{display:flex;align-items:flex-end;gap:8px}
 .chat-row.user-row{flex-direction:row-reverse}
 .chat-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#EDE0D4,#D9C5B2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0}
@@ -159,7 +159,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .mini-chat-arr{font-size:9px;color:#5A5450;transition:.2s}
 .mini-chat-bd{padding:0 12px 10px;display:none}
 .mini-chat-bd.open{display:block}
-.mini-msgs{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;max-height:180px;overflow-y:auto}
+.mini-msgs{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;max-height:180px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .mini-row{display:flex;align-items:flex-end;gap:5px}
 .mini-row.u{flex-direction:row-reverse}
 .mini-av-xs{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#EDE0D4,#D9C5B2);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:white;flex-shrink:0}
@@ -199,7 +199,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .cal-btn{width:100%;padding:11px;background:rgba(66,133,244,0.1);color:#3367D6;border:1.5px solid rgba(66,133,244,0.25);border-radius:14px;font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:8px;font-weight:600;letter-spacing:.3px}
 .cal-btn:hover{background:rgba(66,133,244,0.18)}
 .cal-modal{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);animation:fadein .2s ease}
-.cal-modal-inner{background:#fff;border-radius:22px;padding:24px 20px;width:min(360px,92vw);max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+.cal-modal-inner{background:#fff;border-radius:22px;padding:24px 20px;width:min(360px,92vw);max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
 .cal-modal-title{font-size:17px;font-weight:700;color:#3C3530;margin-bottom:18px;text-align:center}
 .cal-field{margin-bottom:14px}
 .cal-label{font-size:11px;color:#8A6A50;margin-bottom:5px;font-weight:600;letter-spacing:.4px}
@@ -370,7 +370,7 @@ body.font-xl .explanation{font-size:16px}
 .bn-badge{position:absolute;top:4px;right:calc(50% - 18px);background:#ef4444;color:white;font-size:9px;font-weight:700;border-radius:10px;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4}
 
 /* ===== SUBJECT MODE ===== */
-.subject-screen{position:fixed;inset:0;z-index:800;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);overflow-y:auto;pointer-events:none;display:none}
+.subject-screen{position:fixed;inset:0;z-index:800;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;pointer-events:none;display:none}
 .subject-screen-inner{max-width:520px;margin:0 auto;padding:16px 16px 100px}
 .subject-screen-header{display:flex;align-items:center;justify-content:space-between;padding:8px 0 18px}
 .subject-screen-title{font-size:17px;font-weight:700;color:#3C3530;font-family:'Zen Kaku Gothic New',sans-serif}
@@ -476,7 +476,7 @@ body.font-xl .explanation{font-size:16px}
 .stg-toggle::before{content:'';position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,0.18)}
 .stg-toggle.on::before{transform:translateX(22px)}
 /* 性格タイプ選択サブ画面 */
-.stg-type-screen{position:fixed;inset:0;z-index:900;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);overflow-y:auto;display:none;animation:fadein .2s ease}
+.stg-type-screen{position:fixed;inset:0;z-index:900;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;display:none;animation:fadein .2s ease}
 .stg-type-inner{max-width:520px;margin:0 auto;padding:16px 16px calc(90px + env(safe-area-inset-bottom,0px))}
 .stg-type-header{display:flex;align-items:center;gap:12px;padding:8px 0 20px}
 .stg-type-title{font-size:17px;font-weight:700;color:#3C3530;font-family:'Zen Kaku Gothic New',sans-serif}
@@ -3754,6 +3754,7 @@ function showInitialHatchScene(){
     },500);
   }
   overlay.addEventListener('click',closeFn);
+  overlay.addEventListener('touchend',function(e){e.preventDefault();closeFn();},{passive:false});
   document.body.appendChild(overlay);
   var img=document.getElementById('_ihImg');
   // ③ 1.5秒後：ぷるぷる
@@ -3837,10 +3838,12 @@ function showHatchAnimation(){
     var tap=document.getElementById('_hTap');
     if(tap){tap.style.animation='hatchTextIn 0.4s ease forwards';tap.style.opacity='1';}
   },3500);
-  overlay.onclick=function(){
+  function _hatchClose(){
     overlay.style.transition='opacity .4s ease';overlay.style.opacity='0';
     setTimeout(function(){if(overlay.parentNode)overlay.remove();},420);
-  };
+  }
+  overlay.addEventListener('click',_hatchClose);
+  overlay.addEventListener('touchend',function(e){e.preventDefault();_hatchClose();},{passive:false});
   // 6秒後に自動消去
   setTimeout(function(){
     if(overlay.parentNode){overlay.style.transition='opacity .5s ease';overlay.style.opacity='0';
