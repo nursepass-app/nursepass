@@ -30,9 +30,10 @@ if (navigator.userAgent.indexOf('Line/') > -1) {
 --text:#55504D;--text-mid:#5A5450;
 }
 html{touch-action:manipulation}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-button,[onclick]{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button,[onclick],.btn,.nav-item,.choice-btn,.tab-btn,.mode-btn{touch-action:manipulation;cursor:pointer}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);font-family:'Noto Sans JP',sans-serif;padding:16px;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px));position:relative;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
 .blob1{width:400px;height:400px;top:-10%;right:-5%;background:radial-gradient(circle,rgba(217,197,178,0.3) 0%,transparent 70%);animation:float1 8s ease-in-out infinite}
@@ -504,14 +505,14 @@ body.dark .stg-type-desc{color:#A8988A}
 <div class="blob blob2"></div>
 <div class="wrap">
   <div class="nav">
-    <div onclick="switchTab('home')" ontouchend="event.preventDefault();switchTab('home');" role="button" tabindex="0" style="cursor:pointer;-webkit-tap-highlight-color:transparent">
+    <div onclick="switchTab('home')" role="button" tabindex="0" style="cursor:pointer;-webkit-tap-highlight-color:transparent">
       <div class="logo">NursePass</div>
       <div class="logo-sub">看護師国試対策 - ヒカリ</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
       <div class="score-badge">正答率 <span id="rateDisp">--%</span></div>
 
-<button onclick="toggleSound()" ontouchend="event.preventDefault();toggleSound();" class="sound-toggle-btn" title="サウンドOFF" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;border-radius:8px;opacity:0.7">🔔</button>
+<button onclick="toggleSound()" class="sound-toggle-btn" title="サウンドOFF" style="background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;line-height:1;border-radius:8px;opacity:0.7">🔔</button>
     </div>
   </div>
 
@@ -536,28 +537,28 @@ body.dark .stg-type-desc{color:#A8988A}
     <div id="streakWarnBanner"></div>
     <!-- エリア3: モード切替 -->
     <div class="mode-switch-wrap" id="modeSwitchBar" style="margin-bottom:18px">
-      <button class="mode-switch-btn active hikari" id="modeBtnHikari" onclick="setQuizMode('hikari')" ontouchend="event.preventDefault();setQuizMode('hikari');">🌸 やさしく</button>
-      <button class="mode-switch-btn gachi" id="modeBtnGachi" onclick="setQuizMode('gachi')" ontouchend="event.preventDefault();setQuizMode('gachi');">⚡ スピード</button>
+      <button class="mode-switch-btn active hikari" id="modeBtnHikari" onclick="setQuizMode('hikari')">🌸 やさしく</button>
+      <button class="mode-switch-btn gachi" id="modeBtnGachi" onclick="setQuizMode('gachi')">⚡ スピード</button>
     </div>
     <!-- エリア4: メインボタン -->
     <div style="display:flex;flex-direction:column;gap:12px">
-      <button onclick="startQuizWithCount('random',5)" ontouchend="event.preventDefault();startQuizWithCount('random',5);" class="home-main-btn">▶ 今日の5問を始める</button>
+      <button onclick="startQuizWithCount('random',5)" class="home-main-btn">▶ 今日の5問を始める</button>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-        <button onclick="pickCount('field','分野別')" ontouchend="event.preventDefault();pickCount('field','分野別');" class="home-mid-btn">
+        <button onclick="pickCount('field','分野別')" class="home-mid-btn">
           <span class="btn-icon">🎲</span><span class="btn-lbl" style="font-size:13px">分野別</span>
         </button>
-        <button onclick="startQuiz('weak')" ontouchend="event.preventDefault();startQuiz('weak');" class="home-mid-btn" style="background:linear-gradient(135deg,rgba(255,245,245,0.98),rgba(255,235,230,0.9));border-color:rgba(248,113,113,0.35)">
+        <button onclick="startQuiz('weak')" class="home-mid-btn" style="background:linear-gradient(135deg,rgba(255,245,245,0.98),rgba(255,235,230,0.9));border-color:rgba(248,113,113,0.35)">
           <span class="btn-icon">⚠️</span><span class="btn-lbl" style="font-size:13px">苦手強化</span>
         </button>
-        <button onclick="openSubjectScreen()" ontouchend="event.preventDefault();openSubjectScreen();" class="home-mid-btn" style="background:linear-gradient(135deg,rgba(235,245,255,0.98),rgba(210,230,255,0.9));border-color:rgba(100,160,220,0.35)">
+        <button onclick="openSubjectScreen()" class="home-mid-btn" style="background:linear-gradient(135deg,rgba(235,245,255,0.98),rgba(210,230,255,0.9));border-color:rgba(100,160,220,0.35)">
           <span class="btn-icon">📖</span><span class="btn-lbl" style="font-size:13px">科目別</span>
         </button>
       </div>
       <!-- カテゴリタブ -->
       <div class="sub-tabs" style="padding:0;margin-top:2px">
-        <button class="sub-tab active" data-cat="必修" onclick="selectCategory('必修')" ontouchend="event.preventDefault();selectCategory('必修');">必修<span class="cat-count" id="catCount必修"></span></button>
-        <button class="sub-tab" data-cat="一般" onclick="selectCategory('一般')" ontouchend="event.preventDefault();selectCategory('一般');">一般<span class="cat-count" id="catCount一般"></span></button>
-        <button class="sub-tab" data-cat="状況設定" onclick="selectCategory('状況設定')" ontouchend="event.preventDefault();selectCategory('状況設定');">状況設定<span class="cat-count" id="catCount状況設定"></span></button>
+        <button class="sub-tab active" data-cat="必修" onclick="selectCategory('必修')">必修<span class="cat-count" id="catCount必修"></span></button>
+        <button class="sub-tab" data-cat="一般" onclick="selectCategory('一般')">一般<span class="cat-count" id="catCount一般"></span></button>
+        <button class="sub-tab" data-cat="状況設定" onclick="selectCategory('状況設定')">状況設定<span class="cat-count" id="catCount状況設定"></span></button>
       </div>
     </div>
     <!-- 非表示: JS用レガシーID群 -->
@@ -580,25 +581,25 @@ body.dark .stg-type-desc{color:#A8988A}
     <div class="card">
       <div style="padding:12px 16px 8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <div style="font-size:11px;color:#6B5040;font-weight:700;margin-right:4px">カテゴリ：</div>
-        <button class="chip selected" id="weakFilterAll" onclick="setWeakFilter('all')" ontouchend="event.preventDefault();setWeakFilter('all');">全て</button>
-        <button class="chip" id="weakFilter必修" onclick="setWeakFilter('必修')" ontouchend="event.preventDefault();setWeakFilter('必修');">必修</button>
-        <button class="chip" id="weakFilter一般" onclick="setWeakFilter('一般')" ontouchend="event.preventDefault();setWeakFilter('一般');">一般</button>
-        <button class="chip" id="weakFilter状況設定" onclick="setWeakFilter('状況設定')" ontouchend="event.preventDefault();setWeakFilter('状況設定');">状況設定</button>
-        <button class="chip" id="weakFilterbookmark" onclick="setWeakFilter('bookmark')" ontouchend="event.preventDefault();setWeakFilter('bookmark');" style="margin-left:4px">🔖 ブックマーク</button>
-        <button class="chip" id="weakFiltermemo" onclick="setWeakFilter('memo')" ontouchend="event.preventDefault();setWeakFilter('memo');">📝 メモ</button>
-        <button class="chip" id="weakFilterbrowse" onclick="setWeakFilter('browse')" ontouchend="event.preventDefault();setWeakFilter('browse');" style="margin-left:4px">📋 全問</button>
-        <button class="chip" id="weakFilterunanswered" onclick="setWeakFilter('unanswered')" ontouchend="event.preventDefault();setWeakFilter('unanswered');" style="margin-left:4px">✨ 未解答</button>
-        <button class="chip" id="weakFilterwrong_only" onclick="setWeakFilter('wrong_only')" ontouchend="event.preventDefault();setWeakFilter('wrong_only');">✗ 間違えた</button>
-        <button class="chip" id="weakFilterpriority" onclick="setWeakFilter('priority')" ontouchend="event.preventDefault();setWeakFilter('priority');" style="margin-left:4px;border-color:rgba(239,68,68,0.4)">🎯 最優先</button>
-        <button class="chip" id="weakFilterimportant" onclick="setWeakFilter('tag_important')" ontouchend="event.preventDefault();setWeakFilter('tag_important');" style="margin-left:4px">⭐重要</button>
-        <button class="chip" id="weakFilterhard" onclick="setWeakFilter('tag_hard')" ontouchend="event.preventDefault();setWeakFilter('tag_hard');">🔴難解</button>
-        <button class="chip" id="weakFilterreview" onclick="setWeakFilter('tag_review')" ontouchend="event.preventDefault();setWeakFilter('tag_review');">🔵復習</button>
+        <button class="chip selected" id="weakFilterAll" onclick="setWeakFilter('all')">全て</button>
+        <button class="chip" id="weakFilter必修" onclick="setWeakFilter('必修')">必修</button>
+        <button class="chip" id="weakFilter一般" onclick="setWeakFilter('一般')">一般</button>
+        <button class="chip" id="weakFilter状況設定" onclick="setWeakFilter('状況設定')">状況設定</button>
+        <button class="chip" id="weakFilterbookmark" onclick="setWeakFilter('bookmark')" style="margin-left:4px">🔖 ブックマーク</button>
+        <button class="chip" id="weakFiltermemo" onclick="setWeakFilter('memo')">📝 メモ</button>
+        <button class="chip" id="weakFilterbrowse" onclick="setWeakFilter('browse')" style="margin-left:4px">📋 全問</button>
+        <button class="chip" id="weakFilterunanswered" onclick="setWeakFilter('unanswered')" style="margin-left:4px">✨ 未解答</button>
+        <button class="chip" id="weakFilterwrong_only" onclick="setWeakFilter('wrong_only')">✗ 間違えた</button>
+        <button class="chip" id="weakFilterpriority" onclick="setWeakFilter('priority')" style="margin-left:4px;border-color:rgba(239,68,68,0.4)">🎯 最優先</button>
+        <button class="chip" id="weakFilterimportant" onclick="setWeakFilter('tag_important')" style="margin-left:4px">⭐重要</button>
+        <button class="chip" id="weakFilterhard" onclick="setWeakFilter('tag_hard')">🔴難解</button>
+        <button class="chip" id="weakFilterreview" onclick="setWeakFilter('tag_review')">🔵復習</button>
       </div>
       <div style="padding:0 16px 6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <div style="font-size:11px;color:#6B5040;font-weight:700;margin-right:4px">頻出度：</div>
-        <button class="chip" id="weakFilterstars3" onclick="setWeakFilter('stars3')" ontouchend="event.preventDefault();setWeakFilter('stars3');" style="font-size:11px">★★★ 最頻出</button>
-        <button class="chip" id="weakFilterstars2" onclick="setWeakFilter('stars2')" ontouchend="event.preventDefault();setWeakFilter('stars2');" style="font-size:11px">★★ 頻出</button>
-        <button class="chip" id="weakFilterstars1" onclick="setWeakFilter('stars1')" ontouchend="event.preventDefault();setWeakFilter('stars1');" style="font-size:11px">★ 標準</button>
+        <button class="chip" id="weakFilterstars3" onclick="setWeakFilter('stars3')" style="font-size:11px">★★★ 最頻出</button>
+        <button class="chip" id="weakFilterstars2" onclick="setWeakFilter('stars2')" style="font-size:11px">★★ 頻出</button>
+        <button class="chip" id="weakFilterstars1" onclick="setWeakFilter('stars1')" style="font-size:11px">★ 標準</button>
       </div>
       <div style="padding:0 16px 8px">
         <input type="search" id="weakSearchInput" placeholder="🔍 キーワードで問題を検索..." oninput="onWeakSearch(this.value)"
@@ -606,15 +607,15 @@ body.dark .stg-type-desc{color:#A8988A}
       </div>
       <div style="padding:0 16px 4px;display:flex;gap:4px;align-items:center">
         <span style="font-size:10px;color:#8A6A50">並び替え：</span>
-        <button class="chip selected" id="weakSortWrong" onclick="setWeakSort('wrong')" ontouchend="event.preventDefault();setWeakSort('wrong');" style="font-size:10px;padding:3px 8px">間違え多い順</button>
-        <button class="chip" id="weakSortAcc" onclick="setWeakSort('acc')" ontouchend="event.preventDefault();setWeakSort('acc');" style="font-size:10px;padding:3px 8px">正答率低い順</button>
-        <button class="chip" id="weakSortStreak" onclick="setWeakSort('streak')" ontouchend="event.preventDefault();setWeakSort('streak');" style="font-size:10px;padding:3px 8px">未克服優先</button>
-        <button id="hideMasteredBtn" onclick="toggleHideMastered()" ontouchend="event.preventDefault();toggleHideMastered();" style="font-size:10px;padding:3px 8px;background:rgba(240,232,222,0.8);border:1.5px solid rgba(124,58,237,0.25);border-radius:16px;color:#7c3aed;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-left:4px">習得済みを非表示</button>
+        <button class="chip selected" id="weakSortWrong" onclick="setWeakSort('wrong')" style="font-size:10px;padding:3px 8px">間違え多い順</button>
+        <button class="chip" id="weakSortAcc" onclick="setWeakSort('acc')" style="font-size:10px;padding:3px 8px">正答率低い順</button>
+        <button class="chip" id="weakSortStreak" onclick="setWeakSort('streak')" style="font-size:10px;padding:3px 8px">未克服優先</button>
+        <button id="hideMasteredBtn" onclick="toggleHideMastered()" style="font-size:10px;padding:3px 8px;background:rgba(240,232,222,0.8);border:1.5px solid rgba(124,58,237,0.25);border-radius:16px;color:#7c3aed;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-left:4px">習得済みを非表示</button>
       </div>
       <div id="weakSummaryBar" style="padding:0 16px 8px;font-size:11px;color:#8A6A50"></div>
       <div class="weak-list" id="weakList"></div>
     </div>
-    <button class="start-btn" id="weakDrillBtn" onclick="drillAllWeak()" ontouchend="event.preventDefault();drillAllWeak();" style="display:none;margin-top:10px">苦手問題を一気に解く</button>
+    <button class="start-btn" id="weakDrillBtn" onclick="drillAllWeak()" style="display:none;margin-top:10px">苦手問題を一気に解く</button>
   </div>
 
   <div id="tabStats" style="display:none">
@@ -634,24 +635,24 @@ body.dark .stg-type-desc{color:#A8988A}
           </div>
           <div style="display:flex;align-items:center;gap:4px">
             <div class="hikari-limit" id="hikariLimit">本日 残り10回</div>
-            <button class="hikari-settings-btn" onclick="showApiKeyModal()" ontouchend="event.preventDefault();showApiKeyModal();" title="APIキー設定">⚙️</button>
+            <button class="hikari-settings-btn" onclick="showApiKeyModal()" title="APIキー設定">⚙️</button>
           </div>
         </div>
         <div id="hikariKeyNotice" class="api-key-notice" style="display:none">
           <div class="api-key-notice-text">🔑 APIキーが設定されていません。<br>ヒカリと話すには OpenAI APIキーが必要です。</div>
-          <button class="api-key-notice-btn" onclick="showApiKeyModal()" ontouchend="event.preventDefault();showApiKeyModal();">APIキーを設定する</button>
+          <button class="api-key-notice-btn" onclick="showApiKeyModal()">APIキーを設定する</button>
         </div>
         <div class="chat-history" id="chatHistory"></div>
         <div style="padding:6px 12px 4px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid rgba(85,80,77,0.08)">
-          <button onclick="quickChat('今日どんな問題を勉強すればいい？')" ontouchend="event.preventDefault();quickChat('今日どんな問題を勉強すればいい？');" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">今日の学習アドバイス</button>
-          <button onclick="quickChat('今の苦手分野と克服法を教えて')" ontouchend="event.preventDefault();quickChat('今の苦手分野と克服法を教えて');" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">苦手分野の克服法</button>
-          <button onclick="quickChat('試験が不安で緊張してる。励ましてほしい')" ontouchend="event.preventDefault();quickChat('試験が不安で緊張してる。励ましてほしい');" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">不安・緊張をほぐして</button>
-          <button onclick="quickChat('看護師国試の効率的な勉強法を教えて')" ontouchend="event.preventDefault();quickChat('看護師国試の効率的な勉強法を教えて');" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">効率的な勉強法</button>
-          <button onclick="quickChat('今日の学習で気をつけることは何？')" ontouchend="event.preventDefault();quickChat('今日の学習で気をつけることは何？');" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">今日のポイント</button>
+          <button onclick="quickChat('今日どんな問題を勉強すればいい？')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">今日の学習アドバイス</button>
+          <button onclick="quickChat('今の苦手分野と克服法を教えて')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">苦手分野の克服法</button>
+          <button onclick="quickChat('試験が不安で緊張してる。励ましてほしい')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">不安・緊張をほぐして</button>
+          <button onclick="quickChat('看護師国試の効率的な勉強法を教えて')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">効率的な勉強法</button>
+          <button onclick="quickChat('今日の学習で気をつけることは何？')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">今日のポイント</button>
         </div>
         <div class="chat-input-row">
           <textarea class="chat-input" id="chatInput" rows="1" placeholder="ヒカリに相談する..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
-          <button class="chat-send-btn" id="chatSendBtn" onclick="sendChat()" ontouchend="event.preventDefault();sendChat();">送信</button>
+          <button class="chat-send-btn" id="chatSendBtn" onclick="sendChat()">送信</button>
         </div>
       </div>
     </div>
@@ -665,22 +666,22 @@ body.dark .stg-type-desc{color:#A8988A}
     <div class="settings-wrap">
       <div class="settings-section">
         <div class="settings-section-title">学習設定</div>
-        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingEasy()" ontouchend="event.preventDefault();toggleSettingEasy();">
+        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingEasy()">
           <span class="settings-icon">🌸</span>
           <span class="settings-label">やさしくモード</span>
           <div class="stg-toggle" id="stgEasy"></div>
         </div>
-        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingSpeed()" ontouchend="event.preventDefault();toggleSettingSpeed();">
+        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingSpeed()">
           <span class="settings-icon">⚡</span>
           <span class="settings-label">スピードモード</span>
           <div class="stg-toggle" id="stgSpeed"></div>
         </div>
-        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingShuffle()" ontouchend="event.preventDefault();toggleSettingShuffle();">
+        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingShuffle()">
           <span class="settings-icon">🔀</span>
           <span class="settings-label">選択肢の並び順をシャッフル</span>
           <div class="stg-toggle" id="stgShuffle"></div>
         </div>
-        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingSound()" ontouchend="event.preventDefault();toggleSettingSound();">
+        <div class="settings-row" role="button" tabindex="0" onclick="toggleSettingSound()">
           <span class="settings-icon">🔔</span>
           <span class="settings-label">サウンド</span>
           <div class="stg-toggle" id="stgSound"></div>
@@ -688,7 +689,7 @@ body.dark .stg-type-desc{color:#A8988A}
       </div>
       <div class="settings-section">
         <div class="settings-section-title">ヒカリ設定</div>
-        <div class="settings-row" role="button" tabindex="0" onclick="showStgTypeScreen()" ontouchend="event.preventDefault();showStgTypeScreen();">
+        <div class="settings-row" role="button" tabindex="0" onclick="showStgTypeScreen()">
           <span class="settings-icon">💬</span>
           <span class="settings-label">性格タイプを変更する</span>
           <span class="settings-sub" id="stgCurrentType"></span>
@@ -697,7 +698,7 @@ body.dark .stg-type-desc{color:#A8988A}
       </div>
       <div class="settings-section">
         <div class="settings-section-title">データ管理</div>
-        <div class="settings-row" role="button" tabindex="0" onclick="showDataMgmtModal()" ontouchend="event.preventDefault();showDataMgmtModal();">
+        <div class="settings-row" role="button" tabindex="0" onclick="showDataMgmtModal()">
           <span class="settings-icon">💾</span>
           <span class="settings-label">バックアップ・復元・初期化</span>
           <span class="settings-chevron">›</span>
@@ -705,12 +706,12 @@ body.dark .stg-type-desc{color:#A8988A}
       </div>
       <div class="settings-section">
         <div class="settings-section-title">ヘルプ</div>
-        <div class="settings-row" role="button" tabindex="0" onclick="showFaqModal()" ontouchend="event.preventDefault();showFaqModal();">
+        <div class="settings-row" role="button" tabindex="0" onclick="showFaqModal()">
           <span class="settings-icon">❓</span>
           <span class="settings-label">よくある質問</span>
           <span class="settings-chevron">›</span>
         </div>
-        <div class="settings-row" role="button" tabindex="0" onclick="location.href='mailto:yunoa.japan.info@gmail.com?subject=NursePass%20不具合・改善要望'" ontouchend="event.preventDefault();location.href='mailto:yunoa.japan.info@gmail.com?subject=NursePass%20不具合・改善要望';">
+        <div class="settings-row" role="button" tabindex="0" onclick="location.href='mailto:yunoa.japan.info@gmail.com?subject=NursePass%20不具合・改善要望'">
           <span class="settings-icon">📧</span>
           <span class="settings-label">不具合・改善要望を報告</span>
           <span class="settings-chevron">›</span>
@@ -723,7 +724,7 @@ body.dark .stg-type-desc{color:#A8988A}
 <div id="subjectScreen" class="subject-screen">
   <div class="subject-screen-inner">
     <div class="subject-screen-header">
-      <button onclick="closeSubjectScreen()" ontouchend="event.preventDefault();closeSubjectScreen();" class="back-btn" style="touch-action:manipulation">← 戻る</button>
+      <button onclick="closeSubjectScreen()" class="back-btn" style="touch-action:manipulation">← 戻る</button>
       <div class="subject-screen-title">📖 科目別学習</div>
       <div style="width:56px"></div>
     </div>
@@ -731,20 +732,20 @@ body.dark .stg-type-desc{color:#A8988A}
   </div>
 </div>
 <nav class="bottom-nav" id="bottomNav">
-  <button class="bn-btn active" data-tab="home" onclick="switchTab('home')" ontouchend="event.preventDefault();switchTab('home');">
+  <button class="bn-btn active" data-tab="home" onclick="switchTab('home')">
     <span class="bn-icon">🏠</span><span class="bn-label">ホーム</span>
   </button>
-  <button class="bn-btn" data-tab="weak" onclick="switchTab('weak')" ontouchend="event.preventDefault();switchTab('weak');">
+  <button class="bn-btn" data-tab="weak" onclick="switchTab('weak')">
     <span class="bn-icon">📚</span><span class="bn-label">復習</span>
     <span class="bn-badge" id="bnWeakBadge" style="display:none"></span>
   </button>
-  <button class="bn-btn" data-tab="stats" onclick="switchTab('stats')" ontouchend="event.preventDefault();switchTab('stats');">
+  <button class="bn-btn" data-tab="stats" onclick="switchTab('stats')">
     <span class="bn-icon">📊</span><span class="bn-label">記録</span>
   </button>
-  <button class="bn-btn" data-tab="hikari" onclick="switchTab('hikari')" ontouchend="event.preventDefault();switchTab('hikari');">
+  <button class="bn-btn" data-tab="hikari" onclick="switchTab('hikari')">
     <span class="bn-icon">✨</span><span class="bn-label">ヒカリ</span>
   </button>
-  <button class="bn-btn" data-tab="settings" onclick="switchTab('settings')" ontouchend="event.preventDefault();switchTab('settings');">
+  <button class="bn-btn" data-tab="settings" onclick="switchTab('settings')">
     <span class="bn-icon">⚙️</span><span class="bn-label">設定</span>
   </button>
 </nav>
@@ -755,9 +756,9 @@ body.dark .stg-type-desc{color:#A8988A}
     <div class="modal-title" id="apiModalTitle">🌸 OpenAI APIキーを設定</div>
     <div class="modal-desc" id="apiModalDesc">ヒカリとお話しするには、OpenAI APIキーが必要です。<br>キーはあなたのブラウザにのみ保存され、外部には送信されません。<br><br>APIキーは <strong>platform.openai.com</strong> で取得できます。</div>
     <input class="modal-input" id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
-    <button class="modal-btn" onclick="saveApiKey()" ontouchend="event.preventDefault();saveApiKey();">保存して始める</button>
-    <button class="modal-skip" id="apiSkipBtn" onclick="skipApiKey()" ontouchend="event.preventDefault();skipApiKey();">あとで設定する</button>
-    <button class="modal-del" id="apiDelBtn" onclick="deleteApiKey()" ontouchend="event.preventDefault();deleteApiKey();" style="display:none">⚠ 現在のキーを削除する</button>
+    <button class="modal-btn" onclick="saveApiKey()">保存して始める</button>
+    <button class="modal-skip" id="apiSkipBtn" onclick="skipApiKey()">あとで設定する</button>
+    <button class="modal-del" id="apiDelBtn" onclick="deleteApiKey()" style="display:none">⚠ 現在のキーを削除する</button>
   </div>
 </div>
 
@@ -3599,7 +3600,7 @@ function renderQuestion(){
       <div class="q-text">${q.question}</div>
       ${!isTime?`<div id="hintArea" style="margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button></div>`:''}
       <div class="choices">
-        ${(()=>{let ks=Object.keys(q.choices);if(localStorage.getItem('np_shuffle')==='1'){ks=ks.slice().sort(()=>Math.random()-0.5);}return ks.map((k,i)=>`<button class="choice-btn" onclick="answer('${k}')" ontouchend="if(!this.disabled){event.preventDefault();answer('${k}');}" id="ch${k}"><span style="font-weight:700;flex-shrink:0;margin-right:8px;color:#B8907A;font-size:14px">${i+1}.</span>${q.choices[k]}</button>`).join('');})()}
+        ${(()=>{let ks=Object.keys(q.choices);if(localStorage.getItem('np_shuffle')==='1'){ks=ks.slice().sort(()=>Math.random()-0.5);}return ks.map((k,i)=>`<button class="choice-btn" onclick="answer('${k}')" id="ch${k}"><span style="font-weight:700;flex-shrink:0;margin-right:8px;color:#B8907A;font-size:14px">${i+1}.</span>${q.choices[k]}</button>`).join('');})()}
       </div>
     </div>`;
   if(isTime) startQuizTimer();
