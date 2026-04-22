@@ -7445,5 +7445,23 @@ if ('serviceWorker' in navigator) {
     <div id="stgTypeBtns"></div>
   </div>
 </div>
+<button id="debugBtn" onclick="(function(){
+  var lines=[];
+  // localStorage
+  lines.push('=== localStorage ===');
+  for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);var v=localStorage.getItem(k);lines.push(k+': '+(v&&v.length>80?v.slice(0,80)+'…':v));}
+  // z-index >= 1000 の要素
+  lines.push('\\n=== z-index>=1000 の要素 ===');
+  var all=document.querySelectorAll('*');
+  var hi=[];
+  for(var j=0;j<all.length;j++){var el=all[j];var cs=getComputedStyle(el);var z=parseInt(cs.zIndex);if(z>=1000){var pe=cs.pointerEvents;hi.push('z='+z+' pe='+pe+' '+el.tagName+(el.id?'#'+el.id:'')+(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(' ')[0]:''));}}
+  hi.sort(function(a,b){return parseInt(b.split('z=')[1])-parseInt(a.split('z=')[1]);});
+  lines=lines.concat(hi.slice(0,20));
+  // pointer-events が none でなく z-index 高い要素
+  lines.push('\\n=== タッチ可能高z要素(pe!=none) ===');
+  var touchable=hi.filter(function(s){return s.indexOf('pe=none')===-1;});
+  lines=lines.concat(touchable.slice(0,10));
+  alert(lines.join('\\n'));
+})()" style="position:fixed;bottom:calc(90px + env(safe-area-inset-bottom,0px));right:12px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;border:none;font-size:18px;cursor:pointer;z-index:99999;touch-action:manipulation;display:flex;align-items:center;justify-content:center;padding:0;line-height:1">🔍</button>
 </body>
 </html>
