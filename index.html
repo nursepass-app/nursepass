@@ -7270,53 +7270,49 @@ renderTodayPlan();
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),5000);
 })();
-// Android Chrome: touchend on [onclick] elements to eliminate 300ms delay
-// e.preventDefault() prevents the synthetic click so function runs only once
+// タッチ委譲: document レベルの単一 touchend で全クリッカブル要素をカバー
+// （MutationObserver 方式を廃止 — iOS 26 Safari で el.onclick.call が不安定なため）
 (function(){
-  function attachTouchEnd(el){
-    if(el._te) return;
-    el._te=true;
-    // Touch events（iOS/Android）
-    el.addEventListener('touchstart',function(e){
-      if(e.touches){el._tsx=e.touches[0].clientX;el._tsy=e.touches[0].clientY;}
-    },{passive:true});
-    el.addEventListener('touchend',function(e){
-      var dx=0,dy=0;
-      if(e.changedTouches){dx=Math.abs(e.changedTouches[0].clientX-(el._tsx||0));dy=Math.abs(e.changedTouches[0].clientY-(el._tsy||0));}
-      if(dx>10||dy>10) return;
-      if(typeof el.onclick!=='function') return;
-      e.preventDefault();
-      try{el.onclick.call(el);}catch(err){}
-    },{passive:false});
-    // Pointer events（マウス・ペン / iOS 26+ でタッチ以外のポインターを補完）
-    if(window.PointerEvent){
-      el.addEventListener('pointerdown',function(e){
-        el._pdx=e.clientX;el._pdy=e.clientY;
-      },{passive:true});
-      el.addEventListener('pointerup',function(e){
-        if(e.pointerType==='touch') return; // タッチは touchend が担当（二重発火防止）
-        var dx=Math.abs(e.clientX-(el._pdx||0));
-        var dy=Math.abs(e.clientY-(el._pdy||0));
-        if(dx>10||dy>10) return;
-        if(typeof el.onclick!=='function') return;
-        try{el.onclick.call(el);}catch(err){}
-      },{passive:false});
+  var _tsx=0,_tsy=0;
+  document.addEventListener('touchstart',function(e){
+    if(e.touches){_tsx=e.touches[0].clientX;_tsy=e.touches[0].clientY;}
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    var t=e.changedTouches&&e.changedTouches[0];
+    if(!t) return;
+    var dx=Math.abs(t.clientX-_tsx),dy=Math.abs(t.clientY-_tsy);
+    if(dx>10||dy>10) return; // スクロールを除外
+    var el=e.target.closest('[onclick], button, .choice-btn, .bn-btn, .home-main-btn, .home-mid-btn, .sub-tab, .chip, .pq-btn, .stg-type-btn, .settings-row, .back-btn, .next-btn, .gachi-next-btn, .c-btn');
+    if(!el) return;
+    e.preventDefault();
+    if(typeof el.onclick==='function'){
+      try{el.onclick.call(el,e);}catch(err){}
+    } else {
+      var attr=el.getAttribute('onclick');
+      if(attr) try{(new Function(attr)).call(el);}catch(err){}
     }
+  },{passive:false});
+  // Pointer events: マウス・ペン入力（iPad外部デバイス等）補完
+  if(window.PointerEvent){
+    var _pdx=0,_pdy=0;
+    document.addEventListener('pointerdown',function(e){
+      if(e.pointerType==='touch') return;
+      _pdx=e.clientX;_pdy=e.clientY;
+    },{passive:true});
+    document.addEventListener('pointerup',function(e){
+      if(e.pointerType==='touch') return;
+      var dx=Math.abs(e.clientX-_pdx),dy=Math.abs(e.clientY-_pdy);
+      if(dx>10||dy>10) return;
+      var el=e.target.closest('[onclick], button, .choice-btn, .bn-btn, .home-main-btn, .home-mid-btn, .sub-tab, .chip, .pq-btn, .stg-type-btn, .settings-row, .back-btn, .next-btn, .gachi-next-btn, .c-btn');
+      if(!el) return;
+      if(typeof el.onclick==='function'){
+        try{el.onclick.call(el,e);}catch(err){}
+      } else {
+        var attr=el.getAttribute('onclick');
+        if(attr) try{(new Function(attr)).call(el);}catch(err){}
+      }
+    },{passive:false});
   }
-  // 静的要素（ページ読み込み時に存在するもの）
-  function bindAll(){document.querySelectorAll('[onclick]').forEach(attachTouchEnd);}
-  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',bindAll);}else{bindAll();}
-  // 動的要素（renderSubjectList等で生成されるもの）- MutationObserverで監視
-  var obs=new MutationObserver(function(muts){
-    muts.forEach(function(m){
-      m.addedNodes.forEach(function(n){
-        if(n.nodeType!==1) return;
-        if(n.getAttribute&&n.getAttribute('onclick')) attachTouchEnd(n);
-        n.querySelectorAll&&n.querySelectorAll('[onclick]').forEach(attachTouchEnd);
-      });
-    });
-  });
-  obs.observe(document.body,{childList:true,subtree:true});
 })();
 
 // ===== SETTINGS TAB =====
