@@ -4122,16 +4122,15 @@ function answer(key){
   </div>
   ${isBm?`<div id="bmTagRow_${q.id}" style="display:flex;gap:5px;margin:4px 0 6px;flex-wrap:wrap"></div>`:''}
   ${quizMode!=='gachi'?`<div style="font-size:12px;color:${correct?'#166534':'#B8A090'};font-weight:600;margin:4px 0 6px;padding:4px 8px;background:${correct?'rgba(74,222,128,0.08)':'rgba(217,197,178,0.08)'};border-radius:8px">${nmsg}</div>`:''}
-  ${wrongAns}${correctAns}`;
+  ${wrongAns}${correctAns}
+  <button onclick="showExplanationModal(${q.id})" style="margin-top:10px;width:100%;padding:12px 16px;background:linear-gradient(135deg,rgba(245,239,232,0.98),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.6);border-radius:12px;font-size:13px;font-weight:700;color:#4A3828;cursor:pointer;font-family:'Noto Sans JP',sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;text-align:center;display:block">💡 解説を見る</button>`;
   choices.after(res);
 
   const isLast=session.idx>=session.pool.length-1;
   const streak10End=session.mode==='streak10'&&(session.streakGameOver||(session.currentStreak||0)>=session.streakTarget);
 
   // ── 解説・アクションHTML（次のボタンの下に表示）──
-  const _explHtml=quizMode==='gachi'
-    ?`<details style="margin-bottom:8px"><summary style="font-size:12px;color:#64748b;cursor:pointer;user-select:none;padding:4px 0">解説を見る ▾</summary><div class="explanation">${highlightExplanation(q.explanation)}</div></details>`
-    :`<div class="explanation" style="position:relative;margin-bottom:8px">${highlightExplanation(q.explanation)}<button onclick="navigator.clipboard.writeText('Q: '+this.closest('.explanation').textContent.trim()).then(()=>showToast('解説をコピーしました'))" style="position:absolute;top:4px;right:4px;padding:2px 6px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.15);border-radius:6px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif" title="解説をコピー">📋</button></div>`;
+  const _explHtml=''; // 解説はres内ボタンからモーダルで表示
   const _accHtml=(()=>{const h=history[q.id];if(!h||h.correct+h.wrong<1)return'';const tot=h.correct+h.wrong;const acc=Math.round(h.correct/tot*100);const srs=srsData[q.id];const accColor=acc>=80?'#16a34a':acc>=60?'#D9A060':'#ef4444';return`<div style="margin-bottom:6px;padding:4px 10px;background:rgba(237,224,212,0.2);border-radius:8px;font-size:10px;color:#8A6A50;display:flex;gap:10px;align-items:center">この問題: <strong style="color:${accColor}">${acc}%</strong>正答 (${tot}回挑戦)${srs?` · 次の復習: ${srs.due<=todayKey?'今日！':`${Math.max(1,Math.ceil((new Date(srs.due)-new Date())/86400000))}日後`}`:''}</div>`;})();
   const _memoHtml=hasMemo?`<div style="margin-bottom:8px;padding:8px 10px;background:rgba(217,185,80,0.1);border-left:3px solid #D9A060;border-radius:6px;font-size:12px;color:#5A4420">📝 <strong>マイメモ：</strong>${memoData[q.id]}<button onclick="openMemo(${q.id})" style="margin-left:8px;padding:1px 6px;background:none;border:1px solid rgba(217,160,96,0.4);border-radius:6px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">編集</button></div>`:!correct?`<div style="margin-bottom:6px"><button onclick="openMemo(${q.id})" style="padding:4px 12px;background:rgba(217,185,80,0.1);border:1px dashed rgba(217,160,96,0.5);border-radius:8px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif;width:100%;text-align:left">📝 この問題にメモを追加して復習に役立てよう ＋</button></div>`:'';
   const _relHtml=(()=>{if(!correct)return'';const relWeak=QUESTIONS.filter(x=>x.id!==q.id&&x.field===q.field&&history[String(x.id)]&&history[String(x.id)].wrong>0).slice(0,2);const relNew=QUESTIONS.filter(x=>x.id!==q.id&&x.field===q.field&&!history[String(x.id)]).slice(0,2-relWeak.length);const rel=[...relWeak,...relNew];if(!rel.length)return'';return`<div style="margin-bottom:8px;padding:6px 10px;background:rgba(240,232,222,0.3);border-radius:10px"><div style="font-size:10px;color:#8A6A50;font-weight:700;margin-bottom:4px">📌 同じ分野の問題</div>${rel.map(r=>{const rh=history[String(r.id)];const rLabel=rh&&rh.wrong>0?`<span style="color:#dc2626;font-size:9px">✗${rh.wrong}回</span>`:`<span style="color:#aaa;font-size:9px">未解答</span>`;return`<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid rgba(85,80,77,0.08)"><span style="flex:1;font-size:11px;color:#55504D;cursor:pointer" onclick="drillOne(${r.id})">${r.question.slice(0,40)}…</span>${rLabel}</div>`;}).join('')}</div>`;})();
@@ -4203,6 +4202,46 @@ function answer(key){
   }
 }
 
+function showExplanationModal(qId){
+  var q=QUESTIONS.find(function(x){return x.id===qId;});
+  if(!q) return;
+  var m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.52);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  var choicesHtml=Object.entries(q.choices).map(function(e){
+    var k=e[0],v=e[1],ok=k===q.answer;
+    return '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:12px;margin-bottom:8px;'
+      +'background:'+(ok?'rgba(74,222,128,0.15)':'rgba(245,239,232,0.7)')+';'
+      +'border:1.5px solid '+(ok?'rgba(74,222,128,0.5)':'rgba(217,197,178,0.35)')+';">'
+      +'<span style="font-weight:700;flex-shrink:0;min-width:20px;color:'+(ok?'#16a34a':'#8A7060')+'">'+k+'.</span>'
+      +'<span style="font-size:14px;line-height:1.6;color:'+(ok?'#15803d':'#55504D')+';font-weight:'+(ok?'700':'400')+'">'+v+'</span>'
+      +(ok?'<span style="margin-left:auto;flex-shrink:0;color:#16a34a;font-weight:900;font-size:13px;padding-left:6px">✓</span>':'')
+      +'</div>';
+  }).join('');
+  var expl=q.explanation?highlightExplanation(q.explanation):'解説は準備中です。';
+  m.innerHTML='<div style="width:100%;max-width:520px;background:#FDFAF6;border-radius:20px 20px 0 0;'
+    +'padding:20px 20px calc(32px + env(safe-area-inset-bottom,0px));max-height:88vh;'
+    +'overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-family:\'Noto Sans JP\',sans-serif">'
+    // ── ヘッダー ──
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">'
+    +'<div style="font-size:16px;font-weight:700;color:#3C3530;font-family:\'Zen Kaku Gothic New\',sans-serif">💡 解説</div>'
+    +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="padding:5px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(85,80,77,0.2);border-radius:10px;font-size:12px;color:#8A6A50;cursor:pointer;font-family:\'Noto Sans JP\',sans-serif;touch-action:manipulation">✕ 閉じる</button>'
+    +'</div>'
+    // ── 問題文 ──
+    +'<div style="font-size:13px;color:#55504D;line-height:1.7;margin-bottom:14px;padding:10px 12px;background:rgba(245,239,232,0.6);border-radius:12px;border:1px solid rgba(217,197,178,0.3)">'+q.question+'</div>'
+    // ── 選択肢（正解をハイライト）──
+    +choicesHtml
+    // ── 解説文 ──
+    +'<div style="margin:14px 0 16px;padding:14px 16px;background:rgba(240,232,222,0.45);border-radius:14px;border-left:3px solid #B8907A">'
+    +'<div style="font-size:11px;font-weight:700;color:#B8907A;margin-bottom:8px;letter-spacing:.04em">📖 解説</div>'
+    +'<div style="font-size:16px;color:#3C3530;line-height:1.9">'+expl+'</div>'
+    +'</div>'
+    // ── 閉じるボタン ──
+    +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:\'Noto Sans JP\',sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent">閉じる</button>'
+    +'</div>';
+  document.body.appendChild(m);
+  m.addEventListener('click',function(e){if(e.target===m)m.remove();});
+  m.addEventListener('touchend',function(e){if(e.target===m){e.preventDefault();m.remove();}},{passive:false});
+}
 function continueQuiz(){nextQ();}
 function startWeakFromHere(){
   const weakIds=Object.keys(history).filter(id=>history[id].wrong>0);
