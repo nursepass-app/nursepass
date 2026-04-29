@@ -1168,27 +1168,17 @@ function pickCount(mode, label){
   document.body.appendChild(modal);
 }
 function startQuizWithCount(mode, count){
-  try {
-    alert('ステップ1: 関数呼び出し mode=' + mode + ' count=' + count);
-    if(!QUESTIONS||!QUESTIONS.length){alert('データ読み込み中です。しばらくお待ちください。');return;}
-    alert('ステップ2: QUESTIONS取得OK 問題数=' + QUESTIONS.length + ' カテゴリ=' + currentCategory);
-    const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
-    alert('ステップ3: カテゴリ絞り込み後=' + catQ.length + '問 selectedFields=' + JSON.stringify(selectedFields));
-    const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
-    let pool;
-    if(mode==='random') pool=shuffle([...fieldFilter]).slice(0,count);
-    else if(mode==='field') pool=shuffle([...fieldFilter]).slice(0,count);
-    else if(mode==='allcat') pool=shuffle([...catQ]).slice(0,count);
-    else { startQuiz(mode); return; }
-    alert('ステップ4: pool作成OK pool.length=' + pool.length);
-    if(!pool.length){alert('問題が見つかりません。');return;}
-    session={pool,idx:0,correct:0,wrong:0,mode};
-    alert('ステップ5: session設定OK showQuiz呼び出し直前');
-    showQuiz();
-    alert('ステップ6: showQuiz呼び出し完了');
-  } catch(e) {
-    alert('エラー発生: ' + e.message + '\n' + e.stack);
-  }
+  if(!QUESTIONS||!QUESTIONS.length){alert('データ読み込み中です。しばらくお待ちください。');return;}
+  const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
+  const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
+  let pool;
+  if(mode==='random') pool=shuffle([...fieldFilter]).slice(0,count);
+  else if(mode==='field') pool=shuffle([...fieldFilter]).slice(0,count);
+  else if(mode==='allcat') pool=shuffle([...catQ]).slice(0,count);
+  else { startQuiz(mode); return; }
+  if(!pool.length){alert('問題が見つかりません。');return;}
+  session={pool,idx:0,correct:0,wrong:0,mode,combo:0,wrongIds:[]};
+  showQuiz();
 }
 function getDailyPool(){
   const n=parseInt(todayKey.replace(/-/g,''));
@@ -3467,6 +3457,9 @@ function resumeSession(){
 }
 let mockElapsedInterval=null;
 function showQuiz(){
+  if(!session||!session.pool||!session.pool.length) return;
+  if(typeof session.combo==='undefined') session.combo=0;
+  if(!session.wrongIds) session.wrongIds=[];
   // ガチ自動送りタイマーをクリア（前のクイズの残りタイマーが誤発火しないよう）
   if(autoAdvanceTimer){clearInterval(autoAdvanceTimer);autoAdvanceTimer=null;}
   sessionStartTime=Date.now();
