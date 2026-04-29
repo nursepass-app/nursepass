@@ -763,6 +763,10 @@ body.dark .stg-type-desc{color:#A8988A}
 </div>
 
 <script>
+window.onerror = function(msg, src, line, col, err) {
+  alert('グローバルエラー: ' + msg + '\n行:' + line + '\n' + (err ? err.stack : ''));
+  return true;
+};
 // Mobile touch: passive touchstart for iOS scroll performance
 document.addEventListener('touchstart',function(){},{passive:true});
 // Android/iOS touchend delegation: fire click on non-button clickable divs (subject-card, flash-card-wrap, weak-item etc.)
@@ -3457,12 +3461,14 @@ function resumeSession(){
 }
 let mockElapsedInterval=null;
 function showQuiz(){
+  alert('showQuiz-A: 開始');
   if(!session||!session.pool||!session.pool.length) return;
   if(typeof session.combo==='undefined') session.combo=0;
   if(!session.wrongIds) session.wrongIds=[];
   // ガチ自動送りタイマーをクリア（前のクイズの残りタイマーが誤発火しないよう）
   if(autoAdvanceTimer){clearInterval(autoAdvanceTimer);autoAdvanceTimer=null;}
   sessionStartTime=Date.now();
+  alert('showQuiz-B: タイマーOK');
   // 連続学習60分休憩アラート
   if(window._breakAlertTimer) clearTimeout(window._breakAlertTimer);
   window._breakAlertTimer=setTimeout(function(){
@@ -3476,15 +3482,18 @@ function showQuiz(){
     document.body.appendChild(el_b);
     setTimeout(function(){el_b.remove();},8000);
   },60*60*1000);
+  alert('showQuiz-C: タブ非表示前');
   document.getElementById('tabHome').style.display='none';
   document.getElementById('tabWeak').style.display='none';
   document.getElementById('tabStats').style.display='none';
   document.getElementById('tabHikari').style.display='none';
   document.querySelectorAll('.bn-btn').forEach(function(b){b.classList.remove('active');});
+  alert('showQuiz-D: bottomNav非表示前');
   var bn_qs=document.getElementById('bottomNav');
   if(bn_qs) bn_qs.style.display='none';
   var qa=document.getElementById('quizArea');
   qa.style.display='block';
+  alert('showQuiz-E: quizArea表示OK');
   // Start elapsed timer for mock exam
   if(session&&(session.mode==='mock'||session.mode==='minimock')){
     clearInterval(mockElapsedInterval);
@@ -3503,7 +3512,9 @@ function showQuiz(){
       el_t.style.color=secs>timeLimit?'#dc2626':secs>timeLimit*0.75?'#D9A060':'#8A6A50';
     },1000);
   }
+  alert('showQuiz-F: renderQuestion呼び出し直前');
   renderQuestion();
+  alert('showQuiz-G: 完了');
 }
 function recordStudyTime(){
   if(!sessionStartTime) return;
