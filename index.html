@@ -763,10 +763,6 @@ body.dark .stg-type-desc{color:#A8988A}
 </div>
 
 <script>
-window.onerror = function(msg, src, line, col, err) {
-  alert('グローバルエラー: ' + msg + '\n行:' + line + '\n' + (err ? err.stack : ''));
-  return true;
-};
 // Mobile touch: passive touchstart for iOS scroll performance
 document.addEventListener('touchstart',function(){},{passive:true});
 // Android/iOS touchend delegation: fire click on non-button clickable divs (subject-card, flash-card-wrap, weak-item etc.)
@@ -2106,33 +2102,34 @@ function setupReminder(){
     return;
   }
   if(!/^\d{1,2}:\d{2}$/.test(time.trim())){alert('時刻はHH:MM形式で入力してください（例: 20:00）');return;}
-  if(Notification.permission==='denied'){alert('ブラウザの通知が拒否されています。ブラウザ設定から通知を許可してください。');return;}
-  Notification.requestPermission().then(perm=>{
+  if((typeof Notification!=='undefined'?Notification.permission:'denied')==='denied'){alert('ブラウザの通知が拒否されています。ブラウザ設定から通知を許可してください。');return;}
+  if(typeof Notification!=='undefined'){Notification.requestPermission().then(function(perm){
     if(perm==='granted'){
       localStorage.setItem('np_reminder',time.trim());
-      showToast(`🔔 毎日 ${time.trim()} に学習リマインダーを設定しました`);
-      const btn=document.getElementById('reminderBtn');
-      if(btn) btn.textContent=`🔔 ${time.trim()} リマインダー設定済み`;
+      showToast('🔔 毎日 '+time.trim()+' に学習リマインダーを設定しました');
+      var btn=document.getElementById('reminderBtn');
+      if(btn) btn.textContent='🔔 '+time.trim()+' リマインダー設定済み';
       scheduleReminderCheck();
     } else {
       alert('通知の許可が必要です。ブラウザの設定から許可してください。');
     }
-  });
+  });}
 }
 function scheduleReminderCheck(){
-  const reminderTime=localStorage.getItem('np_reminder');
-  if(!reminderTime||Notification.permission!=='granted') return;
-  const [h,m]=reminderTime.split(':').map(Number);
-  const now=new Date();
-  const target=new Date();
-  target.setHours(h,m,0,0);
+  var reminderTime=localStorage.getItem('np_reminder');
+  if(!reminderTime||(typeof Notification!=='undefined'?Notification.permission:'denied')!=='granted') return;
+  var hm=reminderTime.split(':').map(Number);
+  var rh=hm[0],rm=hm[1];
+  var now=new Date();
+  var target=new Date();
+  target.setHours(rh,rm,0,0);
   if(target<=now) target.setDate(target.getDate()+1);
-  const delay=target-now;
-  setTimeout(()=>{
-    const todayStudied=(weeklyData[todayKey]||0)>0;
-    if(!todayStudied){
+  var delay=target-now;
+  setTimeout(function(){
+    var todayStudied=(weeklyData[todayKey]||0)>0;
+    if(!todayStudied&&typeof Notification!=='undefined'){
       new Notification('📚 NursePass学習リマインダー',{
-        body:`今日はまだ問題を解いていません。${dailyGoal}問の目標に向けて頑張りましょう！`,
+        body:'今日はまだ問題を解いていません。'+dailyGoal+'問の目標に向けて頑張りましょう！',
         icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><text y="26" font-size="28">📚</text></svg>'
       });
     }
@@ -2141,7 +2138,7 @@ function scheduleReminderCheck(){
 }
 // Run reminder check on load
 (function(){
-  if(Notification.permission==='granted'&&localStorage.getItem('np_reminder')){
+  if(typeof Notification!=='undefined'&&Notification.permission==='granted'&&localStorage.getItem('np_reminder')){
     scheduleReminderCheck();
   }
 })();
@@ -3461,14 +3458,12 @@ function resumeSession(){
 }
 let mockElapsedInterval=null;
 function showQuiz(){
-  alert('showQuiz-A: 開始');
   if(!session||!session.pool||!session.pool.length) return;
   if(typeof session.combo==='undefined') session.combo=0;
   if(!session.wrongIds) session.wrongIds=[];
   // ガチ自動送りタイマーをクリア（前のクイズの残りタイマーが誤発火しないよう）
   if(autoAdvanceTimer){clearInterval(autoAdvanceTimer);autoAdvanceTimer=null;}
   sessionStartTime=Date.now();
-  alert('showQuiz-B: タイマーOK');
   // 連続学習60分休憩アラート
   if(window._breakAlertTimer) clearTimeout(window._breakAlertTimer);
   window._breakAlertTimer=setTimeout(function(){
@@ -3482,18 +3477,15 @@ function showQuiz(){
     document.body.appendChild(el_b);
     setTimeout(function(){el_b.remove();},8000);
   },60*60*1000);
-  alert('showQuiz-C: タブ非表示前');
   document.getElementById('tabHome').style.display='none';
   document.getElementById('tabWeak').style.display='none';
   document.getElementById('tabStats').style.display='none';
   document.getElementById('tabHikari').style.display='none';
   document.querySelectorAll('.bn-btn').forEach(function(b){b.classList.remove('active');});
-  alert('showQuiz-D: bottomNav非表示前');
   var bn_qs=document.getElementById('bottomNav');
   if(bn_qs) bn_qs.style.display='none';
   var qa=document.getElementById('quizArea');
   qa.style.display='block';
-  alert('showQuiz-E: quizArea表示OK');
   // Start elapsed timer for mock exam
   if(session&&(session.mode==='mock'||session.mode==='minimock')){
     clearInterval(mockElapsedInterval);
@@ -3512,9 +3504,7 @@ function showQuiz(){
       el_t.style.color=secs>timeLimit?'#dc2626':secs>timeLimit*0.75?'#D9A060':'#8A6A50';
     },1000);
   }
-  alert('showQuiz-F: renderQuestion呼び出し直前');
   renderQuestion();
-  alert('showQuiz-G: 完了');
 }
 function recordStudyTime(){
   if(!sessionStartTime) return;
