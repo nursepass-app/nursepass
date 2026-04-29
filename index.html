@@ -3465,49 +3465,49 @@ function showQuiz(){
   sessionStartTime=Date.now();
   // 連続学習60分休憩アラート
   if(window._breakAlertTimer) clearTimeout(window._breakAlertTimer);
-  window._breakAlertTimer=setTimeout(()=>{
-    const qa=document.getElementById('quizArea');
-    if(!qa||qa.style.display==='none') return;
-    const el=document.createElement('div');
-    el.id='breakAlert';
-    el.style.cssText='position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:linear-gradient(135deg,rgba(245,239,232,0.97),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.6);border-radius:14px;padding:10px 16px;font-size:12px;color:#4A3828;font-family:"Noto Sans JP",sans-serif;font-weight:600;text-align:center;z-index:8000;box-shadow:0 4px 16px rgba(184,144,122,0.2);cursor:pointer;max-width:260px;animation:fadein .4s ease';
-    el.innerHTML='☕ 60分経ちました。少し休憩しませんか？<br><span style="font-size:10px;font-weight:400;color:#8A7060">タップで閉じる</span>';
-    el.onclick=()=>el.remove();
-    document.body.appendChild(el);
-    setTimeout(()=>el.remove(),8000);
+  window._breakAlertTimer=setTimeout(function(){
+    var qa_b=document.getElementById('quizArea');
+    if(!qa_b||qa_b.style.display==='none') return;
+    var el_b=document.createElement('div');
+    el_b.id='breakAlert';
+    el_b.style.cssText='position:fixed;bottom:calc(70px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:linear-gradient(135deg,rgba(245,239,232,0.97),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.6);border-radius:14px;padding:10px 16px;font-size:12px;color:#4A3828;font-family:"Noto Sans JP",sans-serif;font-weight:600;text-align:center;z-index:8000;box-shadow:0 4px 16px rgba(184,144,122,0.2);cursor:pointer;max-width:260px;animation:fadein .4s ease';
+    el_b.innerHTML='☕ 60分経ちました。少し休憩しませんか？<br><span style="font-size:10px;font-weight:400;color:#8A7060">タップで閉じる</span>';
+    el_b.onclick=function(){el_b.remove();};
+    document.body.appendChild(el_b);
+    setTimeout(function(){el_b.remove();},8000);
   },60*60*1000);
   document.getElementById('tabHome').style.display='none';
   document.getElementById('tabWeak').style.display='none';
   document.getElementById('tabStats').style.display='none';
   document.getElementById('tabHikari').style.display='none';
-  document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
-  const bn_qs=document.getElementById('bottomNav');
+  document.querySelectorAll('.bn-btn').forEach(function(b){b.classList.remove('active');});
+  var bn_qs=document.getElementById('bottomNav');
   if(bn_qs) bn_qs.style.display='none';
-  const qa=document.getElementById('quizArea');
+  var qa=document.getElementById('quizArea');
   qa.style.display='block';
   // Start elapsed timer for mock exam
   if(session&&(session.mode==='mock'||session.mode==='minimock')){
     clearInterval(mockElapsedInterval);
     session.mockStartTime=session.mockStartTime||Date.now();
-    mockElapsedInterval=setInterval(()=>{
-      const el=document.getElementById('mockElapsed');
-      if(!el){clearInterval(mockElapsedInterval);return;}
-      const secs=Math.floor((Date.now()-session.mockStartTime)/1000);
-      const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
-      const timeStr=h>0?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    mockElapsedInterval=setInterval(function(){
+      var el_t=document.getElementById('mockElapsed');
+      if(!el_t){clearInterval(mockElapsedInterval);return;}
+      var secs=Math.floor((Date.now()-session.mockStartTime)/1000);
+      var h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+      var timeStr=h>0?(h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')):(String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'));
       // 本番試験は240分(14400秒)、ミニは30分(1800秒)
-      const timeLimit=session.mode==='minimock'?1800:14400;
-      const pace=secs>0&&(session.idx||0)>0?Math.round(secs/(session.idx+1)):null;
-      const paceStr=pace?` · ${pace}秒/問`:'';
-      el.textContent=`⏱ ${timeStr}${paceStr}`;
-      el.style.color=secs>timeLimit?'#dc2626':secs>timeLimit*0.75?'#D9A060':'#8A6A50';
+      var timeLimit=session.mode==='minimock'?1800:14400;
+      var pace=secs>0&&(session.idx||0)>0?Math.round(secs/(session.idx+1)):null;
+      var paceStr=pace?(' · '+pace+'秒/問'):'';
+      el_t.textContent='⏱ '+timeStr+paceStr;
+      el_t.style.color=secs>timeLimit?'#dc2626':secs>timeLimit*0.75?'#D9A060':'#8A6A50';
     },1000);
   }
   renderQuestion();
 }
 function recordStudyTime(){
   if(!sessionStartTime) return;
-  const mins=Math.round((Date.now()-sessionStartTime)/60000);
+  var mins=Math.round((Date.now()-sessionStartTime)/60000);
   sessionStartTime=0;
   if(mins<1) return;
   if(!dailyAccuracy[todayKey]) dailyAccuracy[todayKey]={correct:0,total:0};
@@ -3515,17 +3515,17 @@ function recordStudyTime(){
   localStorage.setItem('np_daily_acc',JSON.stringify(dailyAccuracy));
 }
 
-let timerInterval=null;
+var timerInterval=null;
 function clearQuizTimer(){clearInterval(timerInterval);timerInterval=null;}
 function startQuizTimer(){
   clearQuizTimer();
   if(session.mode!=='timeatk') return;
-  let remain=session.timeLimit;
-  const updateTimer=()=>{
-    const fill=document.getElementById('timerFill');
-    const cnt=document.getElementById('timerCnt');
+  var remain=session.timeLimit;
+  var updateTimer=function(){
+    var fill=document.getElementById('timerFill');
+    var cnt=document.getElementById('timerCnt');
     if(!fill||!cnt){clearQuizTimer();return;}
-    const pct=Math.round(remain/session.timeLimit*100);
+    var pct=Math.round(remain/session.timeLimit*100);
     fill.style.width=pct+'%';
     fill.className='timer-fill'+(remain<=8?' warn':'');
     cnt.textContent=remain+'秒';
@@ -3537,38 +3537,39 @@ function startQuizTimer(){
 }
 function autoAnswerTimeout(){
   // タイムアウト時は不正解扱いにして次へ
-  const q=session.pool[session.idx];
+  var q=session.pool[session.idx];
   if(!history[q.id]) history[q.id]={correct:0,wrong:0};
   history[q.id].wrong++;
   if(!todayWrong.ids.includes(q.id))todayWrong.ids.push(q.id);
   saveTodayWrong();save();updateDailyStats();
-  Object.keys(q.choices).forEach(k=>{
-    const btn=document.getElementById('ch'+k);
+  Object.keys(q.choices).forEach(function(k){
+    var btn=document.getElementById('ch'+k);
     if(!btn) return;
     if(k===q.answer) btn.classList.add('correct');
     btn.disabled=true;
   });
-  const choices=document.querySelector('.choices');
+  var choices=document.querySelector('.choices');
   if(choices){
-    const res=document.createElement('div');
+    var res=document.createElement('div');
     res.className='result-area wrong';
     res.innerHTML='<div class="result-label">⏰ 時間切れ！</div><div class="explanation">'+highlightExplanation(q.explanation)+'</div>';
     choices.after(res);
-    if(isBm) renderBmTagBtns(q.id);
-    const nb=document.createElement('button');nb.className='next-btn';nb.id='nextBtn';
-    const isLast=session.idx>=session.pool.length-1;
+    var isBm_t=!!(typeof bookmarks!=='undefined'&&bookmarks[q.id]);
+    if(isBm_t) renderBmTagBtns(q.id);
+    var nb=document.createElement('button');nb.className='next-btn';nb.id='nextBtn';
+    var isLast=session.idx>=session.pool.length-1;
     nb.textContent=isLast?'結果を見る →':'次の問題 →';
     nb.onclick=isLast?finishQuiz:nextQ;
-    mc.after(nb);
+    var mc_el=document.querySelector('.mini-chat');if(mc_el) mc_el.after(nb);else choices.after(nb);
     // 自動送り: 正解時のみ1.5秒後に自動進む
-    if(correct&&autoAdvance&&!isLast){
-      let remaining=1.5;
-      nb.textContent=`次の問題 → (${remaining.toFixed(1)})`;
-      autoAdvanceTimer=setInterval(()=>{
+    if(autoAdvance&&!isLast){
+      var remaining=1.5;
+      nb.textContent='次の問題 → ('+remaining.toFixed(1)+')';
+      autoAdvanceTimer=setInterval(function(){
         remaining-=0.1;
         if(remaining<=0){clearInterval(autoAdvanceTimer);autoAdvanceTimer=null;nextQ();return;}
-        const btn2=document.getElementById('nextBtn');
-        if(btn2) btn2.textContent=`次の問題 → (${remaining.toFixed(1)})`;
+        var btn2=document.getElementById('nextBtn');
+        if(btn2) btn2.textContent='次の問題 → ('+remaining.toFixed(1)+')';
       },100);
     }
   }
@@ -3578,24 +3579,24 @@ function renderQuestion(){
   resetMiniChat();
   hintLevel=0;
   questionStartTime=Date.now();
-  const qa=document.getElementById('quizArea');
+  var qa=document.getElementById('quizArea');
   if(!qa){console.error('quizArea not found');return;}
   if(!session||!session.pool||session.idx>=session.pool.length){
     console.error('Invalid session state',session);
     finishQuiz();return;
   }
-  const q=session.pool[session.idx];
+  var q=session.pool[session.idx];
   if(!q){console.error('Question is null at idx',session.idx);finishQuiz();return;}
-  const total=session.pool.length;
-  const pct=Math.round(session.idx/total*100);
-  const isTime=session.mode==='timeatk';
+  var total=session.pool.length;
+  var pct=Math.round(session.idx/total*100);
+  var isTime=session.mode==='timeatk';
   qa.className=quizMode==='gachi'?'gachi-quiz':'';
   qa.innerHTML=`
     <div class="card" style="animation:fadein .3s ease">
       <div class="quiz-header">
         <button class="back-btn" onclick="clearQuizTimer();backHome()">← 戻る</button>
         <div class="q-progress"><div class="q-bar" style="width:${pct}%"></div></div>
-        <div class="q-count" onclick="${!isTime?'jumpToQuestion()':''}" style="${!isTime?'cursor:pointer;text-decoration:underline dotted':''}" title="${!isTime?'タップで問題番号へジャンプ':''}">${isTime?'⏱ ':''}${session.idx+1}/${total}${session.combo>=3?`<span style="color:#f59e0b;font-size:10px;font-weight:700;margin-left:4px">🔥${session.combo}</span>`:''}${session.idx>0?(()=>{const ap=Math.round(session.correct/session.idx*100);const ac=ap>=80?'#16a34a':ap>=60?'#D9A060':'#ef4444';return `<span style="font-size:9px;color:${ac};margin-left:5px;font-weight:700">${ap}%</span>`;})():''}</div>
+        <div class="q-count" onclick="${!isTime?'jumpToQuestion()':''}" style="${!isTime?'cursor:pointer;text-decoration:underline dotted':''}" title="${!isTime?'タップで問題番号へジャンプ':''}">${isTime?'⏱ ':''}${session.idx+1}/${total}${session.combo>=3?`<span style="color:#f59e0b;font-size:10px;font-weight:700;margin-left:4px">🔥${session.combo}</span>`:''}${session.idx>0?(function(){var ap=Math.round(session.correct/session.idx*100);var ac=ap>=80?'#16a34a':ap>=60?'#D9A060':'#ef4444';return '<span style="font-size:9px;color:'+ac+';margin-left:5px;font-weight:700">'+ap+'%</span>';})():''}</div>
       </div>
       ${session.mode==='mock'?`<div id="mockElapsed" style="font-size:10px;color:#8A6A50;text-align:right;padding:2px 20px 0;font-variant-numeric:tabular-nums">⏱ 00:00</div>`:''}
       ${isTime?`<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div><div class="timer-count" id="timerCnt">${session.timeLimit}秒</div>`:''}
@@ -3603,7 +3604,7 @@ function renderQuestion(){
       <div class="q-text">${q.question}</div>
       ${!isTime?`<div id="hintArea" style="margin:0 0 6px;display:flex;gap:6px;flex-wrap:wrap"><button onclick="showHint()" id="hintBtn" style="padding:3px 12px;background:rgba(240,232,222,0.8);border:1px solid rgba(217,197,178,0.4);border-radius:12px;font-size:10px;color:#8A6A50;cursor:pointer;font-family:'Noto Sans JP',sans-serif">💡 ヒントを見る</button></div>`:''}
       <div class="choices">
-        ${(()=>{let ks=Object.keys(q.choices);if(localStorage.getItem('np_shuffle')==='1'){ks=ks.slice().sort(()=>Math.random()-0.5);}return ks.map((k,i)=>`<button class="choice-btn" onclick="answer('${k}')" id="ch${k}"><span style="font-weight:700;flex-shrink:0;margin-right:8px;color:#B8907A;font-size:14px">${i+1}.</span>${q.choices[k]}</button>`).join('');})()}
+        ${(function(){var ks=Object.keys(q.choices);if(localStorage.getItem('np_shuffle')==='1'){ks=ks.slice().sort(function(){return Math.random()-0.5;});}return ks.map(function(k,i){return '<button class="choice-btn" onclick="answer(\''+k+'\')" id="ch'+k+'"><span style="font-weight:700;flex-shrink:0;margin-right:8px;color:#B8907A;font-size:14px">'+(i+1)+'.</span>'+q.choices[k]+'</button>';}).join('');})()}
       </div>
     </div>`;
   if(isTime) startQuizTimer();
