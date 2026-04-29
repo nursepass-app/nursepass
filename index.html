@@ -4612,7 +4612,9 @@ function shareQuestion(id){
   if(navigator.share){
     navigator.share({title:'NursePass 練習問題',text}).catch(()=>{});
   } else {
-    navigator.clipboard.writeText(text).then(()=>showToast('問題をクリップボードにコピーしました'));
+    navigator.clipboard.writeText(text).then(()=>showToast('問題をクリップボードにコピーしました')).catch(()=>{
+      var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('問題をクリップボードにコピーしました');
+    });
   }
 }
 let hintLevel=0;
