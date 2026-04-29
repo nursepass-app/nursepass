@@ -1168,17 +1168,22 @@ function pickCount(mode, label){
   document.body.appendChild(modal);
 }
 function startQuizWithCount(mode, count){
-  if(!QUESTIONS||!QUESTIONS.length){alert('データ読み込み中です。しばらくお待ちください。');return;}
-  const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
-  const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
-  let pool;
-  if(mode==='random') pool=shuffle([...fieldFilter]).slice(0,count);
-  else if(mode==='field') pool=shuffle([...fieldFilter]).slice(0,count);
-  else if(mode==='allcat') pool=shuffle([...catQ]).slice(0,count);
-  else { startQuiz(mode); return; }
-  if(!pool.length){alert('問題が見つかりません。');return;}
-  session={pool,idx:0,correct:0,wrong:0,mode};
-  showQuiz();
+  try {
+    alert('startQuizWithCount呼ばれました: ' + mode + ', ' + count);
+    if(!QUESTIONS||!QUESTIONS.length){alert('データ読み込み中です。しばらくお待ちください。');return;}
+    const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
+    const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
+    let pool;
+    if(mode==='random') pool=shuffle([...fieldFilter]).slice(0,count);
+    else if(mode==='field') pool=shuffle([...fieldFilter]).slice(0,count);
+    else if(mode==='allcat') pool=shuffle([...catQ]).slice(0,count);
+    else { startQuiz(mode); return; }
+    if(!pool.length){alert('問題が見つかりません。');return;}
+    session={pool,idx:0,correct:0,wrong:0,mode};
+    showQuiz();
+  } catch(e) {
+    alert('エラー: ' + e.message);
+  }
 }
 function getDailyPool(){
   const n=parseInt(todayKey.replace(/-/g,''));
