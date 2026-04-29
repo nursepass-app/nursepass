@@ -353,7 +353,7 @@ body.font-xl .explanation{font-size:16px}
 .mode-switch-btn.active.gachi{background:linear-gradient(135deg,#475569,#334155);color:white;box-shadow:0 2px 8px rgba(51,65,85,.3)}
 
 /* HOME SIMPLE */
-.home-main-btn{width:100%;padding:22px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:20px;font-size:20px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 6px 24px rgba(184,160,144,.35);letter-spacing:.02em;transition:.15s;text-align:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;position:relative;z-index:2;pointer-events:auto}
+.home-main-btn{width:100%;padding:22px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:20px;font-size:20px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 6px 24px rgba(184,160,144,.35);letter-spacing:.02em;transition:.15s;text-align:center;touch-action:none;-webkit-tap-highlight-color:transparent;position:relative;z-index:2;pointer-events:auto;user-select:none;-webkit-user-select:none}
 .home-main-btn:active{transform:scale(.98);opacity:.92}
 .home-mid-btn{padding:18px 12px;background:linear-gradient(135deg,rgba(245,239,232,0.98),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.6);border-radius:18px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(184,160,144,.1);transition:.15s;width:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .home-mid-btn:active{transform:scale(.97)}
@@ -542,7 +542,7 @@ body.dark .stg-type-desc{color:#A8988A}
     </div>
     <!-- エリア4: メインボタン -->
     <div style="display:flex;flex-direction:column;gap:12px">
-      <button onclick="startQuizWithCount('random',5)" ontouchend="event.preventDefault();startQuizWithCount('random',5);" class="home-main-btn">▶ 今日の5問を始める</button>
+      <button onclick="startQuizWithCount('random',5)" ontouchend="event.preventDefault();event.stopPropagation();startQuizWithCount('random',5);" class="home-main-btn">▶ 今日の5問を始める</button>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
         <button onclick="pickCount('field','分野別')" class="home-mid-btn">
           <span class="btn-icon">🎲</span><span class="btn-lbl" style="font-size:13px">分野別</span>
