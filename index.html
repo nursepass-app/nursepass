@@ -7249,8 +7249,8 @@ function _pqAnswer(type){
   if(overlay) _renderPqStep(overlay);
 }
 
-// 初回起動時APIキーモーダル（キー未設定かつ初回のみ）
-if(!localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen')){
+// 初回起動時APIキーモーダル（オンボーディング完了後・キー未設定かつ初回のみ）
+if(localStorage.getItem('np_onboarding_done')==='1' && !localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen')){
   setTimeout(showApiKeyModal, 900);
 }
 
@@ -7354,7 +7354,7 @@ renderPersonalityTypeBtns();
 // オンボーディング（np_onboarding_done が '1' でなければ必ず表示）
 try{
   if(localStorage.getItem('np_onboarding_done')!=='1'){
-    setTimeout(showOnboarding,300);
+    setTimeout(showOnboarding,0);// 即時（他のinit処理に先んじて表示）
   } else {
     // 未処理マイルストーンがある場合（再起動時）
     if(Math.floor(totalQuestions/300)>=unlockedChars.length&&unlockedChars.length<CHAR_LIST.length){
@@ -7365,7 +7365,22 @@ try{
       setTimeout(showPersonalityQuiz,600);
     }
   }
-}catch(e){setTimeout(showOnboarding,300);}
+}catch(e){setTimeout(showOnboarding,0);}
+// デバッグ用：コンソールから呼び出し可能
+window._debugOnboarding=function(){
+  try{localStorage.removeItem('np_onboarding_done');}catch(e){}
+  var p1=document.getElementById('obPhase1');
+  var p2=document.getElementById('obPhase2');
+  var p3=document.getElementById('obPhase3');
+  var b2=document.getElementById('obBirth2Img');
+  if(p1){p1.style.display='block';p1._tapped=false;}
+  if(p2) p2.style.display='none';
+  if(p3) p3.style.display='none';
+  if(b2) b2.style.animation='';
+  var scr=document.getElementById('onboardingScreen');
+  if(scr) scr.style.display='flex';
+  console.log('[NursePass] Onboarding forced. scr=',scr,'p1=',p1);
+};
 renderExamCountdown();
 renderHikariHint();updateModeSwitch();renderGoalBar();renderHikariCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();renderSearchHistoryChips();renderPassGauge();
 showResumeBanner();
