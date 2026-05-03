@@ -205,6 +205,32 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .char-remain{font-size:9px;color:#A09080;text-align:center;line-height:1.3;margin-top:-1px}
 @keyframes char-unlock{0%{transform:scale(1)}25%{transform:scale(1.14)}55%{transform:scale(0.96)}80%{transform:scale(1.04)}100%{transform:scale(1)}}
 .char-card.unlock-anim{animation:char-unlock .6s ease;border-color:#D9A060 !important;box-shadow:0 0 0 3px rgba(217,160,96,.45),0 0 20px rgba(217,160,96,.35) !important}
+/* ===== オンボーディング ===== */
+.onboarding-overlay{position:fixed;inset:0;z-index:500;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadein .4s ease}
+.onboarding-inner{max-width:420px;width:100%;text-align:center}
+.onboarding-title{font-size:20px;font-weight:700;color:#55504D;font-family:'Zen Kaku Gothic New',sans-serif;margin-bottom:8px}
+.onboarding-sub{font-size:13px;color:#8A7A70;margin-bottom:22px;line-height:1.7}
+.onboarding-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+.onboarding-char{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px 8px;border:2px solid rgba(85,80,77,0.18);border-radius:14px;background:rgba(255,255,255,0.75);cursor:pointer;transition:.18s;-webkit-tap-highlight-color:transparent}
+.onboarding-char:active,.onboarding-char.selected{border-color:#B8A090;background:rgba(217,197,178,.25);box-shadow:0 0 0 2px rgba(217,197,178,.5)}
+.onboarding-char img{width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center top;display:block;background:#F5EFE8}
+.onboarding-char-name{font-size:11px;font-weight:700;color:#55504D}
+.onboarding-char-tag{font-size:9px;color:#8A7A70;text-align:center;line-height:1.3}
+/* ===== 仲間解放モーダル ===== */
+.companion-overlay{position:fixed;inset:0;z-index:500;background:rgba(30,20,10,.6);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadein .3s ease}
+.companion-card{background:rgba(255,252,248,.98);border-radius:24px;padding:26px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.companion-lvup-wrap{margin:0 0 14px;display:inline-flex;flex-direction:column;align-items:center;gap:6px}
+.companion-lvup-label{font-size:11px;font-weight:700;color:#D9A060;letter-spacing:.08em}
+.companion-lvup-img{width:84px;height:84px;border-radius:50%;object-fit:cover;object-position:center top;border:3px solid #D9A060;box-shadow:0 0 24px rgba(217,160,96,.45);background:#F5EFE8}
+@keyframes lvup-pop{0%{transform:scale(.75);opacity:.4}40%{transform:scale(1.2)}70%{transform:scale(.95)}100%{transform:scale(1);opacity:1}}
+.companion-lvup-img.anim{animation:lvup-pop .75s ease forwards}
+.companion-title{font-size:15px;font-weight:700;color:#55504D;font-family:'Zen Kaku Gothic New',sans-serif;margin-bottom:16px;min-height:22px}
+.companion-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:4px}
+.companion-char{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 8px 8px;border:2px solid rgba(85,80,77,0.18);border-radius:14px;background:rgba(240,232,222,.6);cursor:pointer;transition:.18s;min-width:62px;-webkit-tap-highlight-color:transparent}
+.companion-char:active,.companion-char.selected{border-color:#B8A090;background:rgba(217,197,178,.2);box-shadow:0 0 0 2px rgba(217,197,178,.45)}
+.companion-char img{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:center top;display:block;background:#F5EFE8}
+.companion-char-name{font-size:11px;font-weight:700;color:#55504D}
+@keyframes companion-join{0%{transform:scale(1)}30%{transform:scale(1.15)}60%{transform:scale(.97)}100%{transform:scale(1)}}
 .hikari-av-img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center top;display:block;background:#F5EFE8}
 /* 毎日の応援メッセージ */
 .daily-msg-card{background:linear-gradient(135deg,rgba(245,239,232,0.96),rgba(237,224,212,0.92));border:1.5px solid rgba(85,80,77,0.32);border-radius:20px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px;box-shadow:0 2px 14px rgba(217,197,178,0.12);animation:fadein .5s ease}
@@ -735,6 +761,27 @@ body.font-xl .explanation{font-size:16px}
   </div>
 </div>
 
+<!-- オンボーディング画面 -->
+<div id="onboardingScreen" class="onboarding-overlay" style="display:none">
+  <div class="onboarding-inner">
+    <div style="font-size:40px;margin-bottom:14px">🌸</div>
+    <div class="onboarding-title">NursePassへようこそ！</div>
+    <div class="onboarding-sub">あなたの最初のコーチを選んでください！<br>一緒に国試合格を目指そう✨</div>
+    <div class="onboarding-grid" id="onboardingGrid"></div>
+  </div>
+</div>
+<!-- 仲間解放モーダル -->
+<div id="companionModal" class="companion-overlay" style="display:none">
+  <div class="companion-card">
+    <div class="companion-lvup-wrap">
+      <div class="companion-lvup-label">✨ LEVEL UP!</div>
+      <img id="companionLvUpImg" class="companion-lvup-img" src="" alt="">
+    </div>
+    <div class="companion-title" id="companionTitle"></div>
+    <div class="companion-grid" id="companionGrid"></div>
+  </div>
+</div>
+
 <script>
 // Mobile touch: passive touchstart for iOS scroll performance
 document.addEventListener('touchstart',function(){},{passive:true});
@@ -1031,75 +1078,156 @@ function haptic(correct){
   navigator.vibrate(correct?40:[80,40,80]);
 }
 (()=>{const btn=document.getElementById('hapticBtn');if(btn)btn.style.opacity=hapticEnabled?'1':'0.3';})();
-// ===== キャラクター選択 =====
+// ===== キャラクター選択・解放システム =====
 const CHAR_LIST=[
-  {id:'hikari', name:'ヒカリ', tag:'やさしい\nクリーム',   unlock:0},
-  {id:'hana',   name:'ハナ',   tag:'ポジティブ\nオレンジ', unlock:300},
-  {id:'ren',    name:'レン',   tag:'太陽明るい\n黄緑',     unlock:600},
-  {id:'riku',   name:'リク',   tag:'クール\n青白',         unlock:900},
-  {id:'sora',   name:'ソラ',   tag:'不思議系\n紫青',       unlock:1200}
+  {id:'hikari', name:'ヒカリ', tag:'やさしい\nクリーム',   color:'#EDE0D4'},
+  {id:'hana',   name:'ハナ',   tag:'ポジティブ\nオレンジ', color:'#FFD6C4'},
+  {id:'ren',    name:'レン',   tag:'太陽明るい\n黄緑',     color:'#C8E8B0'},
+  {id:'riku',   name:'リク',   tag:'クール\n青白',         color:'#B8D4EE'},
+  {id:'sora',   name:'ソラ',   tag:'不思議系\n紫青',       color:'#C8B8E8'}
 ];
 let selectedChar=localStorage.getItem('np_selected_char')||'hikari';
-function getTotalAnswered(){
-  return Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
-}
-function isCharUnlocked(charId){
-  const c=CHAR_LIST.find(x=>x.id===charId);
-  return c&&getTotalAnswered()>=c.unlock;
-}
-function selectCharacter(charId){
-  if(!isCharUnlocked(charId)){
-    const c=CHAR_LIST.find(x=>x.id===charId);
-    const remain=c.unlock-getTotalAnswered();
-    showToast('🔒 あと'+remain+'問で解放されます！');
-    return;
+let unlockedChars=JSON.parse(localStorage.getItem('np_unlocked_chars')||'null');
+let totalQuestions=parseInt(localStorage.getItem('np_total_questions')||'-1');
+// 既存ユーザー移行 & 新規初期化
+(function initCharSystem(){
+  if(totalQuestions<0){
+    totalQuestions=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
+    localStorage.setItem('np_total_questions',String(totalQuestions));
   }
+  if(!unlockedChars){
+    const sc=localStorage.getItem('np_selected_char');
+    if(sc){
+      // 既存ユーザー: 累計問題数から解放済みキャラを復元
+      unlockedChars=[sc];
+      const ms=Math.floor(totalQuestions/300);
+      CHAR_LIST.filter(c=>c.id!==sc).slice(0,ms).forEach(c=>unlockedChars.push(c.id));
+      localStorage.setItem('np_onboarding_done','1');
+    } else {
+      unlockedChars=[];
+    }
+    localStorage.setItem('np_unlocked_chars',JSON.stringify(unlockedChars));
+  }
+})();
+function saveCharState(){
+  localStorage.setItem('np_selected_char',selectedChar);
+  localStorage.setItem('np_unlocked_chars',JSON.stringify(unlockedChars));
+  localStorage.setItem('np_total_questions',String(totalQuestions));
+}
+function isCharUnlocked(charId){return unlockedChars.includes(charId);}
+function getCharImgSrc(charId,lv){return 'images/'+charId+'/'+charId+'_lv'+(lv||0)+'.png';}
+// --- 設定タブ ---
+function selectCharacter(charId){
+  if(!isCharUnlocked(charId)){showToast('🔒 まだ解放されていません');return;}
   selectedChar=charId;
-  localStorage.setItem('np_selected_char',charId);
-  document.querySelectorAll('.char-card').forEach(c=>{
-    c.classList.toggle('selected',c.dataset.char===charId&&isCharUnlocked(charId));
-  });
+  saveCharState();
+  initSettingsTab();
   showToast(CHAR_LIST.find(c=>c.id===charId).name+'を選択しました');
 }
 function initSettingsTab(){
-  const total=getTotalAnswered();
   document.querySelectorAll('.char-card').forEach(card=>{
     const charId=card.dataset.char;
     const c=CHAR_LIST.find(x=>x.id===charId);
-    const unlocked=total>=c.unlock;
+    if(!c) return;
+    const unlocked=isCharUnlocked(charId);
     card.classList.toggle('locked',!unlocked);
     card.classList.toggle('selected',unlocked&&charId===selectedChar);
     const badge=card.querySelector('.char-lock-badge');
     const remain=card.querySelector('.char-remain');
-    if(badge) badge.textContent=unlocked?'':'🔒';
-    if(remain){
-      if(unlocked){remain.textContent='';remain.style.display='none';}
-      else{remain.textContent='あと'+(c.unlock-total)+'問';remain.style.display='';}
+    const nameEl=card.querySelector('.char-card-name');
+    const img=card.querySelector('img');
+    if(unlocked){
+      if(badge) badge.textContent='';
+      if(remain){remain.textContent='';remain.style.display='none';}
+      if(nameEl) nameEl.textContent=c.name;
+      if(img){img.src=getCharImgSrc(charId,0);img.style.filter='';img.style.background='';}
+    } else {
+      if(badge) badge.textContent='🔒';
+      if(remain){remain.textContent='？？？';remain.style.display='';}
+      if(nameEl) nameEl.textContent='？？？';
+      if(img){img.src='';img.style.background=c.color;img.style.filter='brightness(0.5)';}
     }
   });
   const btn2=document.getElementById('hapticBtnSettings');
   if(btn2){btn2.textContent=hapticEnabled?'ON':'OFF';btn2.classList.toggle('on',hapticEnabled);}
 }
-function checkCharUnlock(){
-  const total=getTotalAnswered();
-  CHAR_LIST.forEach(c=>{
-    if(c.unlock===0) return;
-    const key='np_char_notified_'+c.id;
-    if(total>=c.unlock&&localStorage.getItem(key)!=='1'){
-      localStorage.setItem(key,'1');
-      setTimeout(()=>{
-        showToast('🎉 '+c.name+' が解放されました！設定から選択できます✨');
-        const card=document.querySelector('.char-card[data-char="'+c.id+'"]');
-        if(card){
-          card.classList.remove('locked','unlock-anim');
-          void card.offsetWidth;
-          card.classList.add('unlock-anim');
-          initSettingsTab();
-          setTimeout(()=>card.classList.remove('unlock-anim'),700);
-        }
-      },600);
-    }
-  });
+// --- オンボーディング ---
+function showOnboarding(){
+  const scr=document.getElementById('onboardingScreen');
+  if(!scr) return;
+  const grid=document.getElementById('onboardingGrid');
+  if(grid){
+    grid.innerHTML=CHAR_LIST.map(c=>`<div class="onboarding-char" data-char="${c.id}" onclick="selectOnboardingChar('${c.id}')"><img src="${getCharImgSrc(c.id,0)}" alt="${c.name}" onerror="this.style.background='${c.color}';this.src=''"><div class="onboarding-char-name">${c.name}</div><div class="onboarding-char-tag">${c.tag.replace(/\n/g,'<br>')}</div></div>`).join('');
+  }
+  scr.style.display='flex';
+}
+function selectOnboardingChar(charId){
+  const c=CHAR_LIST.find(x=>x.id===charId);
+  if(!c) return;
+  document.querySelectorAll('.onboarding-char').forEach(el=>el.classList.toggle('selected',el.dataset.char===charId));
+  selectedChar=charId;
+  unlockedChars=[charId];
+  localStorage.setItem('np_onboarding_done','1');
+  saveCharState();
+  const title=document.querySelector('#onboardingScreen .onboarding-title');
+  const sub=document.querySelector('#onboardingScreen .onboarding-sub');
+  if(title) title.textContent=c.name+'と一緒に頑張ろう！';
+  if(sub) sub.textContent='さあ、国試合格を目指してスタート！🌸';
+  setTimeout(()=>{
+    const scr=document.getElementById('onboardingScreen');
+    if(scr) scr.style.display='none';
+    updateHikariLevel();
+  },1400);
+}
+// --- マイルストーン（300問ごと） ---
+function incrementTotalQuestions(){
+  totalQuestions++;
+  localStorage.setItem('np_total_questions',String(totalQuestions));
+  checkMilestone();
+}
+function checkMilestone(){
+  if(unlockedChars.length>=CHAR_LIST.length) return;
+  if(Math.floor(totalQuestions/300)>=unlockedChars.length){
+    setTimeout(showCompanionModal,800);
+  }
+}
+function showCompanionModal(){
+  const available=CHAR_LIST.filter(c=>!unlockedChars.includes(c.id));
+  if(!available.length) return;
+  const modal=document.getElementById('companionModal');
+  if(!modal) return;
+  const lvImg=document.getElementById('companionLvUpImg');
+  const title=document.getElementById('companionTitle');
+  const grid=document.getElementById('companionGrid');
+  const selC=CHAR_LIST.find(x=>x.id===selectedChar)||CHAR_LIST[0];
+  if(lvImg){
+    lvImg.src=getCharImgSrc(selectedChar,5);
+    lvImg.onerror=function(){this.style.background=selC.color;this.src='';this.onerror=null;};
+    lvImg.classList.remove('anim');void lvImg.offsetWidth;lvImg.classList.add('anim');
+  }
+  if(title) title.textContent='';
+  if(grid) grid.innerHTML='';
+  modal.style.display='flex';
+  setTimeout(()=>{
+    if(title) title.textContent='新しい仲間を選んでください！';
+    if(grid) grid.innerHTML=available.map(c=>`<div class="companion-char" data-char="${c.id}" onclick="selectCompanionChar('${c.id}')"><img src="${getCharImgSrc(c.id,0)}" alt="${c.name}" onerror="this.style.background='${c.color}';this.src=''"><div class="companion-char-name">${c.name}</div></div>`).join('');
+  },1900);
+}
+function selectCompanionChar(charId){
+  const c=CHAR_LIST.find(x=>x.id===charId);
+  if(!c) return;
+  document.querySelectorAll('.companion-char').forEach(el=>el.classList.toggle('selected',el.dataset.char===charId));
+  const title=document.getElementById('companionTitle');
+  if(title) title.textContent=c.name+'が仲間になった！🎉';
+  unlockedChars.push(charId);
+  selectedChar=charId;
+  saveCharState();
+  setTimeout(()=>{
+    const modal=document.getElementById('companionModal');
+    if(modal) modal.style.display='none';
+    updateHikariLevel();
+    showToast('🎉 '+c.name+'が仲間になった！コーチが変わったよ✨');
+  },1500);
 }
 // 正解後自動送り設定
 let autoAdvance=localStorage.getItem('np_auto_advance')==='1';
@@ -3557,7 +3685,7 @@ function autoAnswerTimeout(){
   if(!history[q.id]) history[q.id]={correct:0,wrong:0};
   history[q.id].wrong++;
   if(!todayWrong.ids.includes(q.id))todayWrong.ids.push(q.id);
-  saveTodayWrong();save();updateDailyStats();
+  saveTodayWrong();save();updateDailyStats();incrementTotalQuestions();
   Object.keys(q.choices).forEach(k=>{
     const btn=document.getElementById('ch'+k);
     if(!btn) return;
@@ -3935,7 +4063,7 @@ function answer(key){
   if(_ta2===20) setTimeout(function(){showHikariMsg('少し休もう。頑張りすぎも禁物だよ');},1600);
   if(session.pool&&session.pool.length===5&&_ta2===5) setTimeout(function(){showHikariMsg('今日のミッション完了！お疲れ様');},1600);
   checkAchievements();
-  checkCharUnlock();
+  incrementTotalQuestions();
   if(session.mode==='mock'&&correct){
     if(q.category==='必修') session.hisshuCorrect=(session.hisshuCorrect||0)+1;
     else if(q.category==='一般') session.ippanCorrect=(session.ippanCorrect||0)+1;
@@ -7114,8 +7242,15 @@ updateStreakDisplay();
 renderHomeSummary();
 updateBnWeakBadge();
 renderPersonalityTypeBtns();
-// 初回診断（personality_type 未設定時）
-if(!localStorage.getItem('personality_type')){
+// オンボーディング（初回起動）
+if(!localStorage.getItem('np_onboarding_done')){
+  setTimeout(showOnboarding,400);
+} else if(Math.floor(totalQuestions/300)>=unlockedChars.length&&unlockedChars.length<CHAR_LIST.length){
+  // 未処理マイルストーンがある場合（再起動時）
+  setTimeout(showCompanionModal,1000);
+}
+// 初回診断（personality_type 未設定時・オンボーディング済みの場合のみ）
+if(!localStorage.getItem('personality_type')&&localStorage.getItem('np_onboarding_done')){
   setTimeout(showPersonalityQuiz, 600);
 }
 renderExamCountdown();
