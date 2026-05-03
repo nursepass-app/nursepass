@@ -200,6 +200,11 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .settings-row-label{font-size:13px;color:#55504D;font-weight:500}
 .settings-toggle{padding:7px 16px;border:1.5px solid rgba(85,80,77,0.3);border-radius:20px;background:rgba(255,255,255,.8);font-size:12px;color:#55504D;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:500;transition:.15s}
 .settings-toggle.on{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border-color:transparent}
+.char-card.locked{filter:grayscale(1);opacity:0.52;cursor:default}
+.char-lock-badge{position:absolute;top:4px;left:5px;font-size:11px;line-height:1;pointer-events:none}
+.char-remain{font-size:9px;color:#A09080;text-align:center;line-height:1.3;margin-top:-1px}
+@keyframes char-unlock{0%{transform:scale(1)}25%{transform:scale(1.14)}55%{transform:scale(0.96)}80%{transform:scale(1.04)}100%{transform:scale(1)}}
+.char-card.unlock-anim{animation:char-unlock .6s ease;border-color:#D9A060 !important;box-shadow:0 0 0 3px rgba(217,160,96,.45),0 0 20px rgba(217,160,96,.35) !important}
 .hikari-av-img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center top;display:block;background:#F5EFE8}
 /* 毎日の応援メッセージ */
 .daily-msg-card{background:linear-gradient(135deg,rgba(245,239,232,0.96),rgba(237,224,212,0.92));border:1.5px solid rgba(85,80,77,0.32);border-radius:20px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px;box-shadow:0 2px 14px rgba(217,197,178,0.12);animation:fadein .5s ease}
@@ -635,28 +640,38 @@ body.font-xl .explanation{font-size:16px}
         <div class="settings-section-title">🎀 AIコーチを選ぶ</div>
         <div class="char-grid" id="charGrid">
           <div class="char-card" data-char="hikari" onclick="selectCharacter('hikari')">
+            <span class="char-lock-badge"></span>
             <img src="images/hikari/hikari_lv0.png" alt="ヒカリ" onerror="this.style.background='#EDE0D4';this.src=''">
             <div class="char-card-name">ヒカリ</div>
+            <div class="char-remain" style="display:none"></div>
             <div class="char-card-tag">やさしい<br>クリーム</div>
           </div>
           <div class="char-card" data-char="hana" onclick="selectCharacter('hana')">
+            <span class="char-lock-badge"></span>
             <img src="images/hana/hana_lv0.png" alt="ハナ" onerror="this.style.background='#FFD6C4';this.src=''">
             <div class="char-card-name">ハナ</div>
+            <div class="char-remain" style="display:none"></div>
             <div class="char-card-tag">ポジティブ<br>オレンジ</div>
           </div>
           <div class="char-card" data-char="sora" onclick="selectCharacter('sora')">
+            <span class="char-lock-badge"></span>
             <img src="images/sora/sora_lv0.png" alt="ソラ" onerror="this.style.background='#C8B8E8';this.src=''">
             <div class="char-card-name">ソラ</div>
+            <div class="char-remain" style="display:none"></div>
             <div class="char-card-tag">不思議系<br>紫青</div>
           </div>
           <div class="char-card" data-char="riku" onclick="selectCharacter('riku')">
+            <span class="char-lock-badge"></span>
             <img src="images/riku/riku_lv0.png" alt="リク" onerror="this.style.background='#B8D4EE';this.src=''">
             <div class="char-card-name">リク</div>
+            <div class="char-remain" style="display:none"></div>
             <div class="char-card-tag">クール<br>青白</div>
           </div>
           <div class="char-card" data-char="ren" onclick="selectCharacter('ren')">
+            <span class="char-lock-badge"></span>
             <img src="images/ren/ren_lv0.png" alt="レン" onerror="this.style.background='#C8E8B0';this.src=''">
             <div class="char-card-name">レン</div>
+            <div class="char-remain" style="display:none"></div>
             <div class="char-card-tag">太陽明るい<br>黄緑</div>
           </div>
         </div>
@@ -1018,27 +1033,73 @@ function haptic(correct){
 (()=>{const btn=document.getElementById('hapticBtn');if(btn)btn.style.opacity=hapticEnabled?'1':'0.3';})();
 // ===== キャラクター選択 =====
 const CHAR_LIST=[
-  {id:'hikari',name:'ヒカリ',tag:'やさしい\nクリーム'},
-  {id:'hana',  name:'ハナ',  tag:'ポジティブ\nオレンジ'},
-  {id:'sora',  name:'ソラ',  tag:'不思議系\n紫青'},
-  {id:'riku',  name:'リク',  tag:'クール\n青白'},
-  {id:'ren',   name:'レン',  tag:'太陽明るい\n黄緑'}
+  {id:'hikari', name:'ヒカリ', tag:'やさしい\nクリーム',   unlock:0},
+  {id:'hana',   name:'ハナ',   tag:'ポジティブ\nオレンジ', unlock:300},
+  {id:'ren',    name:'レン',   tag:'太陽明るい\n黄緑',     unlock:600},
+  {id:'riku',   name:'リク',   tag:'クール\n青白',         unlock:900},
+  {id:'sora',   name:'ソラ',   tag:'不思議系\n紫青',       unlock:1200}
 ];
 let selectedChar=localStorage.getItem('np_selected_char')||'hikari';
+function getTotalAnswered(){
+  return Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
+}
+function isCharUnlocked(charId){
+  const c=CHAR_LIST.find(x=>x.id===charId);
+  return c&&getTotalAnswered()>=c.unlock;
+}
 function selectCharacter(charId){
+  if(!isCharUnlocked(charId)){
+    const c=CHAR_LIST.find(x=>x.id===charId);
+    const remain=c.unlock-getTotalAnswered();
+    showToast('🔒 あと'+remain+'問で解放されます！');
+    return;
+  }
   selectedChar=charId;
   localStorage.setItem('np_selected_char',charId);
   document.querySelectorAll('.char-card').forEach(c=>{
-    c.classList.toggle('selected',c.dataset.char===charId);
+    c.classList.toggle('selected',c.dataset.char===charId&&isCharUnlocked(charId));
   });
   showToast(CHAR_LIST.find(c=>c.id===charId).name+'を選択しました');
 }
 function initSettingsTab(){
-  document.querySelectorAll('.char-card').forEach(c=>{
-    c.classList.toggle('selected',c.dataset.char===selectedChar);
+  const total=getTotalAnswered();
+  document.querySelectorAll('.char-card').forEach(card=>{
+    const charId=card.dataset.char;
+    const c=CHAR_LIST.find(x=>x.id===charId);
+    const unlocked=total>=c.unlock;
+    card.classList.toggle('locked',!unlocked);
+    card.classList.toggle('selected',unlocked&&charId===selectedChar);
+    const badge=card.querySelector('.char-lock-badge');
+    const remain=card.querySelector('.char-remain');
+    if(badge) badge.textContent=unlocked?'':'🔒';
+    if(remain){
+      if(unlocked){remain.textContent='';remain.style.display='none';}
+      else{remain.textContent='あと'+(c.unlock-total)+'問';remain.style.display='';}
+    }
   });
   const btn2=document.getElementById('hapticBtnSettings');
   if(btn2){btn2.textContent=hapticEnabled?'ON':'OFF';btn2.classList.toggle('on',hapticEnabled);}
+}
+function checkCharUnlock(){
+  const total=getTotalAnswered();
+  CHAR_LIST.forEach(c=>{
+    if(c.unlock===0) return;
+    const key='np_char_notified_'+c.id;
+    if(total>=c.unlock&&localStorage.getItem(key)!=='1'){
+      localStorage.setItem(key,'1');
+      setTimeout(()=>{
+        showToast('🎉 '+c.name+' が解放されました！設定から選択できます✨');
+        const card=document.querySelector('.char-card[data-char="'+c.id+'"]');
+        if(card){
+          card.classList.remove('locked','unlock-anim');
+          void card.offsetWidth;
+          card.classList.add('unlock-anim');
+          initSettingsTab();
+          setTimeout(()=>card.classList.remove('unlock-anim'),700);
+        }
+      },600);
+    }
+  });
 }
 // 正解後自動送り設定
 let autoAdvance=localStorage.getItem('np_auto_advance')==='1';
@@ -3874,6 +3935,7 @@ function answer(key){
   if(_ta2===20) setTimeout(function(){showHikariMsg('少し休もう。頑張りすぎも禁物だよ');},1600);
   if(session.pool&&session.pool.length===5&&_ta2===5) setTimeout(function(){showHikariMsg('今日のミッション完了！お疲れ様');},1600);
   checkAchievements();
+  checkCharUnlock();
   if(session.mode==='mock'&&correct){
     if(q.category==='必修') session.hisshuCorrect=(session.hisshuCorrect||0)+1;
     else if(q.category==='一般') session.ippanCorrect=(session.ippanCorrect||0)+1;
