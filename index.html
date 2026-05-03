@@ -4181,7 +4181,6 @@ function answer(key){
   haptic(correct);
   playAnswerSound(correct);
   showAnswerFeedback(correct);
-  setTimeout(function(){showCharMsg(correct?'correct':'wrong');},700);
   if(correct){
     // XPバーのpopアニメーション
     var _xp=document.getElementById('hikariXpFill');
