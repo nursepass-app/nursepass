@@ -1089,24 +1089,15 @@ const CHAR_LIST=[
 let selectedChar=localStorage.getItem('np_selected_char')||'hikari';
 let unlockedChars=JSON.parse(localStorage.getItem('np_unlocked_chars')||'null');
 let totalQuestions=parseInt(localStorage.getItem('np_total_questions')||'-1');
-// 既存ユーザー移行 & 新規初期化
+// 変数初期化
 (function initCharSystem(){
   if(totalQuestions<0){
     totalQuestions=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
     localStorage.setItem('np_total_questions',String(totalQuestions));
   }
   if(!unlockedChars){
-    const sc=localStorage.getItem('np_selected_char');
-    if(sc){
-      // 既存ユーザー: 累計問題数から解放済みキャラを復元
-      unlockedChars=[sc];
-      const ms=Math.floor(totalQuestions/300);
-      CHAR_LIST.filter(c=>c.id!==sc).slice(0,ms).forEach(c=>unlockedChars.push(c.id));
-      localStorage.setItem('np_onboarding_done','1');
-    } else {
-      unlockedChars=[];
-    }
-    localStorage.setItem('np_unlocked_chars',JSON.stringify(unlockedChars));
+    unlockedChars=[];
+    localStorage.setItem('np_unlocked_chars','[]');
   }
 })();
 function saveCharState(){
@@ -1135,18 +1126,9 @@ function initSettingsTab(){
     const badge=card.querySelector('.char-lock-badge');
     const remain=card.querySelector('.char-remain');
     const nameEl=card.querySelector('.char-card-name');
-    const img=card.querySelector('img');
-    if(unlocked){
-      if(badge) badge.textContent='';
-      if(remain){remain.textContent='';remain.style.display='none';}
-      if(nameEl) nameEl.textContent=c.name;
-      if(img){img.src=getCharImgSrc(charId,0);img.style.filter='';img.style.background='';}
-    } else {
-      if(badge) badge.textContent='🔒';
-      if(remain){remain.textContent='？？？';remain.style.display='';}
-      if(nameEl) nameEl.textContent='？？？';
-      if(img){img.src='';img.style.background=c.color;img.style.filter='brightness(0.5)';}
-    }
+    if(badge) badge.textContent=unlocked?'':'🔒';
+    if(remain){remain.textContent='';remain.style.display='none';}
+    if(nameEl) nameEl.textContent=unlocked?c.name:'？？？';
   });
   const btn2=document.getElementById('hapticBtnSettings');
   if(btn2){btn2.textContent=hapticEnabled?'ON':'OFF';btn2.classList.toggle('on',hapticEnabled);}
@@ -7242,16 +7224,18 @@ updateStreakDisplay();
 renderHomeSummary();
 updateBnWeakBadge();
 renderPersonalityTypeBtns();
-// オンボーディング（初回起動）
-if(!localStorage.getItem('np_onboarding_done')){
-  setTimeout(showOnboarding,400);
-} else if(Math.floor(totalQuestions/300)>=unlockedChars.length&&unlockedChars.length<CHAR_LIST.length){
+// オンボーディング（np_onboarding_done が '1' でなければ必ず表示）
+if(localStorage.getItem('np_onboarding_done')!=='1'){
+  setTimeout(showOnboarding,300);
+} else {
   // 未処理マイルストーンがある場合（再起動時）
-  setTimeout(showCompanionModal,1000);
-}
-// 初回診断（personality_type 未設定時・オンボーディング済みの場合のみ）
-if(!localStorage.getItem('personality_type')&&localStorage.getItem('np_onboarding_done')){
-  setTimeout(showPersonalityQuiz, 600);
+  if(Math.floor(totalQuestions/300)>=unlockedChars.length&&unlockedChars.length<CHAR_LIST.length){
+    setTimeout(showCompanionModal,1000);
+  }
+  // 初回診断（personality_type 未設定時）
+  if(!localStorage.getItem('personality_type')){
+    setTimeout(showPersonalityQuiz,600);
+  }
 }
 renderExamCountdown();
 renderHikariHint();updateModeSwitch();renderGoalBar();renderHikariCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();renderSearchHistoryChips();renderPassGauge();
