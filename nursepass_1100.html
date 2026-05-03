@@ -809,9 +809,9 @@ document.addEventListener('touchstart',function(){},{passive:true});
     _ts=null;
   },{passive:true,capture:true});
 })();
-// localStorage fallback: iOS private browsing throws SecurityError on access
+// localStorage fallback: iOS/Safari private browsing — getItem may succeed but setItem throws QuotaExceededError
 (function(){
-  try{localStorage.getItem('_np_test');}
+  try{localStorage.setItem('_np_test','1');localStorage.removeItem('_np_test');}
   catch(e){
     var _mem={};
     window.localStorage={
@@ -1093,17 +1093,15 @@ let totalQuestions=parseInt(localStorage.getItem('np_total_questions')||'-1');
 (function initCharSystem(){
   if(totalQuestions<0){
     totalQuestions=Object.values(history).reduce((s,h)=>s+h.correct+h.wrong,0);
-    localStorage.setItem('np_total_questions',String(totalQuestions));
+    try{localStorage.setItem('np_total_questions',String(totalQuestions));}catch(e){}
   }
   if(!unlockedChars){
     unlockedChars=[];
-    localStorage.setItem('np_unlocked_chars','[]');
+    try{localStorage.setItem('np_unlocked_chars','[]');}catch(e){}
   }
 })();
 function saveCharState(){
-  localStorage.setItem('np_selected_char',selectedChar);
-  localStorage.setItem('np_unlocked_chars',JSON.stringify(unlockedChars));
-  localStorage.setItem('np_total_questions',String(totalQuestions));
+  try{localStorage.setItem('np_selected_char',selectedChar);localStorage.setItem('np_unlocked_chars',JSON.stringify(unlockedChars));localStorage.setItem('np_total_questions',String(totalQuestions));}catch(e){}
 }
 function isCharUnlocked(charId){return unlockedChars.includes(charId);}
 function getCharImgSrc(charId,lv){return 'images/'+charId+'/'+charId+'_lv'+(lv||0)+'.png';}
@@ -1198,7 +1196,7 @@ function selectOnboardingChar(charId){
   document.querySelectorAll('.onboarding-char').forEach(el=>el.classList.toggle('selected',el.dataset.char===charId));
   selectedChar=charId;
   unlockedChars=[charId];
-  localStorage.setItem('np_onboarding_done','1');
+  try{localStorage.setItem('np_onboarding_done','1');}catch(e){}
   saveCharState();
   const title=document.querySelector('#onboardingScreen .onboarding-title');
   const sub=document.querySelector('#onboardingScreen .onboarding-sub');
@@ -7068,9 +7066,7 @@ function initDailyMessage(){
   if(lastDate!==todayKey||lastChar!==selectedChar||!msg){
     var dayMsgs=(CHAR_MESSAGES[selectedChar]||CHAR_MESSAGES.hikari).daily;
     msg=dayMsgs[Math.floor(Math.random()*dayMsgs.length)];
-    localStorage.setItem('np_last_msg_date',todayKey);
-    localStorage.setItem('np_last_msg_char',selectedChar);
-    localStorage.setItem('np_last_msg',msg);
+    try{localStorage.setItem('np_last_msg_date',todayKey);localStorage.setItem('np_last_msg_char',selectedChar);localStorage.setItem('np_last_msg',msg);}catch(e){}
   }
   // 日付・カウントダウン
   var today=new Date();
@@ -7295,18 +7291,20 @@ renderHomeSummary();
 updateBnWeakBadge();
 renderPersonalityTypeBtns();
 // オンボーディング（np_onboarding_done が '1' でなければ必ず表示）
-if(localStorage.getItem('np_onboarding_done')!=='1'){
-  setTimeout(showOnboarding,300);
-} else {
-  // 未処理マイルストーンがある場合（再起動時）
-  if(Math.floor(totalQuestions/300)>=unlockedChars.length&&unlockedChars.length<CHAR_LIST.length){
-    setTimeout(showCompanionModal,1000);
+try{
+  if(localStorage.getItem('np_onboarding_done')!=='1'){
+    setTimeout(showOnboarding,300);
+  } else {
+    // 未処理マイルストーンがある場合（再起動時）
+    if(Math.floor(totalQuestions/300)>=unlockedChars.length&&unlockedChars.length<CHAR_LIST.length){
+      setTimeout(showCompanionModal,1000);
+    }
+    // 初回診断（personality_type 未設定時）
+    if(!localStorage.getItem('personality_type')){
+      setTimeout(showPersonalityQuiz,600);
+    }
   }
-  // 初回診断（personality_type 未設定時）
-  if(!localStorage.getItem('personality_type')){
-    setTimeout(showPersonalityQuiz,600);
-  }
-}
+}catch(e){setTimeout(showOnboarding,300);}
 renderExamCountdown();
 renderHikariHint();updateModeSwitch();renderGoalBar();renderHikariCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();renderSearchHistoryChips();renderPassGauge();
 showResumeBanner();
