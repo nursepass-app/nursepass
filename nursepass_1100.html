@@ -185,6 +185,21 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .api-key-notice-btn{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:10px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
 .hikari-settings-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px;color:#8A6A50;border-radius:8px;transition:.15s}
 .hikari-settings-btn:hover{background:rgba(138,106,80,0.1)}
+/* ===== 設定タブ ===== */
+.settings-section{padding:20px 16px 12px}
+.settings-section-title{font-size:13px;font-weight:700;color:#8A6A50;letter-spacing:.06em;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.char-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:4px}
+.char-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px 8px;border:2px solid rgba(85,80,77,0.18);border-radius:16px;background:rgba(240,232,222,.6);cursor:pointer;transition:.18s;position:relative;-webkit-tap-highlight-color:transparent}
+.char-card.selected{border-color:#B8A090;background:rgba(217,197,178,.25);box-shadow:0 0 0 2px rgba(217,197,178,.5)}
+.char-card.selected::after{content:'✓';position:absolute;top:4px;right:6px;font-size:10px;font-weight:700;color:#8A6A50}
+.char-card img{width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center top;background:#F5EFE8;display:block}
+.char-card-name{font-size:11px;font-weight:700;color:#55504D;font-family:'Noto Sans JP',sans-serif}
+.char-card-tag{font-size:9px;color:#8A7A70;margin-top:-2px;text-align:center;line-height:1.3}
+.settings-other{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(240,232,222,.6);border:1px solid rgba(85,80,77,0.18);border-radius:14px}
+.settings-row-label{font-size:13px;color:#55504D;font-weight:500}
+.settings-toggle{padding:7px 16px;border:1.5px solid rgba(85,80,77,0.3);border-radius:20px;background:rgba(255,255,255,.8);font-size:12px;color:#55504D;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:500;transition:.15s}
+.settings-toggle.on{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border-color:transparent}
 .hikari-av-img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center top;display:block;background:#F5EFE8}
 /* 毎日の応援メッセージ */
 .daily-msg-card{background:linear-gradient(135deg,rgba(245,239,232,0.96),rgba(237,224,212,0.92));border:1.5px solid rgba(85,80,77,0.32);border-radius:20px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px;box-shadow:0 2px 14px rgba(217,197,178,0.12);animation:fadein .5s ease}
@@ -613,6 +628,56 @@ body.font-xl .explanation{font-size:16px}
   <div id="quizArea" style="display:none;margin-top:0"></div>
   <div id="jokyoArea" style="display:none;margin-top:0"></div>
   <div id="flashArea" style="display:none;margin-top:0"></div>
+
+  <div id="tabSettings" style="display:none">
+    <div class="card" style="margin-bottom:12px">
+      <div class="settings-section">
+        <div class="settings-section-title">🎀 AIコーチを選ぶ</div>
+        <div class="char-grid" id="charGrid">
+          <div class="char-card" data-char="hikari" onclick="selectCharacter('hikari')">
+            <img src="images/hikari/hikari_lv0.png" alt="ヒカリ" onerror="this.style.background='#EDE0D4';this.src=''">
+            <div class="char-card-name">ヒカリ</div>
+            <div class="char-card-tag">やさしい<br>クリーム</div>
+          </div>
+          <div class="char-card" data-char="hana" onclick="selectCharacter('hana')">
+            <img src="images/hana/hana_lv0.png" alt="ハナ" onerror="this.style.background='#FFD6C4';this.src=''">
+            <div class="char-card-name">ハナ</div>
+            <div class="char-card-tag">ポジティブ<br>オレンジ</div>
+          </div>
+          <div class="char-card" data-char="sora" onclick="selectCharacter('sora')">
+            <img src="images/sora/sora_lv0.png" alt="ソラ" onerror="this.style.background='#C8B8E8';this.src=''">
+            <div class="char-card-name">ソラ</div>
+            <div class="char-card-tag">不思議系<br>紫青</div>
+          </div>
+          <div class="char-card" data-char="riku" onclick="selectCharacter('riku')">
+            <img src="images/riku/riku_lv0.png" alt="リク" onerror="this.style.background='#B8D4EE';this.src=''">
+            <div class="char-card-name">リク</div>
+            <div class="char-card-tag">クール<br>青白</div>
+          </div>
+          <div class="char-card" data-char="ren" onclick="selectCharacter('ren')">
+            <img src="images/ren/ren_lv0.png" alt="レン" onerror="this.style.background='#C8E8B0';this.src=''">
+            <div class="char-card-name">レン</div>
+            <div class="char-card-tag">太陽明るい<br>黄緑</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="settings-section">
+        <div class="settings-section-title">⚙️ その他の設定</div>
+        <div class="settings-other">
+          <div class="settings-row">
+            <span class="settings-row-label">🔔 バイブレーション</span>
+            <button class="settings-toggle" id="hapticBtnSettings" onclick="toggleHaptic()"></button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-label">🔑 OpenAI APIキー</span>
+            <button class="settings-toggle" onclick="showApiKeyModal()">設定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <div id="subjectScreen" class="subject-screen">
   <div class="subject-screen-inner">
@@ -637,6 +702,9 @@ body.font-xl .explanation{font-size:16px}
   </button>
   <button class="bn-btn" data-tab="hikari" onclick="switchTab('hikari')">
     <span class="bn-icon">✨</span><span class="bn-label">ヒカリ</span>
+  </button>
+  <button class="bn-btn" data-tab="settings" onclick="switchTab('settings')">
+    <span class="bn-icon">⚙️</span><span class="bn-label">設定</span>
   </button>
 </nav>
 
@@ -938,6 +1006,8 @@ function toggleHaptic(){
   localStorage.setItem('np_haptic',hapticEnabled?'1':'0');
   const btn=document.getElementById('hapticBtn');
   if(btn) btn.style.opacity=hapticEnabled?'1':'0.3';
+  const btn2=document.getElementById('hapticBtnSettings');
+  if(btn2){btn2.textContent=hapticEnabled?'ON':'OFF';btn2.classList.toggle('on',hapticEnabled);}
   if(hapticEnabled&&navigator.vibrate) navigator.vibrate(50);
   showToast(hapticEnabled?'バイブレーションON':'バイブレーションOFF');
 }
@@ -946,6 +1016,30 @@ function haptic(correct){
   navigator.vibrate(correct?40:[80,40,80]);
 }
 (()=>{const btn=document.getElementById('hapticBtn');if(btn)btn.style.opacity=hapticEnabled?'1':'0.3';})();
+// ===== キャラクター選択 =====
+const CHAR_LIST=[
+  {id:'hikari',name:'ヒカリ',tag:'やさしい\nクリーム'},
+  {id:'hana',  name:'ハナ',  tag:'ポジティブ\nオレンジ'},
+  {id:'sora',  name:'ソラ',  tag:'不思議系\n紫青'},
+  {id:'riku',  name:'リク',  tag:'クール\n青白'},
+  {id:'ren',   name:'レン',  tag:'太陽明るい\n黄緑'}
+];
+let selectedChar=localStorage.getItem('np_selected_char')||'hikari';
+function selectCharacter(charId){
+  selectedChar=charId;
+  localStorage.setItem('np_selected_char',charId);
+  document.querySelectorAll('.char-card').forEach(c=>{
+    c.classList.toggle('selected',c.dataset.char===charId);
+  });
+  showToast(CHAR_LIST.find(c=>c.id===charId).name+'を選択しました');
+}
+function initSettingsTab(){
+  document.querySelectorAll('.char-card').forEach(c=>{
+    c.classList.toggle('selected',c.dataset.char===selectedChar);
+  });
+  const btn2=document.getElementById('hapticBtnSettings');
+  if(btn2){btn2.textContent=hapticEnabled?'ON':'OFF';btn2.classList.toggle('on',hapticEnabled);}
+}
 // 正解後自動送り設定
 let autoAdvance=localStorage.getItem('np_auto_advance')==='1';
 let quizMode=localStorage.getItem('np_quiz_mode')||'hikari';
@@ -2611,6 +2705,7 @@ function switchTab(t){
   document.getElementById('tabWeak').style.display=t==='weak'?'block':'none';
   document.getElementById('tabStats').style.display=t==='stats'?'block':'none';
   document.getElementById('tabHikari').style.display=t==='hikari'?'block':'none';
+  document.getElementById('tabSettings').style.display=t==='settings'?'block':'none';
   document.querySelectorAll('.bn-btn').forEach(b=>{
     b.classList.toggle('active',b.dataset.tab===t);
   });
@@ -2619,6 +2714,7 @@ function switchTab(t){
   if(t==='weak'){renderWeak();updateBnWeakBadge();}
   if(t==='stats') renderStats();
   if(t==='hikari') initChat();
+  if(t==='settings') initSettingsTab();
   document.getElementById('quizArea').style.display='none';
   // Refresh home widgets when returning
   if(t==='home'){showResumeBanner();renderTodayPlan();renderTodayTimeline();renderMiniReview();renderPassGauge();}
