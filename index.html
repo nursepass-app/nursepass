@@ -206,7 +206,11 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 @keyframes char-unlock{0%{transform:scale(1)}25%{transform:scale(1.14)}55%{transform:scale(0.96)}80%{transform:scale(1.04)}100%{transform:scale(1)}}
 .char-card.unlock-anim{animation:char-unlock .6s ease;border-color:#D9A060 !important;box-shadow:0 0 0 3px rgba(217,160,96,.45),0 0 20px rgba(217,160,96,.35) !important}
 /* ===== オンボーディング ===== */
-.onboarding-overlay{position:fixed;inset:0;z-index:500;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadein .4s ease}
+.onboarding-overlay{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#E8D8C8 100%);display:none;align-items:center;justify-content:center;padding:20px}
+/* オンボーディング未完了時：onboarding表示・main非表示 */
+._ob_show #onboardingScreen{display:flex!important}
+._ob_show .wrap{display:none!important}
+._ob_show #bottomNav{display:none!important}
 .onboarding-inner{max-width:420px;width:100%;text-align:center}
 .onboarding-title{font-size:20px;font-weight:700;color:#55504D;font-family:'Zen Kaku Gothic New',sans-serif;margin-bottom:8px}
 .onboarding-sub{font-size:13px;color:#8A7A70;margin-bottom:22px;line-height:1.7}
@@ -515,6 +519,30 @@ body.font-xl .explanation{font-size:16px}
 </style>
 </head>
 <body ontouchstart="">
+<!-- ① DOMパース直後に np_onboarding_done をチェック（JSエンジン実行、描画前） -->
+<script>(function(){try{if(localStorage.getItem('np_onboarding_done')!=='1')document.documentElement.classList.add('_ob_show');}catch(e){document.documentElement.classList.add('_ob_show');}})();</script>
+<!-- ② オンボーディング画面（body直下・最初の要素）-->
+<div id="onboardingScreen" class="onboarding-overlay">
+  <div class="onboarding-inner" style="text-align:center">
+    <div id="obPhase1" onclick="onboardingTapEgg()" style="-webkit-tap-highlight-color:transparent;cursor:pointer">
+      <div class="ob-narration">不思議な卵が届いた…</div>
+      <img id="obBirth1Img" class="ob-birth1-img" src="images/hikari/hikari_lv0birth1.png" alt="輝く卵" onerror="this.style.background='#EDE0D4'">
+      <div class="ob-tap-hint">タップしてみよう🥚</div>
+    </div>
+    <div id="obPhase2" style="display:none">
+      <img id="obBirth2Img" class="ob-birth2-img" src="images/hikari/hikari_lv0birth2.png" alt="ひびの入った卵" onerror="this.style.background='#EDE0D4'">
+    </div>
+    <div id="obPhase3" style="display:none">
+      <div class="ob-hatch-title">ヒカリが生まれた！✨</div>
+      <div class="ob-phase3-imgwrap">
+        <div class="ob-glow"></div>
+        <img id="obHikariImg" class="ob-hikari-img" src="images/hikari/hikari_lv0.png" alt="ヒカリ" onerror="this.style.background='#EDE0D4'">
+      </div>
+      <div class="ob-speech">はじめまして！<br>一緒に国試合格目指そうね🌟</div>
+      <button class="ob-start-btn" onclick="completeOnboarding()">いっしょにがんばろう！</button>
+    </div>
+  </div>
+</div>
 <div class="blob blob1"></div>
 <div class="blob blob2"></div>
 <div class="wrap">
@@ -777,31 +805,6 @@ body.font-xl .explanation{font-size:16px}
   </div>
 </div>
 
-<!-- オンボーディング画面（3段階孵化） -->
-<div id="onboardingScreen" class="onboarding-overlay" style="display:none">
-  <div class="onboarding-inner" style="text-align:center">
-    <!-- Phase 1: 輝く卵（ふわふわ浮く）→ タップで次へ -->
-    <div id="obPhase1" onclick="onboardingTapEgg()" style="-webkit-tap-highlight-color:transparent;cursor:pointer">
-      <div class="ob-narration">不思議な卵が届いた…</div>
-      <img id="obBirth1Img" class="ob-birth1-img" src="images/hikari/hikari_lv0birth1.png" alt="輝く卵" onerror="this.style.background='#EDE0D4'">
-      <div class="ob-tap-hint">タップしてみよう🥚</div>
-    </div>
-    <!-- Phase 2: ひびが入った卵（シェイク）→ 1秒後に自動進行 -->
-    <div id="obPhase2" style="display:none">
-      <img id="obBirth2Img" class="ob-birth2-img" src="images/hikari/hikari_lv0birth2.png" alt="ひびの入った卵" onerror="this.style.background='#EDE0D4'">
-    </div>
-    <!-- Phase 3: ヒカリ登場（ポップアップ＋光エフェクト） -->
-    <div id="obPhase3" style="display:none">
-      <div class="ob-hatch-title">ヒカリが生まれた！✨</div>
-      <div class="ob-phase3-imgwrap">
-        <div class="ob-glow"></div>
-        <img id="obHikariImg" class="ob-hikari-img" src="images/hikari/hikari_lv0.png" alt="ヒカリ" onerror="this.style.background='#EDE0D4'">
-      </div>
-      <div class="ob-speech">はじめまして！<br>一緒に国試合格目指そうね🌟</div>
-      <button class="ob-start-btn" onclick="completeOnboarding()">いっしょにがんばろう！</button>
-    </div>
-  </div>
-</div>
 <!-- 仲間解放モーダル -->
 <div id="companionModal" class="companion-overlay" style="display:none">
   <div class="companion-card">
@@ -1259,6 +1262,8 @@ function completeOnboarding(){
   unlockedChars=['hikari'];
   try{localStorage.setItem('np_onboarding_done','1');}catch(e){}
   saveCharState();
+  // _ob_showクラス除去 → .wrap と #bottomNav が表示される
+  document.documentElement.classList.remove('_ob_show');
   var scr=document.getElementById('onboardingScreen');
   if(scr){
     scr.style.transition='opacity .4s ease';
@@ -7351,10 +7356,10 @@ updateStreakDisplay();
 renderHomeSummary();
 updateBnWeakBadge();
 renderPersonalityTypeBtns();
-// オンボーディング（np_onboarding_done が '1' でなければ必ず表示）
+// オンボーディング（表示はCSSクラスで制御済み。フェーズのリセットのみ実行）
 try{
   if(localStorage.getItem('np_onboarding_done')!=='1'){
-    setTimeout(showOnboarding,0);// 即時（他のinit処理に先んじて表示）
+    showOnboarding();// フェーズリセット（表示はbody直後の早期スクリプトが制御）
   } else {
     // 未処理マイルストーンがある場合（再起動時）
     if(Math.floor(totalQuestions/300)>=unlockedChars.length&&unlockedChars.length<CHAR_LIST.length){
@@ -7365,21 +7370,13 @@ try{
       setTimeout(showPersonalityQuiz,600);
     }
   }
-}catch(e){setTimeout(showOnboarding,0);}
-// デバッグ用：コンソールから呼び出し可能
+}catch(e){showOnboarding();}
+// デバッグ用：コンソールから _debugOnboarding() で強制表示
 window._debugOnboarding=function(){
   try{localStorage.removeItem('np_onboarding_done');}catch(e){}
-  var p1=document.getElementById('obPhase1');
-  var p2=document.getElementById('obPhase2');
-  var p3=document.getElementById('obPhase3');
-  var b2=document.getElementById('obBirth2Img');
-  if(p1){p1.style.display='block';p1._tapped=false;}
-  if(p2) p2.style.display='none';
-  if(p3) p3.style.display='none';
-  if(b2) b2.style.animation='';
-  var scr=document.getElementById('onboardingScreen');
-  if(scr) scr.style.display='flex';
-  console.log('[NursePass] Onboarding forced. scr=',scr,'p1=',p1);
+  document.documentElement.classList.add('_ob_show');
+  showOnboarding();
+  console.log('[NursePass] Onboarding forced. _ob_show class added.');
 };
 renderExamCountdown();
 renderHikariHint();updateModeSwitch();renderGoalBar();renderHikariCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();renderSearchHistoryChips();renderPassGauge();
