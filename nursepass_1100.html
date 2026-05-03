@@ -520,7 +520,7 @@ body.font-xl .explanation{font-size:16px}
     <div id="hikariHintBar" class="daily-msg-card" style="margin-bottom:12px;display:flex!important">
       <div style="position:relative;flex-shrink:0"><div class="daily-msg-avatar" id="dailyMsgAvDiv"><img class="hikari-av-img" id="dailyAvImg" src="" alt="ヒカリ"></div><span id="hikariCrown" style="display:none;position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:15px;line-height:1;z-index:2">👑</span></div>
       <div class="daily-msg-content">
-        <div class="daily-msg-label">ヒカリより <span id="hikariLvBadge" style="background:rgba(138,106,80,0.15);color:#8A6A50;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px">Lv.1</span></div>
+        <div class="daily-msg-label" id="dailyMsgLabel">ヒカリより <span id="hikariLvBadge" style="background:rgba(138,106,80,0.15);color:#8A6A50;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px">Lv.1</span></div>
         <div id="hikariLvName" style="font-size:11px;color:#B8907A;font-weight:700;margin-bottom:2px">小さなヒカリ</div>
         <div class="hikari-xp-track"><div class="hikari-xp-fill" id="hikariXpFill"></div></div>
         <div id="hikariLvNext" style="font-size:10px;color:#aaa;margin-bottom:3px"></div>
@@ -1107,6 +1107,55 @@ function saveCharState(){
 }
 function isCharUnlocked(charId){return unlockedChars.includes(charId);}
 function getCharImgSrc(charId,lv){return 'images/'+charId+'/'+charId+'_lv'+(lv||0)+'.png';}
+// ===== キャラクター別メッセージ =====
+var CHAR_MESSAGES={
+  hikari:{
+    daily:  ['今日も一緒に頑張ろうね🌟','焦らなくて大丈夫、ゆっくりいこう💛','間違えても大丈夫！それが勉強だよ🍀','今日のあなたはきっと輝いてる✨','一問一問、丁寧にいこうね🌸'],
+    correct:['やったね！すごいよ🌟','正解！一緒に喜んじゃう💛','その調子！どんどんいこう🍀'],
+    wrong:  ['大丈夫だよ、次があるよ🌟','間違えた分だけ強くなれるよ💛','焦らないで、もう一度いこう🍀'],
+    levelup:['レベルアップ！一緒に成長できて嬉しい🌟','また一段階強くなったね💛','ここまで来れたこと、誇りに思うよ🍀']
+  },
+  hana:{
+    daily:  ['今日もポジティブにいこう🌸','絶対できる！信じてるよ！🔥','失敗は成功のもと！どんどん行こう🌺','笑顔で解けば答えも見えてくる😊','今日も全開でいこうっ！💪'],
+    correct:['やったーー！！🌸','完璧！さすがだよ！🔥','正解！もう止まらないね🌺'],
+    wrong:  ['ドンマイ！次は絶対いける！🌸','失敗は成長の証だよ！🔥','気にしない気にしない！前向きに🌺'],
+    levelup:['レベルアップおめでとう！🌸最高！','どんどん強くなってる！すごいよ！🔥','一緒に上を目指そう！まだまだいけるよ🌺']
+  },
+  sora:{
+    daily:  ['宇宙の果てまで知識は広がる…✨','不思議だね、学ぶほど世界が変わって見える🌙','今日の問題も星のように輝いてる⭐','静かに、でも確実に進んでいこう🔮','知ることは、空を飛ぶことに似てる…🌌'],
+    correct:['…正解。星が一つ増えた✨','素晴らしい。宇宙が輝いた🌙','正しい答えは、美しい⭐'],
+    wrong:  ['…それも、宇宙の一部✨','間違いは、新しい星座を作る🌙','失敗は答えへの別ルート⭐'],
+    levelup:['…また一つ、星が生まれた✨','成長は、静かに、でも確実に🌙','あなたの宇宙が広がっていく⭐']
+  },
+  riku:{
+    daily:  ['効率よくいこう。集中だ❄️','感情は不要。データで考えろ📊','今日のノルマを淡々とこなせ🎯','無駄を省いて、本質だけを見ろ❄️','完璧にやれとは言わない。でも手は抜くな💎'],
+    correct:['正解。想定通りだ❄️','悪くない。次も同じ精度で📊','合格点だ。続けろ🎯'],
+    wrong:  ['不正解。原因を分析しろ❄️','感情的になるな。次を見ろ📊','ミスは許容範囲内だ。修正せよ🎯'],
+    levelup:['レベルアップ。想定の範囲内だ❄️','順調だ。このペースを維持しろ📊','合格への距離が縮まった🎯']
+  },
+  ren:{
+    daily:  ['やったるぞー！今日も全力だ⚡','ミスしても気にするな！次いけ次！🌞','一緒に燃えようぜ！🔥','今日も太陽みたいに輝こう！☀️','諦めなければ絶対勝てる！⚡'],
+    correct:['よっしゃーー！！⚡','やったぜ！最高だ！🌞','正解！燃えてきたー！🔥'],
+    wrong:  ['くそーっ！でも負けないぞ！⚡','ドンマイ！ぼくも一緒に頑張る！🌞','次こそ絶対決めてやる！🔥'],
+    levelup:['レベルアップだーー！！⚡やったぜ！','もっと強くなれるぞ！燃えてきた！🌞','一緒に上り詰めよう！！🔥']
+  }
+};
+function getCharMsg(type){
+  var msgs=(CHAR_MESSAGES[selectedChar]||CHAR_MESSAGES.hikari)[type]||[];
+  return msgs[Math.floor(Math.random()*msgs.length)]||'';
+}
+function showCharMsg(type,duration){
+  var msg=getCharMsg(type);
+  if(!msg) return;
+  duration=duration||3000;
+  document.querySelectorAll('.hikari-msg-toast').forEach(function(e){e.remove();});
+  var d=document.createElement('div');
+  d.className='hikari-msg-toast';
+  var imgSrc=getCharImgSrc(selectedChar,getHikariLevel());
+  d.innerHTML='<div class="hikari-msg-av"><img src="'+imgSrc+'" alt="'+selectedChar+'" style="width:100%;height:100%;object-fit:contain;border-radius:50%" onerror="this.style.background=\'#F5EFE8\';this.onerror=null"></div><div class="hikari-msg-body">'+msg+'</div>';
+  document.body.appendChild(d);
+  setTimeout(function(){d.style.transition='opacity .4s ease';d.style.opacity='0';setTimeout(function(){if(d.parentNode)d.remove();},420);},duration);
+}
 // --- 設定タブ ---
 function selectCharacter(charId){
   if(!isCharUnlocked(charId)){showToast('🔒 まだ解放されていません');return;}
@@ -3768,8 +3817,8 @@ function updateHikariLevel(){
   var crown=document.getElementById('hikariCrown');
   if(av) av.className='daily-msg-avatar'+(lv>0?' hikari-av-lv'+lv:'');
   if(crown) crown.style.display=lv>=5?'':'none';
-  // image swap
-  var src=HIKARI_IMG_PATHS[lv];
+  // image swap（選択キャラのlvに対応した画像）
+  var src=getCharImgSrc(selectedChar,lv);
   var imgs=['dailyAvImg','hikariAvLg'];
   imgs.forEach(function(id){var e=document.getElementById(id);if(e)e.src=src;});
   // badge and name
@@ -3810,7 +3859,7 @@ function showLevelUp(lv){
     +'<div class="lv-up-lv-num">Lv.'+lv+'</div>'
     +'<div class="lv-up-name-text">'+HIKARI_LV_NAMES[lv]+'</div>'
     +'<div class="lv-up-evolve">に進化した！✨</div>'
-    +'<div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:10px;font-family:\'Noto Sans JP\',sans-serif;text-align:center;line-height:1.5">'+getPersonalityMsg('levelup')+'</div>'
+    +'<div style="font-size:14px;color:rgba(255,255,255,0.92);margin-top:12px;font-family:\'Noto Sans JP\',sans-serif;text-align:center;line-height:1.6;font-weight:500">'+getCharMsg('levelup')+'</div>'
     +'</div>'
     +'<div class="lv-up-tap">タップして続ける</div>';
   screen.onclick=function(){
@@ -3822,13 +3871,13 @@ function showLevelUp(lv){
   setTimeout(function(){spawnLvUpParticles(screen);},300);
   setTimeout(launchConfetti,500);
   if(lv>=4) setTimeout(launchConfetti,1000);
-  // 自動クローズ
+  // 自動クローズ（5秒）
   setTimeout(function(){
     if(screen.parentNode){
       screen.style.transition='opacity .5s ease';screen.style.opacity='0';
       setTimeout(function(){if(screen.parentNode)screen.remove();},500);
     }
-  },3500);
+  },5000);
 }
 function spawnLvUpParticles(container){
   var colors=['#FFD700','#FF6B9D','#7DF9FF','#B4FF6B','#FF9F43','#fff'];
@@ -4055,6 +4104,7 @@ function answer(key){
   haptic(correct);
   playAnswerSound(correct);
   showAnswerFeedback(correct);
+  setTimeout(function(){showCharMsg(correct?'correct':'wrong');},700);
   if(correct){
     // XPバーのpopアニメーション
     var _xp=document.getElementById('hikariXpFill');
@@ -4064,7 +4114,6 @@ function answer(key){
     if(session.combo>bestCombo){bestCombo=session.combo;localStorage.setItem('np_best_combo',bestCombo);}
     const milestones=[3,5,10,20];
     if(milestones.includes(session.combo)){setTimeout(function(){showComboBanner(session.combo);},200);if(session.combo>=5)setTimeout(launchConfetti,400);}
-    if(session.combo===3){setTimeout(function(){showHikariMsg(getPersonalityMsg('correct'));},1300);}
     localStorage.setItem('np_last_study_ts',Date.now());
   } else {
     session.combo=0;
@@ -6998,21 +7047,42 @@ const DAILY_MESSAGES = {
 };
 
 function initDailyMessage(){
-  const _setAv=id=>{const el=document.getElementById(id);if(el)el.src=HIKARI_IMG_PATHS[getHikariLevel()];};
-  _setAv("dailyAvImg");_setAv("hikariAvLg");
-  const today=new Date();
-  const m=today.getMonth()+1;
-  const d=today.getDate();
-  const msgs=DAILY_MESSAGES[m];
-  const msg=msgs[Math.min(d-1,msgs.length-1)];
-  // 国試日：毎年2月第3日曜（概算で2月14日〜21日）→2月15日を基準
-  const examYear=today.getMonth()===1&&today.getDate()<15?today.getFullYear():today.getFullYear()+1;
-  const examDate=new Date(examYear,1,15,0,0,0);
-  const diffDays=Math.ceil((examDate-today)/(1000*60*60*24));
-  const _setText=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  _setText('dailyMsgText',msg);
-  _setText('dailyMsgDate',`${m}月${d}日`);
-  _setText('dailyMsgCountdown',diffDays>0?`国試まで${diffDays}日、一緒に頑張ろう✨`:'今日も一歩ずつ、一緒に歩いていこう✨');
+  // アバター画像（選択キャラ）
+  var lv=getHikariLevel();
+  var charSrc=getCharImgSrc(selectedChar,lv);
+  ['dailyAvImg','hikariAvLg'].forEach(function(id){var e=document.getElementById(id);if(e)e.src=charSrc;});
+  // キャラ名ラベル更新
+  var labelEl=document.getElementById('dailyMsgLabel');
+  if(labelEl){
+    var badge=document.getElementById('hikariLvBadge');
+    var charName=(CHAR_LIST.find(function(c){return c.id===selectedChar;})||{name:'ヒカリ'}).name;
+    // テキストノードだけ書き換え（spnバッジを保持）
+    var tn=labelEl.firstChild;
+    if(tn&&tn.nodeType===3) tn.textContent=charName+'より ';
+    else labelEl.insertBefore(document.createTextNode(charName+'より '),labelEl.firstChild);
+  }
+  // 今日のメッセージ（キャラ別・1日1回キャッシュ）
+  var lastDate=localStorage.getItem('np_last_msg_date');
+  var lastChar=localStorage.getItem('np_last_msg_char');
+  var msg=localStorage.getItem('np_last_msg');
+  if(lastDate!==todayKey||lastChar!==selectedChar||!msg){
+    var dayMsgs=(CHAR_MESSAGES[selectedChar]||CHAR_MESSAGES.hikari).daily;
+    msg=dayMsgs[Math.floor(Math.random()*dayMsgs.length)];
+    localStorage.setItem('np_last_msg_date',todayKey);
+    localStorage.setItem('np_last_msg_char',selectedChar);
+    localStorage.setItem('np_last_msg',msg);
+  }
+  // 日付・カウントダウン
+  var today=new Date();
+  var m=today.getMonth()+1;
+  var d=today.getDate();
+  var examYear=today.getMonth()===1&&today.getDate()<15?today.getFullYear():today.getFullYear()+1;
+  var examDate=new Date(examYear,1,15,0,0,0);
+  var diffDays=Math.ceil((examDate-today)/(1000*60*60*24));
+  var _set=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
+  _set('dailyMsgText',msg);
+  _set('dailyMsgDate',m+'月'+d+'日');
+  _set('dailyMsgCountdown',diffDays>0?'国試まで'+diffDays+'日、一緒に頑張ろう✨':'今日も一歩ずつ、一緒に歩いていこう✨');
 }
 
 // ===== 性格タイプ診断システム =====
