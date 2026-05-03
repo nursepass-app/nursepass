@@ -1271,6 +1271,10 @@ function completeOnboarding(){
     setTimeout(function(){
       scr.style.display='none';scr.style.opacity='';scr.style.transition='';
       updateHikariLevel();
+      // 性格診断未実施なら続けて表示
+      if(!localStorage.getItem('personality_type')){
+        setTimeout(showPersonalityQuiz,400);
+      }
     },420);
   }
 }
@@ -7234,8 +7238,8 @@ function _renderPqStep(overlay){
       +'<div class="pq-bubble">ヒカリがあなたのタイプを覚えたよ！<br><br>'
       +'<span style="font-size:18px">'+info.label+'</span><br>'
       +'<span style="font-size:12px;color:#8A6A50">'+info.desc+'</span></div>'
-      +'<button class="pq-btn" style="text-align:center;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:#fff;border:none" '
-      +'onclick="document.getElementById(\'pqScreen\').remove()">はじめよう ✨</button>';
+      +'<button class="pq-btn" style="text-align:center;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:#fff;border:none;font-size:15px;padding:15px" '
+      +'onclick="document.getElementById(\'pqScreen\').remove()">さあ、国試合格を目指そう！🌸</button>';
     return;
   }
   var q=_pqQuestions[_pqStep];
