@@ -216,6 +216,19 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .onboarding-char img{width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center top;display:block;background:#F5EFE8}
 .onboarding-char-name{font-size:11px;font-weight:700;color:#55504D}
 .onboarding-char-tag{font-size:9px;color:#8A7A70;text-align:center;line-height:1.3}
+/* ===== オンボーディング 卵孵化 ===== */
+.ob-egg-wrap{cursor:pointer;display:inline-block;position:relative;margin:18px auto;-webkit-tap-highlight-color:transparent}
+.ob-egg-img{width:160px;height:160px;object-fit:contain;border-radius:50%;display:block;background:#F5EFE8}
+.ob-egg-img.ob-shaking{animation:eggShake .35s ease 2}
+.ob-crack{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;pointer-events:none;transition:opacity .2s;text-shadow:0 0 12px rgba(255,215,0,.8)}
+.ob-tap-hint{font-size:12px;color:#B8907A;margin-top:6px;animation:obPulse 1.6s ease-in-out infinite}
+.ob-hatch-title{font-size:22px;font-weight:900;color:#55504D;margin-bottom:16px;font-family:'Zen Kaku Gothic New',sans-serif;animation:lvTitle .5s cubic-bezier(.17,.67,.35,1.3) forwards}
+.ob-hikari-img{width:150px;height:150px;object-fit:contain;border-radius:50%;display:block;margin:0 auto 18px;background:#F5EFE8;animation:eggImgIn .7s cubic-bezier(.17,.67,.35,1.3) forwards}
+.ob-speech{background:rgba(255,255,255,.88);border:1.5px solid rgba(184,160,144,.35);border-radius:16px;padding:12px 18px;font-size:14px;color:#55504D;line-height:1.8;margin-bottom:22px;font-family:'Noto Sans JP',sans-serif}
+.ob-start-btn{width:100%;padding:15px;background:linear-gradient(135deg,#D9C5B2,#C4A882);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,144,122,.3);-webkit-tap-highlight-color:transparent}
+.ob-start-btn:active{opacity:.82}
+@keyframes obPulse{0%,100%{opacity:.4;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
+@keyframes obLightFlash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
 /* ===== 仲間解放モーダル ===== */
 .companion-overlay{position:fixed;inset:0;z-index:500;background:rgba(30,20,10,.6);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadein .3s ease}
 .companion-card{background:rgba(255,252,248,.98);border-radius:24px;padding:26px 20px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)}
@@ -761,13 +774,23 @@ body.font-xl .explanation{font-size:16px}
   </div>
 </div>
 
-<!-- オンボーディング画面 -->
+<!-- オンボーディング画面（卵孵化） -->
 <div id="onboardingScreen" class="onboarding-overlay" style="display:none">
-  <div class="onboarding-inner">
-    <div style="font-size:40px;margin-bottom:14px">🌸</div>
-    <div class="onboarding-title">NursePassへようこそ！</div>
-    <div class="onboarding-sub">あなたの最初のコーチを選んでください！<br>一緒に国試合格を目指そう✨</div>
-    <div class="onboarding-grid" id="onboardingGrid"></div>
+  <div class="onboarding-inner" style="text-align:center">
+    <div id="obPhase1">
+      <div style="font-size:16px;font-weight:700;color:#55504D;line-height:1.8;margin-bottom:14px;font-family:'Zen Kaku Gothic New',sans-serif">あなたのもとに、<br>不思議な卵が届いた…🥚</div>
+      <div class="ob-egg-wrap" onclick="onboardingTapEgg()">
+        <img id="obEggImg" class="ob-egg-img" src="images/hikari/hikari_lv0.png" alt="卵" onerror="this.style.background='#EDE0D4'">
+        <div id="obCrack" class="ob-crack" style="opacity:0">✦✦✦</div>
+      </div>
+      <div class="ob-tap-hint">卵をタップしよう ✨</div>
+    </div>
+    <div id="obPhase2" style="display:none">
+      <div class="ob-hatch-title">ヒカリが生まれた！✨</div>
+      <img id="obHikariImg" class="ob-hikari-img" src="images/hikari/hikari_lv0.png" alt="ヒカリ" onerror="this.style.background='#EDE0D4'">
+      <div class="ob-speech">はじめまして！<br>一緒に国試合格目指そうね🌟</div>
+      <button class="ob-start-btn" onclick="completeOnboarding()">いっしょにがんばろう！</button>
+    </div>
   </div>
 </div>
 <!-- 仲間解放モーダル -->
@@ -1182,31 +1205,69 @@ function initSettingsTab(){
 }
 // --- オンボーディング ---
 function showOnboarding(){
-  const scr=document.getElementById('onboardingScreen');
+  var scr=document.getElementById('onboardingScreen');
   if(!scr) return;
-  const grid=document.getElementById('onboardingGrid');
-  if(grid){
-    grid.innerHTML=CHAR_LIST.map(c=>`<div class="onboarding-char" data-char="${c.id}" onclick="selectOnboardingChar('${c.id}')"><img src="${getCharImgSrc(c.id,0)}" alt="${c.name}" onerror="this.style.background='${c.color}';this.src=''"><div class="onboarding-char-name">${c.name}</div><div class="onboarding-char-tag">${c.tag.replace(/\n/g,'<br>')}</div></div>`).join('');
-  }
+  // フェーズリセット
+  var p1=document.getElementById('obPhase1');
+  var p2=document.getElementById('obPhase2');
+  var egg=document.getElementById('obEggImg');
+  var crack=document.getElementById('obCrack');
+  if(p1) p1.style.display='block';
+  if(p2) p2.style.display='none';
+  if(egg){egg.style.animation='';egg._hatching=false;egg.classList.remove('ob-shaking');}
+  if(crack) crack.style.opacity='0';
   scr.style.display='flex';
 }
-function selectOnboardingChar(charId){
-  const c=CHAR_LIST.find(x=>x.id===charId);
-  if(!c) return;
-  document.querySelectorAll('.onboarding-char').forEach(el=>el.classList.toggle('selected',el.dataset.char===charId));
-  selectedChar=charId;
-  unlockedChars=[charId];
+function onboardingTapEgg(){
+  var egg=document.getElementById('obEggImg');
+  if(!egg||egg._hatching) return;
+  egg._hatching=true;
+  var hint=document.querySelector('.ob-tap-hint');
+  if(hint) hint.style.display='none';
+  // 1: 卵が揺れる（プルプル）
+  egg.classList.add('ob-shaking');
+  setTimeout(function(){
+    egg.classList.remove('ob-shaking');
+    egg.classList.add('ob-shaking');// 2巡目
+  },380);
+  setTimeout(function(){
+    // 2: ひびが入る
+    var crack=document.getElementById('obCrack');
+    if(crack) crack.style.opacity='1';
+    spawnLvUpParticles(document.getElementById('onboardingScreen'));
+  },750);
+  setTimeout(function(){
+    // 3: 光のエフェクト（白フラッシュ）
+    var flash=document.createElement('div');
+    flash.style.cssText='position:fixed;inset:0;background:#fff;z-index:600;pointer-events:none;animation:obLightFlash .55s ease forwards';
+    document.body.appendChild(flash);
+    setTimeout(function(){if(flash.parentNode)flash.remove();},600);
+    // 卵が消える
+    egg.style.animation='eggBurst .32s ease forwards';
+  },1100);
+  setTimeout(function(){
+    // 4: ヒカリ登場フェーズ
+    var p1=document.getElementById('obPhase1');
+    var p2=document.getElementById('obPhase2');
+    if(p1) p1.style.display='none';
+    if(p2) p2.style.display='block';
+    spawnLvUpParticles(document.getElementById('onboardingScreen'));
+  },1480);
+}
+function completeOnboarding(){
+  selectedChar='hikari';
+  unlockedChars=['hikari'];
   try{localStorage.setItem('np_onboarding_done','1');}catch(e){}
   saveCharState();
-  const title=document.querySelector('#onboardingScreen .onboarding-title');
-  const sub=document.querySelector('#onboardingScreen .onboarding-sub');
-  if(title) title.textContent=c.name+'と一緒に頑張ろう！';
-  if(sub) sub.textContent='さあ、国試合格を目指してスタート！🌸';
-  setTimeout(()=>{
-    const scr=document.getElementById('onboardingScreen');
-    if(scr) scr.style.display='none';
-    updateHikariLevel();
-  },1400);
+  var scr=document.getElementById('onboardingScreen');
+  if(scr){
+    scr.style.transition='opacity .4s ease';
+    scr.style.opacity='0';
+    setTimeout(function(){
+      scr.style.display='none';scr.style.opacity='';scr.style.transition='';
+      updateHikariLevel();
+    },420);
+  }
 }
 // --- マイルストーン（300問ごと） ---
 function incrementTotalQuestions(){
