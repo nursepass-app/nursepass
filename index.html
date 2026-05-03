@@ -251,6 +251,14 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .companion-char img{width:48px;height:48px;border-radius:50%;object-fit:cover;object-position:center top;display:block;background:#F5EFE8}
 .companion-char-name{font-size:11px;font-weight:700;color:#55504D}
 @keyframes companion-join{0%{transform:scale(1)}30%{transform:scale(1.15)}60%{transform:scale(.97)}100%{transform:scale(1)}}
+/* 新キャラ解放モーダル */
+.companion-new-img-wrap{position:relative;display:inline-block;margin-bottom:14px}
+.companion-new-img{width:160px;height:160px;object-fit:contain;border-radius:50%;display:block;background:#F5EFE8;animation:eggImgIn .7s cubic-bezier(.17,.67,.35,1.3) forwards;box-shadow:0 0 32px rgba(217,160,96,.35)}
+.companion-new-glow{position:absolute;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,215,100,.45) 0%,transparent 65%);top:50%;left:50%;transform:translate(-50%,-50%);animation:obGlow 1.4s ease forwards;pointer-events:none;z-index:0}
+.companion-new-title{font-size:20px;font-weight:900;color:#55504D;font-family:'Zen Kaku Gothic New',sans-serif;margin-bottom:12px;animation:lvTitle .5s cubic-bezier(.17,.67,.35,1.3) forwards}
+.companion-new-speech{background:rgba(255,255,255,.9);border:1.5px solid rgba(184,160,144,.35);border-radius:16px;padding:12px 18px;font-size:14px;color:#55504D;line-height:1.8;margin-bottom:20px;font-family:'Noto Sans JP',sans-serif}
+.companion-new-btn{width:100%;padding:14px;background:linear-gradient(135deg,#D9C5B2,#C4A882);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(184,144,122,.3);-webkit-tap-highlight-color:transparent}
+.companion-new-btn:active{opacity:.82}
 .hikari-av-img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:center top;display:block;background:#F5EFE8}
 /* 毎日の応援メッセージ */
 .daily-msg-card{background:linear-gradient(135deg,rgba(245,239,232,0.96),rgba(237,224,212,0.92));border:1.5px solid rgba(85,80,77,0.32);border-radius:20px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:flex-start;gap:12px;box-shadow:0 2px 14px rgba(217,197,178,0.12);animation:fadein .5s ease}
@@ -1115,11 +1123,11 @@ function haptic(correct){
 (()=>{const btn=document.getElementById('hapticBtn');if(btn)btn.style.opacity=hapticEnabled?'1':'0.3';})();
 // ===== キャラクター選択・解放システム =====
 const CHAR_LIST=[
-  {id:'hikari', name:'ヒカリ', tag:'やさしい\nクリーム',   color:'#EDE0D4'},
-  {id:'hana',   name:'ハナ',   tag:'ポジティブ\nオレンジ', color:'#FFD6C4'},
-  {id:'ren',    name:'レン',   tag:'太陽明るい\n黄緑',     color:'#C8E8B0'},
-  {id:'riku',   name:'リク',   tag:'クール\n青白',         color:'#B8D4EE'},
-  {id:'sora',   name:'ソラ',   tag:'不思議系\n紫青',       color:'#C8B8E8'}
+  {id:'hikari', name:'ヒカリ', tag:'やさしい\nクリーム',   color:'#EDE0D4', unlockMsg:''},
+  {id:'hana',   name:'ハナ',   tag:'ポジティブ\nオレンジ', color:'#FFD6C4', unlockMsg:'よろしくね！一緒に頑張ろう！🌸'},
+  {id:'ren',    name:'レン',   tag:'太陽明るい\n黄緑',     color:'#C8E8B0', unlockMsg:'やったー！よろしくな！一緒に燃えようぜ⚡'},
+  {id:'riku',   name:'リク',   tag:'クール\n青白',         color:'#B8D4EE', unlockMsg:'よろしく。期待に応えてみせる❄️'},
+  {id:'sora',   name:'ソラ',   tag:'不思議系\n紫青',       color:'#C8B8E8', unlockMsg:'…よろしく。一緒に星を見よう🌙'}
 ];
 let selectedChar=localStorage.getItem('np_selected_char')||'hikari';
 let unlockedChars=JSON.parse(localStorage.getItem('np_unlocked_chars')||'null');
@@ -1291,42 +1299,43 @@ function checkMilestone(){
   }
 }
 function showCompanionModal(){
-  const available=CHAR_LIST.filter(c=>!unlockedChars.includes(c.id));
-  if(!available.length) return;
-  const modal=document.getElementById('companionModal');
+  // 次に解放されるキャラ（CHAR_LIST順で未解放の最初の1人）
+  var nextChar=CHAR_LIST.find(function(c){return !unlockedChars.includes(c.id);});
+  if(!nextChar) return;
+  var modal=document.getElementById('companionModal');
   if(!modal) return;
-  const lvImg=document.getElementById('companionLvUpImg');
-  const title=document.getElementById('companionTitle');
-  const grid=document.getElementById('companionGrid');
-  const selC=CHAR_LIST.find(x=>x.id===selectedChar)||CHAR_LIST[0];
-  if(lvImg){
-    lvImg.src=getCharImgSrc(selectedChar,5);
-    lvImg.onerror=function(){this.style.background=selC.color;this.src='';this.onerror=null;};
-    lvImg.classList.remove('anim');void lvImg.offsetWidth;lvImg.classList.add('anim');
+  // 解放処理
+  unlockedChars.push(nextChar.id);
+  selectedChar=nextChar.id;
+  saveCharState();
+  // モーダル内容を組み立て
+  var card=modal.querySelector('.companion-card');
+  if(card){
+    card.innerHTML=
+      '<div class="companion-new-img-wrap">'
+        +'<div class="companion-new-glow"></div>'
+        +'<img class="companion-new-img" src="'+getCharImgSrc(nextChar.id,0)+'" alt="'+nextChar.name+'" onerror="this.style.background=\''+nextChar.color+'\'">'
+      +'</div>'
+      +'<div class="companion-new-title">'+nextChar.name+'が仲間になった！🎉</div>'
+      +'<div class="companion-new-speech">'+nextChar.unlockMsg+'</div>'
+      +'<button class="companion-new-btn" onclick="closeCompanionModal()">よろしく！</button>';
   }
-  if(title) title.textContent='';
-  if(grid) grid.innerHTML='';
   modal.style.display='flex';
-  setTimeout(()=>{
-    if(title) title.textContent='新しい仲間を選んでください！';
-    if(grid) grid.innerHTML=available.map(c=>`<div class="companion-char" data-char="${c.id}" onclick="selectCompanionChar('${c.id}')"><img src="${getCharImgSrc(c.id,0)}" alt="${c.name}" onerror="this.style.background='${c.color}';this.src=''"><div class="companion-char-name">${c.name}</div></div>`).join('');
-  },1900);
+  spawnLvUpParticles(modal);
+}
+function closeCompanionModal(){
+  var modal=document.getElementById('companionModal');
+  if(modal) modal.style.display='none';
+  var c=CHAR_LIST.find(function(x){return x.id===selectedChar;});
+  updateHikariLevel();
+  if(c) showToast('🎉 '+c.name+'が仲間になった！コーチが変わったよ✨');
 }
 function selectCompanionChar(charId){
-  const c=CHAR_LIST.find(x=>x.id===charId);
+  // 旧グリッド選択UI用（現在は未使用）
+  var c=CHAR_LIST.find(function(x){return x.id===charId;});
   if(!c) return;
-  document.querySelectorAll('.companion-char').forEach(el=>el.classList.toggle('selected',el.dataset.char===charId));
-  const title=document.getElementById('companionTitle');
-  if(title) title.textContent=c.name+'が仲間になった！🎉';
-  unlockedChars.push(charId);
-  selectedChar=charId;
-  saveCharState();
-  setTimeout(()=>{
-    const modal=document.getElementById('companionModal');
-    if(modal) modal.style.display='none';
-    updateHikariLevel();
-    showToast('🎉 '+c.name+'が仲間になった！コーチが変わったよ✨');
-  },1500);
+  unlockedChars.push(charId);selectedChar=charId;saveCharState();
+  closeCompanionModal();
 }
 // 正解後自動送り設定
 let autoAdvance=localStorage.getItem('np_auto_advance')==='1';
