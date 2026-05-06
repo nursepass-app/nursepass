@@ -188,8 +188,8 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 /* ===== 設定タブ ===== */
 .settings-section{padding:20px 16px 12px}
 .settings-section-title{font-size:13px;font-weight:700;color:#8A6A50;letter-spacing:.06em;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.char-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:4px}
-.char-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px 8px;border:2px solid rgba(85,80,77,0.18);border-radius:16px;background:rgba(240,232,222,.6);cursor:pointer;transition:.18s;position:relative;-webkit-tap-highlight-color:transparent}
+.char-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-bottom:4px}
+.char-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px 8px;border:2px solid rgba(85,80,77,0.18);border-radius:16px;background:rgba(240,232,222,.6);cursor:pointer;transition:.18s;position:relative;-webkit-tap-highlight-color:transparent;flex:0 0 calc(33.333% - 7px);box-sizing:border-box}
 .char-card.selected{border-color:#B8A090;background:rgba(217,197,178,.25);box-shadow:0 0 0 2px rgba(217,197,178,.5)}
 .char-card.selected::after{content:'✓';position:absolute;top:4px;right:6px;font-size:10px;font-weight:700;color:#8A6A50}
 .char-card img{width:52px;height:52px;border-radius:50%;object-fit:cover;object-position:center top;background:#F5EFE8;display:block}
