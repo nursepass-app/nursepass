@@ -128,9 +128,9 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 
 /* ===== ヒカリチャット ===== */
 .hikari-wrap{padding:16px;display:flex;flex-direction:column;height:calc(100vh - 210px);min-height:420px}
-.hikari-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(189,199,193,0.35)}
+.hikari-header{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(189,199,193,0.35)}
 .hikari-avatar-lg{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#EDE0D4,#D9C5B2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;box-shadow:0 2px 10px rgba(217,197,178,0.3)}
-.hikari-info{flex:1}
+.hikari-info{flex:1 1 0%;min-width:0;overflow:hidden}
 .hikari-name{font-size:14px;font-weight:700;color:#55504D;font-family:'Zen Kaku Gothic New',sans-serif}
 .hikari-catchcopy{font-size:10px;color:#5A5450;margin-top:1px}
 .hikari-limit{font-size:10px;color:#5A5450;background:rgba(255,255,255,0.8);padding:3px 9px;border-radius:10px;border:1px solid rgba(85,80,77,0.25);white-space:nowrap}
@@ -683,7 +683,7 @@ body.font-xl .explanation{font-size:16px}
             <div class="hikari-name">ヒカリ</div>
             <div class="hikari-catchcopy">いつも隣でそっと照らすよ</div>
           </div>
-          <div style="display:flex;align-items:center;gap:4px">
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
             <div class="hikari-limit" id="hikariLimit">本日 残り10回</div>
             <button class="hikari-settings-btn" onclick="showApiKeyModal()" title="APIキー設定">⚙️</button>
           </div>
