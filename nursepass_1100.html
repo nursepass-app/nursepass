@@ -545,18 +545,7 @@ body.font-xl .explanation{font-size:16px}
       <img id="obBirth1Img" class="ob-birth1-img" src="images/hikari/hikari_lv0birth1.png" alt="輝く卵" onerror="this.style.background='#EDE0D4'">
       <div class="ob-tap-hint">タップしてみよう🥚</div>
     </div>
-    <div id="obPhase2" style="display:none">
-      <img id="obBirth2Img" class="ob-birth2-img" src="images/hikari/hikari_lv0birth2.png" alt="ひびの入った卵" onerror="this.style.background='#EDE0D4'">
-    </div>
-    <div id="obPhase3" style="display:none">
-      <div class="ob-hatch-title">ヒカリが生まれた！✨</div>
-      <div class="ob-phase3-imgwrap">
-        <div class="ob-glow"></div>
-        <img id="obHikariImg" class="ob-hikari-img" src="images/hikari/hikari_lv0.png" alt="ヒカリ" onerror="this.style.background='#EDE0D4'">
-      </div>
-      <div class="ob-speech">はじめまして！<br>一緒に国試合格目指そうね🌟</div>
-      <button class="ob-start-btn" onclick="completeOnboarding()">いっしょにがんばろう！</button>
-    </div>
+    <!-- obPhase2・obPhase3はJSで動的生成（display:none要素の同時レンダリングバグ回避） -->
   </div>
 </div>
 <div class="blob blob1"></div>
@@ -1249,42 +1238,67 @@ function initSettingsTab(){
 function showOnboarding(){
   var scr=document.getElementById('onboardingScreen');
   if(!scr) return;
-  // 全フェーズリセット
+  // 動的生成されたPhase2/3があれば削除してリセット
+  ['obPhase2','obPhase3'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.remove();
+  });
   var p1=document.getElementById('obPhase1');
-  var p2=document.getElementById('obPhase2');
-  var p3=document.getElementById('obPhase3');
-  var b2=document.getElementById('obBirth2Img');
   if(p1){p1.style.display='block';p1._tapped=false;}
-  if(p2) p2.style.display='none';
-  if(p3) p3.style.display='none';
-  if(b2) b2.style.animation='';
   scr.style.display='flex';
 }
 function onboardingTapEgg(){
   var p1=document.getElementById('obPhase1');
   if(!p1||p1._tapped) return;
   p1._tapped=true;
-  // Phase 1 → Phase 2: ひびが入った卵＋シェイク
-  p1.style.display='none';
-  var p2=document.getElementById('obPhase2');
-  var b2=document.getElementById('obBirth2Img');
-  if(p2) p2.style.display='block';
-  if(b2) b2.style.animation='eggShake .35s ease 3';
+  var inner=document.getElementById('onboardingScreen').querySelector('.onboarding-inner');
+
+  // Phase1をDOMから削除
+  p1.remove();
+
+  // Phase2を動的生成してDOMに追加（birth2のみ）
+  var p2=document.createElement('div');
+  p2.id='obPhase2';
+  var b2=document.createElement('img');
+  b2.className='ob-birth2-img';
+  b2.src='images/hikari/hikari_lv0birth2.png';
+  b2.alt='ひびの入った卵';
+  b2.style.animation='eggShake .35s ease 3';
+  p2.appendChild(b2);
+  inner.appendChild(p2);
   spawnLvUpParticles(document.getElementById('onboardingScreen'));
-  // 1秒後に自動でPhase 3へ（白フラッシュ→ヒカリ登場）
+
+  // 1秒後にPhase2をDOMから削除 → Phase3を動的生成
   setTimeout(function(){
-    // 白フラッシュ
-    var flash=document.createElement('div');
-    flash.style.cssText='position:fixed;inset:0;background:#fff;z-index:600;pointer-events:none;animation:obLightFlash .55s ease forwards';
-    document.body.appendChild(flash);
-    setTimeout(function(){if(flash.parentNode)flash.remove();},600);
-    // Phase 2 → Phase 3
-    setTimeout(function(){
-      if(p2) p2.style.display='none';
-      var p3=document.getElementById('obPhase3');
-      if(p3) p3.style.display='block';
-      spawnLvUpParticles(document.getElementById('onboardingScreen'));
-    },200);
+    p2.remove(); // Phase2を完全削除してからPhase3を追加
+    var p3=document.createElement('div');
+    p3.id='obPhase3';
+    var glowWrap=document.createElement('div');
+    glowWrap.className='ob-phase3-imgwrap';
+    var glow=document.createElement('div');
+    glow.className='ob-glow';
+    var hikari=document.createElement('img');
+    hikari.className='ob-hikari-img';
+    hikari.src='images/hikari/hikari_lv0.png';
+    hikari.alt='ヒカリ';
+    glowWrap.appendChild(glow);
+    glowWrap.appendChild(hikari);
+    var title=document.createElement('div');
+    title.className='ob-hatch-title';
+    title.textContent='ヒカリが生まれた！✨';
+    var speech=document.createElement('div');
+    speech.className='ob-speech';
+    speech.innerHTML='はじめまして！<br>一緒に国試合格目指そうね🌟';
+    var btn=document.createElement('button');
+    btn.className='ob-start-btn';
+    btn.textContent='いっしょにがんばろう！';
+    btn.onclick=completeOnboarding;
+    p3.appendChild(title);
+    p3.appendChild(glowWrap);
+    p3.appendChild(speech);
+    p3.appendChild(btn);
+    inner.appendChild(p3);
+    spawnLvUpParticles(document.getElementById('onboardingScreen'));
   },1000);
 }
 function completeOnboarding(){
@@ -7472,9 +7486,7 @@ fetch('questions.json')
     // デバッグ用：コンソールから _debugOnboarding() で強制表示
     window._debugOnboarding=function(){
       try{localStorage.removeItem('np_onboarding_done');}catch(e){}
-      document.documentElement.classList.add('_ob_show');
-      showOnboarding();
-      console.log('[NursePass] Onboarding forced. _ob_show class added.');
+      location.reload();
     };
     renderExamCountdown();
     renderHikariHint();updateModeSwitch();renderGoalBar();renderHikariCard();renderDailyTip();renderDailyBanner();updateSoundBtn();renderSessionGoalBar();renderMiniReview();renderTodayTimeline();renderSearchHistoryChips();renderPassGauge();
