@@ -4046,12 +4046,14 @@ function showHatchAnimation(){
     if(burst) burst.style.display='block';
   },1200);
   setTimeout(function(){
+    var egg=document.getElementById('_eggEmoji');
     var burst=document.getElementById('_eggBurst');
     var hatch=document.getElementById('_eggHatch');
     var img=document.getElementById('_eggImg');
     var title=document.getElementById('_eggTitle');
     var sub=document.getElementById('_eggSub');
     var tap=document.getElementById('_eggTap');
+    if(egg){egg.style.animation='none';egg.style.display='none';}
     if(burst) burst.style.display='none';
     if(hatch) hatch.style.display='block';
     if(img) img.style.display='block';
