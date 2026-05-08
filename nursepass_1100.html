@@ -4021,51 +4021,58 @@ function spawnLvUpParticles(container){
   }
 }
 function showHatchAnimation(){
-  var overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;cursor:pointer';
-  overlay.innerHTML='<div id="_eggScene" style="position:fixed;top:0;left:0;width:100%;height:100%;'
-    +'background:rgba(255,255,210,0.97);display:flex;flex-direction:column;align-items:center;'
-    +'justify-content:center;animation:eggFadeIn 0.4s ease">'
-    // 卵2枚を同じ位置に重ねるコンテナ
-    +'<div id="_eggContainer" style="position:relative;width:160px;height:160px;">'
-    +'<img id="_eggImg1" src="images/hikari/hikari_lv0birth1.png" '
-    +'style="width:160px;height:160px;object-fit:contain;animation:eggShake 0.4s ease 3">'
-    +'<img id="_eggImg2" src="images/hikari/hikari_lv0birth2.png" '
-    +'style="position:absolute;top:0;left:0;width:160px;height:160px;object-fit:contain;display:none">'
-    +'</div>'
-    +'<img id="_eggImg" src="images/hikari/hikari_lv1.png" alt="小さなヒカリ" '
-    +'style="width:140px;height:140px;object-fit:contain;border-radius:50%;margin-top:12px;display:none;'
-    +'animation:eggImgIn 0.6s cubic-bezier(.17,.67,.35,1.3) forwards">'
-    +'<div id="_eggTitle" style="font-size:22px;font-weight:bold;margin-top:14px;color:#e67e22;'
-    +'font-family:\'Noto Sans JP\',sans-serif;display:none">ヒカリが孵化した！✨</div>'
-    +'<div id="_eggSub" style="font-size:13px;margin-top:6px;color:#B8907A;'
-    +'font-family:\'Noto Sans JP\',sans-serif;display:none">小さなヒカリ</div>'
-    +'<div id="_eggTap" style="font-size:13px;margin-top:16px;color:#aaa;'
-    +'font-family:\'Noto Sans JP\',sans-serif;display:none">タップして続ける</div>'
-    +'</div>';
-  overlay.onclick=function(){overlay.remove();};
-  document.body.appendChild(overlay);
-  // 卵→割れ状態
-  setTimeout(function(){
-    var img1=document.getElementById('_eggImg1');
-    var img2=document.getElementById('_eggImg2');
-    if(img1) img1.style.animation='eggBurst 0.3s ease forwards';
-    if(img2){img2.style.display='block';img2.style.animation='eggImgIn 0.35s cubic-bezier(.17,.67,.35,1.3) forwards';}
-  },1200);
-  // 割れ状態→キャラクター（卵コンテナをDOMから完全削除）
-  setTimeout(function(){
-    var container=document.getElementById('_eggContainer');
-    if(container) container.remove();
-    var img=document.getElementById('_eggImg');
-    var title=document.getElementById('_eggTitle');
-    var sub=document.getElementById('_eggSub');
-    var tap=document.getElementById('_eggTap');
-    if(img) img.style.display='block';
-    if(title) title.style.display='block';
-    if(sub) sub.style.display='block';
-    if(tap) tap.style.display='block';
-    spawnLvUpParticles(overlay);
-  },1700);
+  // シーン（常にDOM上の画像は1枚のみ）
+  var scene=document.createElement('div');
+  scene.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,210,0.97);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:eggFadeIn 0.4s ease;cursor:pointer';
+  document.body.appendChild(scene);
+
+  var phase=1;
+
+  function makeEl(tag,css,text){
+    var e=document.createElement(tag);
+    e.style.cssText=css;
+    if(text) e.textContent=text;
+    return e;
+  }
+
+  // フェーズ1: 卵画像のみ
+  var img1=makeEl('img',"width:160px;height:160px;object-fit:contain;animation:eggShake 0.4s ease 3");
+  img1.src='images/hikari/hikari_lv0birth1.png';
+  var hint=makeEl('div',"font-size:13px;margin-top:20px;color:#aaa;font-family:'Noto Sans JP',sans-serif",'タップして孵化させる');
+  scene.appendChild(img1);
+  scene.appendChild(hint);
+
+  function showPhase3(){
+    phase=3;
+    // フェーズ3: キャラ画像のみ（割れ画像はすでにremove済み）
+    var charImg=makeEl('img',"width:140px;height:140px;object-fit:contain;animation:eggImgIn 0.6s cubic-bezier(.17,.67,.35,1.3) forwards");
+    charImg.src='images/hikari/hikari_lv1.png';
+    scene.appendChild(charImg);
+    scene.appendChild(makeEl('div',"font-size:22px;font-weight:bold;margin-top:14px;color:#e67e22;font-family:'Noto Sans JP',sans-serif",'ヒカリが孵化した！✨'));
+    scene.appendChild(makeEl('div',"font-size:13px;margin-top:6px;color:#B8907A;font-family:'Noto Sans JP',sans-serif",'小さなヒカリ'));
+    scene.appendChild(makeEl('div',"font-size:13px;margin-top:16px;color:#aaa;font-family:'Noto Sans JP',sans-serif",'タップして続ける'));
+    spawnLvUpParticles(scene);
+  }
+
+  scene.addEventListener('click',function(){
+    if(phase===1){
+      phase=2;
+      // フェーズ1の要素をDOMから削除
+      img1.remove();
+      hint.remove();
+      // フェーズ2: 割れ卵画像のみ
+      var img2=makeEl('img',"width:160px;height:160px;object-fit:contain;animation:eggImgIn 0.35s cubic-bezier(.17,.67,.35,1.3) forwards");
+      img2.src='images/hikari/hikari_lv0birth2.png';
+      scene.appendChild(img2);
+      // 1秒後にフェーズ3へ（割れ卵をDOMから削除してキャラを追加）
+      setTimeout(function(){
+        img2.remove();
+        showPhase3();
+      },1000);
+    } else if(phase===3){
+      scene.remove();
+    }
+  });
 }
 // ===== HIKARI SCENE MESSAGES =====
 function showHikariMsg(text,duration){
