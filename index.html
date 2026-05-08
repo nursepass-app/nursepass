@@ -110,6 +110,7 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .result-msg{font-size:15px;color:#55504D;line-height:1.7;margin-bottom:20px}
 .result-retry{width:100%;padding:12px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px}
 .result-home{width:100%;padding:12px;background:rgba(237,224,212,.35);color:#55504D;border:1px solid rgba(237,224,212,.3);border-radius:14px;font-size:15px;cursor:pointer;font-family:'Noto Sans JP',sans-serif}
+.result-continue{width:100%;padding:12px;background:linear-gradient(135deg,#E8C49C,#C99A6E);color:#4A3828;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-bottom:8px}
 
 /* WEAK LIST */
 .weak-list{padding:12px 16px}
@@ -4581,6 +4582,7 @@ function finishQuiz(){
         </div>`;
       })()}
       <button class="result-retry" onclick="retrySession()">もう一度やる</button>
+      <button class="result-continue" onclick="continueQuiz()">➕ もっと解く（+5問）</button>
       <button class="result-home" onclick="backHome()">ホームへ戻る</button>
 ` + (quizMode!=='gachi'?`<button class="cal-btn" onclick="showCalModal('NursePass 看護師国試 学習', '正解率 ${rate}% (${total}問中${session.correct}問正解)')">📅 次の学習をカレンダーに追加</button>`:'') + `
       ${(()=>{
@@ -4703,6 +4705,17 @@ function confirmCalAdd() {
 function retrySession(){
   const pool=shuffle([...session.pool]);
   session={pool,idx:0,correct:0,wrong:0,mode:session.mode};
+  renderQuestion();
+}
+function continueQuiz(){
+  const usedIds=new Set([...(session.usedIds||[]),...session.pool.map(q=>q.id)]);
+  let candidates=QUESTIONS.filter(q=>!usedIds.has(q.id));
+  if(candidates.length<5){
+    candidates=[...QUESTIONS];
+    showToast('🎉 全問を網羅中！最初からランダムで続けます');
+  }
+  const pool=shuffle(candidates).slice(0,5);
+  session={pool,idx:0,correct:0,wrong:0,mode:session.mode,usedIds:[...usedIds]};
   renderQuestion();
 }
 function retryWrong(){
