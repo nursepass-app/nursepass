@@ -4024,9 +4024,13 @@ function showHatchAnimation(){
   overlay.innerHTML='<div id="_eggScene" style="position:fixed;top:0;left:0;width:100%;height:100%;'
     +'background:rgba(255,255,210,0.97);display:flex;flex-direction:column;align-items:center;'
     +'justify-content:center;animation:eggFadeIn 0.4s ease">'
-    +'<div id="_eggEmoji" style="font-size:90px;animation:eggShake 0.4s ease 3;display:block">🥚</div>'
-    +'<div id="_eggBurst" style="font-size:60px;margin-top:8px;display:none">💥</div>'
-    +'<div id="_eggHatch" style="font-size:60px;margin-top:8px;display:none">🐣</div>'
+    // 卵2枚を同じ位置に重ねるコンテナ
+    +'<div style="position:relative;width:160px;height:160px;">'
+    +'<img id="_eggImg1" src="images/hikari/hikari_lv0birth1.png" '
+    +'style="width:160px;height:160px;object-fit:contain;animation:eggShake 0.4s ease 3">'
+    +'<img id="_eggImg2" src="images/hikari/hikari_lv0birth2.png" '
+    +'style="position:absolute;top:0;left:0;width:160px;height:160px;object-fit:contain;display:none">'
+    +'</div>'
     +'<img id="_eggImg" src="images/hikari/hikari_lv1.png" alt="小さなヒカリ" '
     +'style="width:140px;height:140px;object-fit:contain;border-radius:50%;margin-top:12px;display:none;'
     +'animation:eggImgIn 0.6s cubic-bezier(.17,.67,.35,1.3) forwards">'
@@ -4039,29 +4043,29 @@ function showHatchAnimation(){
     +'</div>';
   overlay.onclick=function(){overlay.remove();};
   document.body.appendChild(overlay);
+  // 卵→割れ状態
   setTimeout(function(){
-    var egg=document.getElementById('_eggEmoji');
-    var burst=document.getElementById('_eggBurst');
-    if(egg) egg.style.animation='eggBurst 0.3s ease forwards';
-    if(burst) burst.style.display='block';
+    var img1=document.getElementById('_eggImg1');
+    var img2=document.getElementById('_eggImg2');
+    if(img1) img1.style.animation='eggBurst 0.3s ease forwards';
+    if(img2){img2.style.display='block';img2.style.animation='eggImgIn 0.35s cubic-bezier(.17,.67,.35,1.3) forwards';}
   },1200);
+  // 割れ状態→キャラクター
   setTimeout(function(){
-    var egg=document.getElementById('_eggEmoji');
-    var burst=document.getElementById('_eggBurst');
-    var hatch=document.getElementById('_eggHatch');
+    var img1=document.getElementById('_eggImg1');
+    var img2=document.getElementById('_eggImg2');
     var img=document.getElementById('_eggImg');
     var title=document.getElementById('_eggTitle');
     var sub=document.getElementById('_eggSub');
     var tap=document.getElementById('_eggTap');
-    if(egg){egg.style.animation='none';egg.style.display='none';}
-    if(burst) burst.style.display='none';
-    if(hatch) hatch.style.display='block';
+    if(img1){img1.style.animation='none';img1.style.display='none';}
+    if(img2){img2.style.animation='none';img2.style.display='none';}
     if(img) img.style.display='block';
     if(title) title.style.display='block';
     if(sub) sub.style.display='block';
     if(tap) tap.style.display='block';
     spawnLvUpParticles(overlay);
-  },1500);
+  },1700);
 }
 // ===== HIKARI SCENE MESSAGES =====
 function showHikariMsg(text,duration){
