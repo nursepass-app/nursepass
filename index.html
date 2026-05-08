@@ -467,6 +467,11 @@ body.font-xl .explanation{font-size:16px}
 .answer-feedback-wrap{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:12px;}
 .answer-feedback-symbol{font-weight:900;line-height:1;text-align:center;}
 .answer-feedback-text{font-weight:700;text-align:center;}
+@keyframes charJump{0%{opacity:0;transform:translateY(60px) scale(0.3)}35%{opacity:1;transform:translateY(-22px) scale(1.13)}55%{transform:translateY(6px) scale(0.96)}72%{transform:translateY(-10px) scale(1.05)}88%{transform:translateY(2px) scale(0.99)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes sparkleOut{0%{opacity:0;transform:scale(0) rotate(0deg)}28%{opacity:1;transform:scale(1.4) rotate(18deg)}78%{opacity:0.7}100%{opacity:0;transform:scale(0.3) rotate(55deg) translate(var(--sx),var(--sy))}}
+@keyframes charMsgPop{0%{opacity:0;transform:translateY(14px) scale(0.78)}55%{transform:translateY(-2px) scale(1.06)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes charOverlayOut{from{opacity:1}to{opacity:0}}
+.char-correct-overlay{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;z-index:9998;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,225,160,0.2) 0%,transparent 65%);}
 
 /* ===== HIKARI MSG TOAST ===== */
 @keyframes hikariMsgIn{0%{opacity:0;transform:translateX(-50%) translateY(14px);}100%{opacity:1;transform:translateX(-50%) translateY(0);}}
@@ -4129,29 +4134,49 @@ function updateStreakDisplay(){
   }
 }
 function showAnswerFeedback(correct){
-  document.querySelectorAll('.answer-feedback-wrap').forEach(e=>e.remove());
-  const wrap=document.createElement('div');
-  wrap.className='answer-feedback-wrap';
-  const sym=document.createElement('div');
-  sym.className='answer-feedback-symbol';
-  const txt=document.createElement('div');
-  txt.className='answer-feedback-text';
+  document.querySelectorAll('.answer-feedback-wrap,.char-correct-overlay').forEach(e=>e.remove());
   if(correct){
-    sym.textContent='◎';
-    sym.style.cssText='font-size:200px;color:#4CAF50;text-shadow:0 4px 24px rgba(76,175,80,0.35);';
-    txt.textContent='すごい！';
-    txt.style.cssText='font-size:36px;color:#4CAF50;';
-    wrap.appendChild(sym);wrap.appendChild(txt);
-    document.body.appendChild(wrap);
-    wrap.style.animation='feedbackZoomIn .4s cubic-bezier(.17,.67,.35,1.3) forwards';
-    // hold then fade
+    const overlay=document.createElement('div');
+    overlay.className='char-correct-overlay';
+    const inner=document.createElement('div');
+    inner.style.cssText='position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;';
+    // sparkle + image container
+    const sc=document.createElement('div');
+    sc.style.cssText='position:relative;width:140px;height:140px;display:flex;align-items:center;justify-content:center;overflow:visible;';
+    // sparkles
+    [{x:-80,y:-55,e:'✨',d:0},{x:78,y:-60,e:'⭐',d:.05},{x:-90,y:8,e:'🌟',d:.08},{x:87,y:5,e:'💛',d:.03},{x:-56,y:70,e:'✨',d:.1},{x:54,y:72,e:'🌸',d:.07},{x:5,y:-90,e:'💫',d:.02},{x:-30,y:-84,e:'⭐',d:.12}].forEach(s=>{
+      const sp=document.createElement('span');
+      sp.style.cssText=`position:absolute;left:calc(50% + ${s.x}px);top:calc(50% + ${s.y}px);font-size:18px;line-height:1;--sx:${Math.round(s.x*.38)}px;--sy:${Math.round(s.y*.38)}px;animation:sparkleOut ${.6+Math.random()*.35}s ease ${s.d}s both;`;
+      sp.textContent=s.e;
+      sc.appendChild(sp);
+    });
+    // character image
+    const img=document.createElement('img');
+    img.src=getCharImgSrc(selectedChar,getHikariLevel());
+    img.style.cssText='position:relative;z-index:1;width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 6px 28px rgba(255,195,90,0.6));animation:charJump .55s cubic-bezier(.17,.67,.35,1.3) forwards;';
+    img.onerror=function(){this.style.display='none';};
+    sc.appendChild(img);
+    inner.appendChild(sc);
+    // message
+    const msgEl=document.createElement('div');
+    msgEl.style.cssText="font-size:17px;font-weight:700;color:#8A5840;text-shadow:0 1px 10px rgba(255,255,255,0.95),0 0 20px rgba(255,210,110,0.65);text-align:center;max-width:220px;line-height:1.4;font-family:'Noto Sans JP',sans-serif;animation:charMsgPop .35s ease .22s both;";
+    msgEl.textContent=getCharMsg('correct');
+    inner.appendChild(msgEl);
+    overlay.appendChild(inner);
+    document.body.appendChild(overlay);
     setTimeout(()=>{
-      wrap.style.animation='feedbackFadeOut .3s ease-in forwards';
-      setTimeout(()=>wrap.remove(),300);
-    },700);
+      overlay.style.animation='charOverlayOut .35s ease forwards';
+      setTimeout(()=>overlay.remove(),350);
+    },1150);
   } else {
+    const wrap=document.createElement('div');
+    wrap.className='answer-feedback-wrap';
+    const sym=document.createElement('div');
+    sym.className='answer-feedback-symbol';
     sym.textContent='×';
     sym.style.cssText='font-size:60px;color:#999999;';
+    const txt=document.createElement('div');
+    txt.className='answer-feedback-text';
     txt.textContent='あと少し';
     txt.style.cssText='font-size:24px;color:#999999;';
     wrap.appendChild(sym);wrap.appendChild(txt);
