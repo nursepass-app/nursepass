@@ -1445,7 +1445,11 @@ function pickCount(mode, label){
   document.body.appendChild(modal);
 }
 function startQuizWithCount(mode, count){
-  if(!QUESTIONS||!QUESTIONS.length){alert('データ読み込み中です。しばらくお待ちください。');return;}
+  if(!QUESTIONS||!QUESTIONS.length){
+    window._pendingStart=function(){startQuizWithCount(mode,count);};
+    showToast('データ読み込み中… 準備ができたら自動で始まります');
+    return;
+  }
   const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
   const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
   let pool;
@@ -7401,6 +7405,7 @@ fetch('questions.json')
   .then(function(data){
     QUESTIONS = data;
     FIELDS = [...new Set(QUESTIONS.map(function(q){return q.field;}))].sort();
+    if(window._pendingStart){var _fn=window._pendingStart;window._pendingStart=null;_fn();return;}
     renderHomeSummary();
     updateBnWeakBadge();
     renderPersonalityTypeBtns();

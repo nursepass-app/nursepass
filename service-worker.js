@@ -1,7 +1,8 @@
-const CACHE_NAME = 'nursepass-v3';
+const CACHE_NAME = 'nursepass-v4';
 const CACHE_FILES = [
   '/nursepass/',
   '/nursepass/index.html',
+  '/nursepass/questions.json',
   '/nursepass/images/hikari/hikari_lv0.png',
   '/nursepass/images/hikari/hikari_lv0birth1.png',
   '/nursepass/images/hikari/hikari_lv0birth2.png',
