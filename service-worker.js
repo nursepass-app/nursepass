@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nursepass-v4';
+const CACHE_NAME = 'nursepass-v5';
 const CACHE_FILES = [
   '/nursepass/',
   '/nursepass/index.html',
@@ -41,14 +41,16 @@ self.addEventListener('activate', function(event) {
   self.clients.claim();
 });
 
-// Fetch: serve from cache, fall back to network
+// Fetch: network-first for HTML, cache-first for other assets
 self.addEventListener('fetch', function(event) {
-  event.respondWith(
-    caches.match(event.request).then(function(cached) {
-      if (cached) return cached;
-      return fetch(event.request).then(function(response) {
-        // Cache successful GET responses
-        if (event.request.method === 'GET' && response.status === 200) {
+  var url = event.request.url;
+  var isHtml = event.request.mode === 'navigate' || url.endsWith('.html') || url.endsWith('/nursepass/');
+
+  if (isHtml) {
+    // Network-first for HTML: always get fresh code, fall back to cache offline
+    event.respondWith(
+      fetch(event.request).then(function(response) {
+        if (response.status === 200) {
           var clone = response.clone();
           caches.open(CACHE_NAME).then(function(cache) {
             cache.put(event.request, clone);
@@ -56,11 +58,26 @@ self.addEventListener('fetch', function(event) {
         }
         return response;
       }).catch(function() {
-        // Offline fallback: return cached index.html for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/nursepass/index.html');
-        }
-      });
-    })
-  );
+        return caches.match(event.request).then(function(cached) {
+          return cached || caches.match('/nursepass/index.html');
+        });
+      })
+    );
+  } else {
+    // Cache-first for images, sounds, JSON
+    event.respondWith(
+      caches.match(event.request).then(function(cached) {
+        if (cached) return cached;
+        return fetch(event.request).then(function(response) {
+          if (event.request.method === 'GET' && response.status === 200) {
+            var clone = response.clone();
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(event.request, clone);
+            });
+          }
+          return response;
+        });
+      })
+    );
+  }
 });
