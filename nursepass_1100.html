@@ -5186,6 +5186,14 @@ function drillField(fieldName){
   showToast(`${fieldName.replace('必修・','').replace('一般・','').replace('状況設定・','')} の特訓開始！`);
 }
 
+function getApiErrMsg(status){
+  if(status===401) return 'APIキーに問題があります。設定を確認してください';
+  if(status===402) return 'API残高が不足しています。チャージしてください';
+  if(status===429) return 'アクセスが集中しています。少し待ってから試してください';
+  if(status===500) return 'OpenAIサーバーが不安定です。しばらくお待ちください';
+  return `接続エラーが発生しました（エラーコード: ${status}）`;
+}
+
 // ヒカリ AI学習分析
 async function requestHikariAnalysis(){
   const key=localStorage.getItem('np_openai_key');
@@ -5220,11 +5228,17 @@ async function requestHikariAnalysis(){
         {role:'user',content:`以下の学習データに基づき、具体的で実用的な学習アドバイスをください。\n\n${summary}`}
       ],max_tokens:250,temperature:0.7})
     });
-    if(!res.ok) throw new Error('API error '+res.status);
+    if(!res.ok){
+      const msg=getApiErrMsg(res.status);
+      out.innerHTML=`<div style="font-size:11px;color:#dc2626">${msg}</div>`;
+      btn.disabled=false;btn.textContent='🌸 ヒカリに分析してもらう';
+      return;
+    }
     const data=await res.json();
     const reply=data.choices?.[0]?.message?.content||'うまく取得できなかったよ。もう一度試してね。';
     out.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:20px">🌸</div><div style="flex:1"><div style="font-size:12px;color:#55504D;line-height:1.7">${reply.replace(/\n/g,'<br>')}</div><div style="font-size:9px;color:#aaa;margin-top:6px">ヒカリ · ${new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}</div></div></div>`;
   }catch(e){
+    console.error('[NursePass] ヒカリ分析エラー:',e);
     out.innerHTML=`<div style="font-size:11px;color:#dc2626">分析に失敗しました。もう一度お試しください。</div>`;
   }
   btn.disabled=false;btn.textContent='🌸 ヒカリに分析してもらう';
@@ -6659,8 +6673,8 @@ async function sendMiniChat(){
     });
     const t=document.getElementById('miniTyping');if(t)t.remove();
     if(!res.ok){
-      if(res.status===401){localStorage.removeItem('np_openai_key');appendMiniMsg('hikari','APIキーが正しくないみたい。\n設定し直してね。');showApiKeyModal();}
-      else{appendMiniMsg('hikari','うまく繋がれなかった。\n少し時間をおいてみてね。');}
+      if(res.status===401){localStorage.removeItem('np_openai_key');showApiKeyModal();}
+      appendMiniMsg('hikari',getApiErrMsg(res.status));
     }else{
       const data=await res.json();
       const reply=(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'うまく答えられなかった。\nもう一度聞いてね。';
@@ -6669,6 +6683,7 @@ async function sendMiniChat(){
       updateLimitDisplay();
     }
   }catch(e){
+    console.error('[NursePass] ミニチャットエラー:',e);
     const t=document.getElementById('miniTyping');if(t)t.remove();
     appendMiniMsg('hikari','ネットワークエラーが起きたよ。\n接続を確認してみてね。');
   }
@@ -6756,13 +6771,8 @@ async function sendChat(){
     const t=document.getElementById('typingIndicator');
     if(t) t.remove();
     if(!res.ok){
-      if(res.status===401){
-        localStorage.removeItem('np_openai_key');
-        pushChatMsg('hikari','APIキーが正しくないみたい。\nもう一度確認して入力してね。');
-        showApiKeyModal();
-      } else {
-        pushChatMsg('hikari','ごめんね、うまく繋がれなかった。\n少し時間をおいてみてね。');
-      }
+      if(res.status===401){localStorage.removeItem('np_openai_key');showApiKeyModal();}
+      pushChatMsg('hikari',getApiErrMsg(res.status));
     } else {
       const data=await res.json();
       const reply=(data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content)||'ごめんね、うまく答えられなかった。\nもう一度話しかけてね。';
@@ -6771,6 +6781,7 @@ async function sendChat(){
       updateLimitDisplay();
     }
   }catch(e){
+    console.error('[NursePass] チャットエラー:',e);
     const t=document.getElementById('typingIndicator');
     if(t) t.remove();
     pushChatMsg('hikari','ネットワークに繋がれなかったみたい。\n接続を確認してみてね。');
