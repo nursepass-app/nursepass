@@ -532,6 +532,21 @@ body.font-xl .explanation{font-size:16px}
 .lv-up-evolve{font-size:15px;color:rgba(255,255,255,0.85);margin-top:6px;font-family:'Noto Sans JP',sans-serif}
 .lv-up-tap{font-size:12px;color:rgba(255,255,255,0.4);margin-top:24px;font-family:'Noto Sans JP',sans-serif}
 .lv-up-particle{position:fixed;border-radius:3px;pointer-events:none;z-index:10001;animation:lvParticle 1.4s ease-out forwards}
+/* 文字サイズ */
+body.font-small .q-text{font-size:15px!important}
+body.font-small .choice-btn{font-size:13px!important}
+body.font-small .explanation,body.font-small .result-area{font-size:12px!important}
+body.font-large .q-text{font-size:22px!important}
+body.font-large .choice-btn{font-size:19px!important}
+body.font-large .explanation,body.font-large .result-area{font-size:17px!important}
+/* 難易度フィルター */
+.star-filter-wrap{display:flex;gap:6px;margin-bottom:14px}
+.star-filter-btn{flex:1;padding:6px 2px;border:1.5px solid rgba(85,80,77,0.25);border-radius:12px;background:rgba(240,232,222,.5);font-size:11px;font-weight:500;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:#55504D;transition:.18s;text-align:center;-webkit-tap-highlight-color:transparent}
+.star-filter-btn.active{background:linear-gradient(135deg,#fff3cc,#ffe08a);border-color:rgba(200,160,60,0.5);color:#7a5000;font-weight:700}
+/* 文字サイズ設定ボタン */
+.font-size-btns{display:flex;gap:6px}
+.font-size-btn{flex:1;padding:7px 4px;border:1.5px solid rgba(85,80,77,0.3);border-radius:12px;background:rgba(255,255,255,.8);font-size:12px;color:#55504D;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:500;transition:.15s;text-align:center}
+.font-size-btn.active{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border-color:transparent}
 </style>
 </head>
 <body ontouchstart="">
@@ -583,9 +598,16 @@ body.font-xl .explanation{font-size:16px}
     <div id="streakHomeBadge"></div>
     <div id="streakWarnBanner"></div>
     <!-- エリア3: モード切替 -->
-    <div class="mode-switch-wrap" id="modeSwitchBar" style="margin-bottom:18px">
+    <div class="mode-switch-wrap" id="modeSwitchBar" style="margin-bottom:10px">
       <button class="mode-switch-btn active hikari" id="modeBtnHikari" onclick="setQuizMode('hikari')">🌸 やさしく</button>
       <button class="mode-switch-btn gachi" id="modeBtnGachi" onclick="setQuizMode('gachi')">⚡ スピード</button>
+    </div>
+    <!-- 難易度フィルター -->
+    <div class="star-filter-wrap" id="starFilterBar">
+      <button class="star-filter-btn" data-stars="all" onclick="setStarFilter('all')">すべて</button>
+      <button class="star-filter-btn" data-stars="3" onclick="setStarFilter('3')">★★★ 難</button>
+      <button class="star-filter-btn" data-stars="2" onclick="setStarFilter('2')">★★ 普通</button>
+      <button class="star-filter-btn" data-stars="1" onclick="setStarFilter('1')">★ 易</button>
     </div>
     <!-- エリア4: メインボタン -->
     <div style="display:flex;flex-direction:column;gap:12px">
@@ -754,6 +776,14 @@ body.font-xl .explanation{font-size:16px}
           <div class="settings-row">
             <span class="settings-row-label">🔔 バイブレーション</span>
             <button class="settings-toggle" id="hapticBtnSettings" onclick="toggleHaptic()"></button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-label">🔤 文字サイズ</span>
+            <div class="font-size-btns">
+              <button class="font-size-btn" data-size="small" onclick="setFontSize('small')">小</button>
+              <button class="font-size-btn" data-size="medium" onclick="setFontSize('medium')">中</button>
+              <button class="font-size-btn" data-size="large" onclick="setFontSize('large')">大</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1368,6 +1398,26 @@ function selectCompanionChar(charId){
 let autoAdvance=localStorage.getItem('np_auto_advance')==='1';
 let quizMode=localStorage.getItem('np_quiz_mode')||'hikari';
 let skipMastered=localStorage.getItem('np_skip_mastered')==='1';
+let starFilter=localStorage.getItem('np_star_filter')||'all';
+function setStarFilter(val){
+  starFilter=val;
+  localStorage.setItem('np_star_filter',val);
+  document.querySelectorAll('.star-filter-btn').forEach(function(b){b.classList.toggle('active',b.dataset.stars===val);});
+}
+function applyStarFilter(pool){
+  if(starFilter==='all') return pool;
+  var s=parseInt(starFilter);
+  var m=pool.filter(function(q){return q.stars===s;});
+  return m.length?m:pool;
+}
+let fontSize=localStorage.getItem('np_font_size')||'medium';
+function setFontSize(size){
+  fontSize=size;
+  localStorage.setItem('np_font_size',size);
+  document.body.classList.remove('font-small','font-large');
+  if(size!=='medium') document.body.classList.add('font-'+size);
+  document.querySelectorAll('.font-size-btn').forEach(function(b){b.classList.toggle('active',b.dataset.size===size);});
+}
 let sessionGoal=parseInt(localStorage.getItem('np_session_goal')||'0');
 function toggleSkipMastered(){
   skipMastered=!skipMastered;
@@ -1466,8 +1516,8 @@ function startQuizWithCount(mode, count){
   const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
   const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
   let pool;
-  if(mode==='random') pool=shuffle([...fieldFilter]).slice(0,count);
-  else if(mode==='field') pool=shuffle([...fieldFilter]).slice(0,count);
+  if(mode==='random') pool=shuffle([...applyStarFilter(fieldFilter)]).slice(0,count);
+  else if(mode==='field') pool=shuffle([...applyStarFilter(fieldFilter)]).slice(0,count);
   else if(mode==='allcat') pool=shuffle([...catQ]).slice(0,count);
   else { startQuiz(mode); return; }
   if(!pool.length){alert('問題が見つかりません。');return;}
@@ -3566,7 +3616,7 @@ function startQuiz(mode){
   const applySkip=arr=>skipMastered?arr.filter(q=>!isMastered(q.id)):arr;
   if(mode==='random'){
     // Smart weighted random: 40% weak/unmastered, 30% unread, 30% general
-    const base=applySkip(fieldFilter);
+    const base=applyStarFilter(applySkip(fieldFilter));
     const weakQ=base.filter(q=>{const h=history[String(q.id)];return h&&h.wrong>0&&h.correct<=h.wrong;});
     const unreadQ=base.filter(q=>!history[String(q.id)]);
     const otherQ=base.filter(q=>{const h=history[String(q.id)];return h&&(h.correct>h.wrong);});
@@ -7397,6 +7447,8 @@ initModeButtons();
 updateScoreBadge();
 initDailyMessage();
 updateHikariLevel();
+setFontSize(fontSize);
+setStarFilter(starFilter);
 updateStreakDisplay();
 (function(){
   var lastDate=streakData.lastDate||'';
