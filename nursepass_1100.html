@@ -602,12 +602,12 @@ body.font-large .explanation,body.font-large .result-area{font-size:17px!importa
       <button class="mode-switch-btn active hikari" id="modeBtnHikari" onclick="setQuizMode('hikari')">🌸 やさしく</button>
       <button class="mode-switch-btn gachi" id="modeBtnGachi" onclick="setQuizMode('gachi')">⚡ スピード</button>
     </div>
-    <!-- 難易度フィルター -->
+    <!-- 重要度フィルター -->
     <div class="star-filter-wrap" id="starFilterBar">
       <button class="star-filter-btn" data-stars="all" onclick="setStarFilter('all')">すべて</button>
-      <button class="star-filter-btn" data-stars="3" onclick="setStarFilter('3')">★★★ 難</button>
-      <button class="star-filter-btn" data-stars="2" onclick="setStarFilter('2')">★★ 普通</button>
-      <button class="star-filter-btn" data-stars="1" onclick="setStarFilter('1')">★ 易</button>
+      <button class="star-filter-btn" data-stars="1" onclick="setStarFilter('1')">★以上</button>
+      <button class="star-filter-btn" data-stars="2" onclick="setStarFilter('2')">★★以上</button>
+      <button class="star-filter-btn" data-stars="3" onclick="setStarFilter('3')">★★★のみ</button>
     </div>
     <!-- エリア4: メインボタン -->
     <div style="display:flex;flex-direction:column;gap:12px">
@@ -1407,7 +1407,7 @@ function setStarFilter(val){
 function applyStarFilter(pool){
   if(starFilter==='all') return pool;
   var s=parseInt(starFilter);
-  var m=pool.filter(function(q){return q.stars===s;});
+  var m=pool.filter(function(q){return q.stars>=s;});
   return m.length?m:pool;
 }
 let fontSize=localStorage.getItem('np_font_size')||'medium';
