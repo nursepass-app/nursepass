@@ -682,12 +682,7 @@ body.font-xl .explanation{font-size:16px}
           </div>
           <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
             <div class="hikari-limit" id="hikariLimit">本日 残り10回</div>
-            <button class="hikari-settings-btn" onclick="showApiKeyModal()" title="APIキー設定">⚙️</button>
           </div>
-        </div>
-        <div id="hikariKeyNotice" class="api-key-notice" style="display:none">
-          <div class="api-key-notice-text">🔑 APIキーが設定されていません。<br>ヒカリと話すには OpenAI APIキーが必要です。</div>
-          <button class="api-key-notice-btn" onclick="showApiKeyModal()">APIキーを設定する</button>
         </div>
         <div class="chat-history" id="chatHistory"></div>
         <div style="padding:6px 12px 4px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid rgba(85,80,77,0.08)">
@@ -760,10 +755,6 @@ body.font-xl .explanation{font-size:16px}
             <span class="settings-row-label">🔔 バイブレーション</span>
             <button class="settings-toggle" id="hapticBtnSettings" onclick="toggleHaptic()"></button>
           </div>
-          <div class="settings-row">
-            <span class="settings-row-label">🔑 OpenAI APIキー</span>
-            <button class="settings-toggle" onclick="showApiKeyModal()">設定</button>
-          </div>
         </div>
       </div>
     </div>
@@ -800,18 +791,6 @@ body.font-xl .explanation{font-size:16px}
     <span class="bn-icon">⚙️</span><span class="bn-label">設定</span>
   </button>
 </nav>
-
-<!-- APIキー入力モーダル -->
-<div class="modal-overlay" id="apiKeyModal" style="display:none">
-  <div class="modal-card">
-    <div class="modal-title" id="apiModalTitle">🌸 OpenAI APIキーを設定</div>
-    <div class="modal-desc" id="apiModalDesc">ヒカリとお話しするには、OpenAI APIキーが必要です。<br>キーはあなたのブラウザにのみ保存され、外部には送信されません。<br><br>APIキーは <strong>platform.openai.com</strong> で取得できます。</div>
-    <input class="modal-input" id="apiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
-    <button class="modal-btn" onclick="saveApiKey()">保存して始める</button>
-    <button class="modal-skip" id="apiSkipBtn" onclick="skipApiKey()">あとで設定する</button>
-    <button class="modal-del" id="apiDelBtn" onclick="deleteApiKey()" style="display:none">⚠ 現在のキーを削除する</button>
-  </div>
-</div>
 
 <!-- 仲間解放モーダル -->
 <div id="companionModal" class="companion-overlay" style="display:none">
@@ -5186,7 +5165,7 @@ function drillField(fieldName){
   showToast(`${fieldName.replace('必修・','').replace('一般・','').replace('状況設定・','')} の特訓開始！`);
 }
 
-const HIKARI_PROXY='https://nursepass-proxy.YOUR_SUBDOMAIN.workers.dev';
+const HIKARI_PROXY='https://nursepass-proxy.yunoa091224.workers.dev';
 const HIKARI_APP_TOKEN='nursepass-hikari-2026';
 
 function getApiErrMsg(status){
@@ -6714,7 +6693,6 @@ function initChat(){
     pushChatMsg('hikari','こんにちは。ヒカリだよ。\n勉強のこと、不安なこと、何でも話してね。\nそっと一緒に考えるから。');
   }
   renderChat();
-  updateApiKeyState();
 }
 function pushChatMsg(role,text){
   chatHistory.push({role,text});
@@ -6783,55 +6761,6 @@ async function sendChat(){
   }
   btn.disabled=false;
 }
-function updateApiKeyState(){
-  const notice=document.getElementById('hikariKeyNotice');
-  const input=document.getElementById('chatInput');
-  const btn=document.getElementById('chatSendBtn');
-  if(notice) notice.style.display='none';
-  if(input){input.disabled=false;input.placeholder='ヒカリに相談する...';}
-  if(btn) btn.disabled=false;
-}
-function showApiKeyModal(){
-  const key=localStorage.getItem('np_openai_key');
-  const title=document.getElementById('apiModalTitle');
-  const desc=document.getElementById('apiModalDesc');
-  const skipBtn=document.getElementById('apiSkipBtn');
-  const delBtn=document.getElementById('apiDelBtn');
-  if(key){
-    title.textContent='⚙️ APIキーを変更';
-    desc.innerHTML='新しいAPIキーを入力してください。<br>キーはあなたのブラウザにのみ保存されます。';
-    if(skipBtn) skipBtn.textContent='変更せずに閉じる';
-    if(delBtn) delBtn.style.display='block';
-  } else {
-    title.textContent='🌸 OpenAI APIキーを設定';
-    desc.innerHTML='ヒカリとお話しするには、OpenAI APIキーが必要です。<br>キーはあなたのブラウザにのみ保存され、外部には送信されません。<br><br>APIキーは <strong>platform.openai.com</strong> で取得できます。';
-    if(skipBtn) skipBtn.textContent='あとで設定する';
-    if(delBtn) delBtn.style.display='none';
-  }
-  document.getElementById('apiKeyInput').value='';
-  document.getElementById('apiKeyModal').style.display='flex';
-}
-function saveApiKey(){
-  const key=document.getElementById('apiKeyInput').value.trim();
-  if(!key.startsWith('sk-')){alert('APIキーは「sk-」から始まる文字列を入力してください。');return;}
-  localStorage.setItem('np_openai_key',key);
-  localStorage.setItem('np_api_seen','1');
-  document.getElementById('apiKeyModal').style.display='none';
-  document.getElementById('apiKeyInput').value='';
-  updateApiKeyState();
-}
-function skipApiKey(){
-  localStorage.setItem('np_api_seen','1');
-  document.getElementById('apiKeyModal').style.display='none';
-  updateApiKeyState();
-}
-function deleteApiKey(){
-  if(!confirm('APIキーを削除しますか？\nヒカリとのチャットが使えなくなります。')) return;
-  localStorage.removeItem('np_openai_key');
-  document.getElementById('apiKeyModal').style.display='none';
-  updateApiKeyState();
-}
-
 // 毎日の応援メッセージ
 const DAILY_MESSAGES = {
   1:[
