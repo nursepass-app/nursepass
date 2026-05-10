@@ -5186,6 +5186,9 @@ function drillField(fieldName){
   showToast(`${fieldName.replace('必修・','').replace('一般・','').replace('状況設定・','')} の特訓開始！`);
 }
 
+const HIKARI_PROXY='https://nursepass-proxy.YOUR_SUBDOMAIN.workers.dev';
+const HIKARI_APP_TOKEN='nursepass-hikari-2026';
+
 function getApiErrMsg(status){
   if(status===401) return 'APIキーに問題があります。設定を確認してください';
   if(status===402) return 'API残高が不足しています。チャージしてください';
@@ -5196,8 +5199,6 @@ function getApiErrMsg(status){
 
 // ヒカリ AI学習分析
 async function requestHikariAnalysis(){
-  const key=localStorage.getItem('np_openai_key');
-  if(!key){showApiKeyModal();return;}
   const btn=document.getElementById('hikariAnalysisBtn');
   const out=document.getElementById('hikariAnalysisOutput');
   if(!btn||!out) return;
@@ -5220,9 +5221,9 @@ async function requestHikariAnalysis(){
   const examDays=getExamDays();
   const summary=`学習者の現在の状況:\n- 解答済み問題数: ${total}/${QUESTIONS.length}問（カバー率${Math.round(total/QUESTIONS.length*100)}%）\n- 全体正答率: ${rate}%\n- 連続学習日数: ${streak}日\n- 今日解いた問題数: ${today}問\n- SRS期限問題数: ${srsCount}問\n- 苦手分野トップ3: ${weakFields.map(x=>`${x.f}(${x.rate}%)`).join('、')||'なし'}\n- 試験まで: ${examDays!==null?examDays+'日':'不明'}`;
   try{
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{
+    const res=await fetch(HIKARI_PROXY,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      headers:{'Content-Type':'application/json','X-App-Token':HIKARI_APP_TOKEN},
       body:JSON.stringify({model:'gpt-4o',messages:[
         {role:'system',content:'あなたは看護師国家試験対策アプリ「NursePass」のAIコーチ「ヒカリ（叶愛）」です。静かなやさしさで不安な心に寄り添い、温かく励ます口調で学習アドバイスをします。200字以内で簡潔に。'},
         {role:'user',content:`以下の学習データに基づき、具体的で実用的な学習アドバイスをください。\n\n${summary}`}
@@ -6647,8 +6648,6 @@ async function sendMiniChat(){
   if(!input||!miniCtx) return;
   const text=input.value.trim();
   if(!text) return;
-  const key=localStorage.getItem('np_openai_key');
-  if(!key){showApiKeyModal();return;}
   if(getChatCount()>=CHAT_LIMIT){
     appendMiniMsg('hikari','今日の相談回数が上限に達したよ。\nまた明日話しかけてね。');
     return;
@@ -6666,14 +6665,13 @@ async function sendMiniChat(){
   try{
     const apiMsgs=[{role:'system',content:sysP}];
     miniMsgs.slice(-8).forEach(m=>apiMsgs.push({role:m.role==='hikari'?'assistant':'user',content:m.text}));
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{
+    const res=await fetch(HIKARI_PROXY,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      headers:{'Content-Type':'application/json','X-App-Token':HIKARI_APP_TOKEN},
       body:JSON.stringify({model:'gpt-4o',messages:apiMsgs,max_tokens:300,temperature:0.7})
     });
     const t=document.getElementById('miniTyping');if(t)t.remove();
     if(!res.ok){
-      if(res.status===401){localStorage.removeItem('np_openai_key');showApiKeyModal();}
       appendMiniMsg('hikari',getApiErrMsg(res.status));
     }else{
       const data=await res.json();
@@ -6742,8 +6740,6 @@ async function sendChat(){
   const btn=document.getElementById('chatSendBtn');
   const text=input.value.trim();
   if(!text) return;
-  const key=localStorage.getItem('np_openai_key');
-  if(!key){showApiKeyModal();return;}
   if(getChatCount()>=CHAT_LIMIT){
     pushChatMsg('hikari','今日はもうたくさん話したね。\nまた明日、ヒカリはここにいるよ。\nゆっくり休んでね。');
     return;
@@ -6763,15 +6759,14 @@ async function sendChat(){
   try{
     const msgs=[{role:'system',content:CHAT_SYSTEM}];
     chatHistory.slice(-12).forEach(m=>msgs.push({role:m.role==='hikari'?'assistant':'user',content:m.text}));
-    const res=await fetch('https://api.openai.com/v1/chat/completions',{
+    const res=await fetch(HIKARI_PROXY,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      headers:{'Content-Type':'application/json','X-App-Token':HIKARI_APP_TOKEN},
       body:JSON.stringify({model:'gpt-4o',messages:msgs,max_tokens:300,temperature:0.8})
     });
     const t=document.getElementById('typingIndicator');
     if(t) t.remove();
     if(!res.ok){
-      if(res.status===401){localStorage.removeItem('np_openai_key');showApiKeyModal();}
       pushChatMsg('hikari',getApiErrMsg(res.status));
     } else {
       const data=await res.json();
@@ -6789,19 +6784,12 @@ async function sendChat(){
   btn.disabled=false;
 }
 function updateApiKeyState(){
-  const key=localStorage.getItem('np_openai_key');
   const notice=document.getElementById('hikariKeyNotice');
   const input=document.getElementById('chatInput');
   const btn=document.getElementById('chatSendBtn');
-  if(!key){
-    if(notice) notice.style.display='block';
-    if(input){input.disabled=true;input.placeholder='APIキーを設定してください';}
-    if(btn) btn.disabled=true;
-  } else {
-    if(notice) notice.style.display='none';
-    if(input){input.disabled=false;input.placeholder='ヒカリに相談する...';}
-    if(btn) btn.disabled=false;
-  }
+  if(notice) notice.style.display='none';
+  if(input){input.disabled=false;input.placeholder='ヒカリに相談する...';}
+  if(btn) btn.disabled=false;
 }
 function showApiKeyModal(){
   const key=localStorage.getItem('np_openai_key');
@@ -7381,10 +7369,6 @@ function _pqAnswer(type){
   if(overlay) _renderPqStep(overlay);
 }
 
-// 初回起動時APIキーモーダル（オンボーディング完了後・キー未設定かつ初回のみ）
-if(localStorage.getItem('np_onboarding_done')==='1' && !localStorage.getItem('np_openai_key') && !localStorage.getItem('np_api_seen')){
-  setTimeout(showApiKeyModal, 900);
-}
 
 // INIT
 (function initCatCounts(){
