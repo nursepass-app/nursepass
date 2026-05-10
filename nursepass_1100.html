@@ -604,10 +604,10 @@ body.font-large .explanation,body.font-large .result-area{font-size:17px!importa
     </div>
     <!-- 重要度フィルター -->
     <div class="star-filter-wrap" id="starFilterBar">
-      <button class="star-filter-btn" data-stars="all" onclick="setStarFilter('all')">すべて</button>
-      <button class="star-filter-btn" data-stars="1" onclick="setStarFilter('1')">★以上</button>
-      <button class="star-filter-btn" data-stars="2" onclick="setStarFilter('2')">★★以上</button>
       <button class="star-filter-btn" data-stars="3" onclick="setStarFilter('3')">★★★のみ</button>
+      <button class="star-filter-btn" data-stars="2" onclick="setStarFilter('2')">★★以上</button>
+      <button class="star-filter-btn" data-stars="1" onclick="setStarFilter('1')">★以上/全て</button>
+      <button class="star-filter-btn" data-stars="unread" onclick="setStarFilter('unread')">未解答優先</button>
     </div>
     <!-- エリア4: メインボタン -->
     <div style="display:flex;flex-direction:column;gap:12px">
@@ -1398,14 +1398,18 @@ function selectCompanionChar(charId){
 let autoAdvance=localStorage.getItem('np_auto_advance')==='1';
 let quizMode=localStorage.getItem('np_quiz_mode')||'hikari';
 let skipMastered=localStorage.getItem('np_skip_mastered')==='1';
-let starFilter=localStorage.getItem('np_star_filter')||'all';
+let starFilter=localStorage.getItem('np_star_filter')||'1';
 function setStarFilter(val){
   starFilter=val;
   localStorage.setItem('np_star_filter',val);
   document.querySelectorAll('.star-filter-btn').forEach(function(b){b.classList.toggle('active',b.dataset.stars===val);});
 }
 function applyStarFilter(pool){
-  if(starFilter==='all') return pool;
+  if(starFilter==='1') return pool;
+  if(starFilter==='unread'){
+    var unread=pool.filter(function(q){return !history[String(q.id)];});
+    return unread.length?unread:pool;
+  }
   var s=parseInt(starFilter);
   var m=pool.filter(function(q){return q.stars>=s;});
   return m.length?m:pool;
