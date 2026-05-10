@@ -677,8 +677,8 @@ body.font-xl .explanation{font-size:16px}
         <div class="hikari-header">
           <div class="hikari-avatar-lg"><img class="hikari-av-img" id="hikariAvLg" src="" alt="ヒカリ"></div>
           <div class="hikari-info">
-            <div class="hikari-name">ヒカリ</div>
-            <div class="hikari-catchcopy">いつも隣でそっと照らすよ</div>
+            <div class="hikari-name" id="chatPanelName">ヒカリ</div>
+            <div class="hikari-catchcopy" id="chatPanelCatchcopy">いつも隣でそっと照らすよ</div>
           </div>
           <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
             <div class="hikari-limit" id="hikariLimit">本日 残り10回</div>
@@ -1113,15 +1113,17 @@ function haptic(correct){
 (()=>{const btn=document.getElementById('hapticBtn');if(btn)btn.style.opacity=hapticEnabled?'1':'0.3';})();
 // ===== キャラクター選択・解放システム =====
 const CHAR_LIST=[
-  {id:'hikari', name:'ヒカリ', tag:'やさしい\nクリーム',   color:'#EDE0D4', unlockMsg:''},
-  {id:'hana',   name:'ハナ',   tag:'ポジティブ\nオレンジ', color:'#FFD6C4', unlockMsg:'よろしくね！一緒に頑張ろう！🌸'},
-  {id:'ren',    name:'レン',   tag:'太陽明るい\n黄緑',     color:'#C8E8B0', unlockMsg:'やったー！よろしくな！一緒に燃えようぜ⚡'},
-  {id:'riku',   name:'リク',   tag:'クール\n青白',         color:'#B8D4EE', unlockMsg:'よろしく。期待に応えてみせる❄️'},
-  {id:'sora',   name:'ソラ',   tag:'不思議系\n紫青',       color:'#C8B8E8', unlockMsg:'…よろしく。一緒に星を見よう🌙'}
+  {id:'hikari', name:'ヒカリ', catchcopy:'いつも隣でそっと照らすよ',       tag:'やさしい\nクリーム',   color:'#EDE0D4', unlockMsg:''},
+  {id:'hana',   name:'ハナ',   catchcopy:'一緒に全力で咲こう！',           tag:'ポジティブ\nオレンジ', color:'#FFD6C4', unlockMsg:'よろしくね！一緒に頑張ろう！🌸'},
+  {id:'ren',    name:'レン',   catchcopy:'燃えろ！絶対合格しようぜ⚡',     tag:'太陽明るい\n黄緑',     color:'#C8E8B0', unlockMsg:'やったー！よろしくな！一緒に燃えようぜ⚡'},
+  {id:'riku',   name:'リク',   catchcopy:'確実に、一歩ずつ積み上げよう',   tag:'クール\n青白',         color:'#B8D4EE', unlockMsg:'よろしく。期待に応えてみせる❄️'},
+  {id:'sora',   name:'ソラ',   catchcopy:'…星の数だけ、可能性がある🌙',   tag:'不思議系\n紫青',       color:'#C8B8E8', unlockMsg:'…よろしく。一緒に星を見よう🌙'}
 ];
 let selectedChar=localStorage.getItem('np_selected_char')||'hikari';
 let unlockedChars=JSON.parse(localStorage.getItem('np_unlocked_chars')||'null');
 let totalQuestions=parseInt(localStorage.getItem('np_total_questions')||'-1');
+let charExp=JSON.parse(localStorage.getItem('np_char_exp')||'{}');
+function saveCharExp(){try{localStorage.setItem('np_char_exp',JSON.stringify(charExp));}catch(e){}}
 // 変数初期化
 (function initCharSystem(){
   if(totalQuestions<0){
@@ -1131,6 +1133,11 @@ let totalQuestions=parseInt(localStorage.getItem('np_total_questions')||'-1');
   if(!unlockedChars){
     unlockedChars=[];
     try{localStorage.setItem('np_unlocked_chars','[]');}catch(e){}
+  }
+  // 既存ユーザーのヒカリexpを移行
+  if(charExp.hikari===undefined){
+    charExp.hikari=Object.values(history).reduce(function(s,h){return s+h.correct;},0);
+    saveCharExp();
   }
 })();
 function saveCharState(){
@@ -1193,6 +1200,7 @@ function selectCharacter(charId){
   selectedChar=charId;
   saveCharState();
   initSettingsTab();
+  updateHikariLevel();
   showToast(CHAR_LIST.find(c=>c.id===charId).name+'を選択しました');
 }
 function initSettingsTab(){
@@ -1784,6 +1792,7 @@ function answerQod(key,qid){
   // Record in history
   if(!history[qid]) history[qid]={correct:0,wrong:0};
   if(correct) history[qid].correct++; else {history[qid].wrong++;if(!todayWrong.ids.includes(qid))todayWrong.ids.push(qid);saveTodayWrong();}
+  if(correct){charExp[selectedChar]=(charExp[selectedChar]||0)+1;saveCharExp();}
   srsUpdate(qid,correct); save(); updateScoreBadge(); updateDailyStats(); renderGoalBar();
   const inner=document.getElementById('qodInner');
   if(!inner) return;
@@ -3914,17 +3923,23 @@ var HIKARI_IMG_PATHS=[
   'images/hikari/hikari_lv4.png',
   'images/hikari/hikari_lv5.png'
 ];
-var HIKARI_LV_NAMES=['たまごのヒカリ','小さなヒカリ','めざめたヒカリ','かがやくヒカリ','うつくしいヒカリ','めがみヒカリ'];
+var CHAR_LV_NAMES={
+  hikari:['たまごのヒカリ','小さなヒカリ','めざめたヒカリ','かがやくヒカリ','うつくしいヒカリ','めがみヒカリ'],
+  hana:  ['たまごのハナ','芽吹きのハナ','かがやくハナ','満開のハナ','花かんむりハナ','花の女神ハナ'],
+  ren:   ['たまごのレン','元気なレン','燃えるレン','輝くレン','炎のレン','太陽神レン'],
+  riku:  ['たまごのリク','静かなリク','鋭いリク','氷雪のリク','覇者リク','氷帝リク'],
+  sora:  ['たまごのソラ','ひそかなソラ','星のソラ','宇宙のソラ','深淵ソラ','星の女神ソラ']
+};
+function getCharLvName(charId,lv){return (CHAR_LV_NAMES[charId]||CHAR_LV_NAMES.hikari)[lv]||'';}
 var HIKARI_LV_REQ=[0,10,50,100,200,500];
 function getTotalAnswered(){
-  // 正解数のみでレベルを計算する（不正解はカウントしない）
   return Object.values(history).reduce(function(s,h){return s+h.correct;},0);
 }
 function getHikariLevel(){
-  var t=getTotalAnswered();
+  var t=charExp[selectedChar]||0;
   if(t>=500)return 5;if(t>=200)return 4;if(t>=100)return 3;if(t>=50)return 2;if(t>=10)return 1;return 0;
 }
-function getHikariImgSrc(){return HIKARI_IMG_PATHS[getHikariLevel()];}
+function getHikariImgSrc(){return getCharImgSrc(selectedChar,getHikariLevel());}
 var _hikariLvPrev=-1;
 function updateHikariLevel(){
   var lv=getHikariLevel();
@@ -3938,12 +3953,24 @@ function updateHikariLevel(){
   var src=getCharImgSrc(selectedChar,lv);
   var imgs=['dailyAvImg','hikariAvLg'];
   imgs.forEach(function(id){var e=document.getElementById(id);if(e)e.src=src;});
+  // キャラ名・キャッチコピー更新
+  var c=CHAR_LIST.find(function(x){return x.id===selectedChar;})||CHAR_LIST[0];
+  var labelEl=document.getElementById('dailyMsgLabel');
+  if(labelEl){
+    var tn=labelEl.firstChild;
+    if(tn&&tn.nodeType===3) tn.textContent=c.name+'より ';
+    else labelEl.insertBefore(document.createTextNode(c.name+'より '),labelEl.firstChild);
+  }
+  var cpName=document.getElementById('chatPanelName');
+  var cpCopy=document.getElementById('chatPanelCatchcopy');
+  if(cpName) cpName.textContent=c.name;
+  if(cpCopy) cpCopy.textContent=c.catchcopy||'';
   // badge and name
   var badge=document.getElementById('hikariLvBadge');
   var nameEl=document.getElementById('hikariLvName');
   var nextEl=document.getElementById('hikariLvNext');
   if(badge) badge.textContent='Lv.'+lv;
-  if(nameEl) nameEl.textContent=HIKARI_LV_NAMES[lv];
+  if(nameEl) nameEl.textContent=getCharLvName(selectedChar,lv);
   if(nextEl){
     if(lv<5){var rem=HIKARI_LV_REQ[lv+1]-t;nextEl.textContent='あと'+rem+'問でLv.'+(lv+1)+'！';}
     else{nextEl.textContent='最高レベル達成！✨';}
@@ -3967,10 +3994,10 @@ function showLevelUp(lv){
   screen.className='lv-up-screen';
   screen.innerHTML=
     '<div class="lv-up-screen-title">✨ LEVEL UP！ ✨</div>'
-    +'<img class="lv-up-new-img" src="'+HIKARI_IMG_PATHS[lv]+'" alt="'+HIKARI_LV_NAMES[lv]+'">'
+    +'<img class="lv-up-new-img" src="'+getCharImgSrc(selectedChar,lv)+'" alt="'+getCharLvName(selectedChar,lv)+'">'
     +'<div class="lv-up-name-wrap">'
     +'<div class="lv-up-lv-num">Lv.'+prevLv+' → Lv.'+lv+'</div>'
-    +'<div class="lv-up-name-text">'+HIKARI_LV_NAMES[lv]+'</div>'
+    +'<div class="lv-up-name-text">'+getCharLvName(selectedChar,lv)+'</div>'
     +'<div class="lv-up-evolve">に進化した！✨</div>'
     +'<div style="font-size:14px;color:rgba(255,255,255,0.88);margin-top:12px;font-family:\'Noto Sans JP\',sans-serif;text-align:center;line-height:1.6;font-weight:500">'+getCharMsg('levelup')+'</div>'
     +'</div>'
@@ -4215,6 +4242,7 @@ function answer(key){
   const prevH={...history[q.id]};
   if(correct) history[q.id].correct++;
   else {history[q.id].wrong++;if(!todayWrong.ids.includes(q.id))todayWrong.ids.push(q.id);saveTodayWrong();}
+  if(correct){charExp[selectedChar]=(charExp[selectedChar]||0)+1;saveCharExp();}
   // 苦手問題克服お祝い（以前に間違えた問題が3回正解に到達）
   if(correct&&prevH.wrong>=2&&prevH.correct===2&&history[q.id].correct===3){
     setTimeout(()=>{showToast('✨ 苦手問題を克服！この問題はもう大丈夫です！');},300);
@@ -7266,7 +7294,7 @@ function showPersonalityQuiz(){
 }
 function _renderPqStep(overlay){
   var lv=getHikariLevel();
-  var img=HIKARI_IMG_PATHS[lv];
+  var img=getCharImgSrc(selectedChar,lv);
   if(_pqStep>=_pqQuestions.length){
     // 判定
     var best='hikari_empathy',bestPt=0;
