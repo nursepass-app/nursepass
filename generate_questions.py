@@ -4,8 +4,13 @@ NursePass 問題半自動生成ツール
 Claude API を使って看護師国家試験の問題を生成し、
 レビュー後に questions.json へ追記する。
 
-使用方法:
-  python3 generate_questions.py
+【生成モード】
+  python3 generate_questions.py --subject "基礎看護学" --count 5
+  → generated_YYYYMMDD_HHMMSS.json に保存し全問を表示
+
+【承認モード】
+  python3 generate_questions.py --approve generated_*.json [--reject 2,4]
+  → questions.json に追記（--reject で除外する問題番号を指定）
 
 依存:
   .venv/bin/python3 (anthropic 0.100.0+)
@@ -13,10 +18,13 @@ Claude API を使って看護師国家試験の問題を生成し、
   ANTHROPIC_API_KEY
 """
 
+import argparse
 import json
 import os
 import sys
 import textwrap
+from collections import Counter
+from datetime import datetime
 from pathlib import Path
 
 STARS_MASTER_JSON = Path(__file__).parent / "stars_master.json"
@@ -103,6 +111,50 @@ SUBJECTS = {
         ),
     },
 }
+
+
+def find_subject(query: str) -> dict:
+    """--subject 引数から科目情報を解決する（番号・完全一致・部分一致に対応）。"""
+    # 番号指定（1, 2）
+    if query in SUBJECTS:
+        return SUBJECTS[query]
+
+    # SUBJECTS のラベルで完全一致
+    for s in SUBJECTS.values():
+        if s["label"] == query:
+            return s
+
+    # questions.json の全フィールドで部分一致
+    with open(QUESTIONS_JSON, encoding="utf-8") as f:
+        data = json.load(f)
+
+    all_fields = sorted(set(q["field"] for q in data))
+
+    if query in all_fields:
+        matched_field = query
+    else:
+        candidates = [f for f in all_fields if query in f]
+        if len(candidates) == 1:
+            matched_field = candidates[0]
+        elif len(candidates) > 1:
+            print(f"複数の科目が候補として見つかりました（より具体的に指定してください）:")
+            for c in candidates:
+                print(f"  {c}")
+            sys.exit(1)
+        else:
+            print(f"科目 '{query}' が見つかりません。利用可能な科目:")
+            for f in all_fields:
+                print(f"  {f}")
+            sys.exit(1)
+
+    cats = Counter(q["category"] for q in data if q["field"] == matched_field)
+    category = cats.most_common(1)[0][0]
+    return {
+        "label": matched_field,
+        "category": category,
+        "field": matched_field,
+        "description": f"看護師国家試験「{category}問題」の「{matched_field}」領域。",
+    }
 
 SYSTEM_PROMPT_TEMPLATE = """あなたは看護師国家試験（日本）の問題作成専門家です。
 指示された科目・領域の必修問題を正確かつ実践的に作成してください。
@@ -250,116 +302,143 @@ def display_question(idx: int, q: dict, total: int) -> None:
     print(f"{'─'*60}")
 
 
-def review_and_append(subject: dict, generated: list[dict]) -> None:
-    """生成した問題をインタラクティブにレビューして questions.json に追記する。"""
-    questions = load_questions()
-    next_id = get_next_id(questions)
-    approved = []
-    total = len(generated)
+def save_generated(subject: dict, generated: list[dict]) -> Path:
+    """生成した問題を中間ファイルに保存して返す。"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_path = Path(__file__).parent / f"generated_{timestamp}.json"
+    payload = {
+        "subject": subject,
+        "generated_at": datetime.now().isoformat(),
+        "questions": [dict(idx=i + 1, **q) for i, q in enumerate(generated)],
+    }
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    return out_path
 
-    print(f"\n{'='*60}")
-    print(f"  {total}問生成しました。1問ずつレビューしてください。")
-    print(f"  y = 追加  n = スキップ  s = stars変更  e = 全編集  q = 終了して保存")
-    print(f"{'='*60}")
 
-    for i, q in enumerate(generated, 1):
-        display_question(i, q, total)
+def approve_from_file(file_path: Path, reject_indices: set[int]) -> None:
+    """生成済みファイルから問題を読み込み、questions.json に追記する。"""
+    with open(file_path, encoding="utf-8") as f:
+        payload = json.load(f)
 
-        while True:
-            choice = input("\n  操作を選んでください [y/n/s/e/q]: ").strip().lower()
-            if choice == "y":
-                entry = {
-                    "id": next_id + len(approved),
-                    "category": subject["category"],
-                    "field": subject["field"],
-                    "question": q["question"],
-                    "choices": q["choices"],
-                    "answer": q["answer"],
-                    "explanation": q["explanation"],
-                    "stars": q["stars"],
-                }
-                approved.append(entry)
-                print(f"  ✓ 追加しました (id={entry['id']})")
-                break
-            elif choice == "n":
-                print("  スキップしました。")
-                break
-            elif choice == "s":
-                stars_now = "★" * q["stars"] + "☆" * (3 - q["stars"])
-                print(f"  現在の stars: {stars_now} ({q['stars']})")
-                print("  新しい stars を入力してください（1〜3、空白でキャンセル）:")
-                new_stars = input("  >> ").strip()
-                if new_stars in ("1", "2", "3"):
-                    q["stars"] = int(new_stars)
-                    stars_new = "★" * q["stars"] + "☆" * (3 - q["stars"])
-                    print(f"  ✓ stars を {stars_new} ({q['stars']}) に変更しました。")
-                elif new_stars == "":
-                    print("  キャンセルしました。")
-                else:
-                    print("  1〜3 の数字を入力してください。")
-            elif choice == "e":
-                print("  問題文を入力してください（空白でそのまま）:")
-                new_q = input("  >> ").strip()
-                if new_q:
-                    q["question"] = new_q
-                print("  解説を入力してください（空白でそのまま）:")
-                new_exp = input("  >> ").strip()
-                if new_exp:
-                    q["explanation"] = new_exp
-                print("  stars を入力してください（1〜3、空白でそのまま）:")
-                new_stars = input("  >> ").strip()
-                if new_stars in ("1", "2", "3"):
-                    q["stars"] = int(new_stars)
-                display_question(i, q, total)
-            elif choice == "q":
-                print("\n  レビューを終了します。")
-                break
-            else:
-                print("  y / n / s / e / q のいずれかを入力してください。")
+    subject = payload["subject"]
+    candidates = payload["questions"]
+    total = len(candidates)
+    approved_qs = [q for q in candidates if q["idx"] not in reject_indices]
 
-        if choice == "q":
-            break
-
-    if not approved:
-        print("\n追加する問題がありませんでした。questions.json は変更していません。")
+    if not approved_qs:
+        print("承認する問題がありません。questions.json は変更していません。")
         return
 
-    questions.extend(approved)
+    questions = load_questions()
+    next_id = get_next_id(questions)
+
+    entries = []
+    for i, q in enumerate(approved_qs):
+        entries.append({
+            "id": next_id + i,
+            "category": subject["category"],
+            "field": subject["field"],
+            "question": q["question"],
+            "choices": q["choices"],
+            "answer": q["answer"],
+            "explanation": q["explanation"],
+            "stars": q["stars"],
+        })
+
+    questions.extend(entries)
     save_questions(questions)
+
+    skipped = total - len(approved_qs)
     print(f"\n{'='*60}")
-    print(f"  {len(approved)}問を questions.json に追記しました。")
-    print(f"  追加 ID: {approved[0]['id']} 〜 {approved[-1]['id']}")
+    print(f"  {len(entries)}問を questions.json に追記しました。")
+    if skipped:
+        print(f"  スキップ: {skipped}問（--reject {','.join(str(i) for i in sorted(reject_indices))}）")
+    print(f"  追加 ID: {entries[0]['id']} 〜 {entries[-1]['id']}")
     print(f"  総問題数: {len(questions)}")
     print(f"{'='*60}")
 
 
-def select_subject() -> dict:
-    print("\n" + "="*60)
-    print("  NursePass 問題生成ツール")
-    print("="*60)
-    print("\n科目を選択してください:\n")
-    for key, subj in SUBJECTS.items():
-        print(f"  {key}. {subj['label']}")
-    print()
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="NursePass 問題半自動生成ツール",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=textwrap.dedent("""
+            【生成モード】
+              python3 generate_questions.py --subject "基礎看護学" --count 5
 
-    while True:
-        choice = input(">> ").strip()
-        if choice in SUBJECTS:
-            return SUBJECTS[choice]
-        print(f"  {', '.join(SUBJECTS.keys())} のいずれかを入力してください。")
+            【承認モード】
+              python3 generate_questions.py --approve generated_*.json
+              python3 generate_questions.py --approve generated_*.json --reject 2,4
+        """),
+    )
+    parser.add_argument("--subject", "-s", help="科目名（部分一致可）")
+    parser.add_argument("--count", "-n", type=int, default=GENERATE_COUNT,
+                        help=f"生成問題数（デフォルト: {GENERATE_COUNT}）")
+    parser.add_argument("--approve", metavar="FILE",
+                        help="生成済みJSONを承認して questions.json に追記")
+    parser.add_argument("--reject", default="",
+                        help="除外する問題番号（カンマ区切り: 2,4,7）。--approve と併用")
+    return parser.parse_args()
 
 
 def main() -> None:
-    subject = select_subject()
-    print(f"\n科目: {subject['label']} を選択しました。")
-    print(f"{GENERATE_COUNT}問を生成します...\n")
+    args = parse_args()
+
+    # ── 承認モード ──────────────────────────────────────
+    if args.approve:
+        file_path = Path(args.approve)
+        if not file_path.exists():
+            print(f"ERROR: ファイルが見つかりません: {file_path}")
+            sys.exit(1)
+
+        reject_indices: set[int] = set()
+        if args.reject:
+            try:
+                reject_indices = {int(x.strip()) for x in args.reject.split(",") if x.strip()}
+            except ValueError:
+                print("ERROR: --reject には整数をカンマ区切りで指定してください（例: 2,4,7）")
+                sys.exit(1)
+
+        with open(file_path, encoding="utf-8") as f:
+            payload = json.load(f)
+        total = len(payload["questions"])
+
+        print(f"\n{'='*60}")
+        print(f"  承認モード: {file_path.name}")
+        print(f"  科目: {payload['subject']['label']}")
+        print(f"  問題数: {total}問  除外: {sorted(reject_indices) or 'なし'}")
+        print(f"{'='*60}")
+
+        for q in payload["questions"]:
+            skip = " ← スキップ" if q["idx"] in reject_indices else ""
+            display_question(q["idx"], q, total)
+            if skip:
+                print(f"  [除外]{skip}")
+
+        approve_from_file(file_path, reject_indices)
+        return
+
+    # ── 生成モード ──────────────────────────────────────
+    if not args.subject:
+        print("ERROR: --subject を指定してください。")
+        print("  例: python3 generate_questions.py --subject \"基礎看護学\" --count 5")
+        sys.exit(1)
+
+    subject = find_subject(args.subject)
+    count = args.count
+
+    print(f"\n{'='*60}")
+    print(f"  NursePass 問題生成ツール")
+    print(f"  科目: {subject['label']}  問題数: {count}問")
+    print(f"{'='*60}\n")
 
     questions = load_questions()
     existing_texts = get_existing_question_texts(questions, subject["field"])
     print(f"  既存問題数（同科目）: {len(existing_texts)}問")
 
     try:
-        generated = generate_questions_via_api(subject, existing_texts, GENERATE_COUNT)
+        generated = generate_questions_via_api(subject, existing_texts, count)
     except json.JSONDecodeError as e:
         print(f"ERROR: APIの応答をJSONとして解析できませんでした: {e}")
         sys.exit(1)
@@ -367,9 +446,18 @@ def main() -> None:
         print(f"ERROR: API呼び出しに失敗しました: {e}")
         sys.exit(1)
 
-    print(f"  {len(generated)}問の生成が完了しました。")
+    print(f"  {len(generated)}問の生成が完了しました。\n")
 
-    review_and_append(subject, generated)
+    for i, q in enumerate(generated, 1):
+        display_question(i, q, len(generated))
+
+    out_path = save_generated(subject, generated)
+    print(f"\n{'='*60}")
+    print(f"  生成ファイル: {out_path.name}")
+    print(f"  レビュー後、以下のコマンドで承認してください:")
+    print(f"    python3 generate_questions.py --approve {out_path.name}")
+    print(f"    python3 generate_questions.py --approve {out_path.name} --reject 2,4")
+    print(f"{'='*60}")
 
 
 if __name__ == "__main__":
