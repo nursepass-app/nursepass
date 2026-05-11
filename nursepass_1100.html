@@ -7382,13 +7382,13 @@ function _pqAnswer(type){
 
 
 // INIT
-(function initCatCounts(){
+function initCatCounts(){
   ['必修','一般','状況設定'].forEach(cat=>{
     const n=QUESTIONS.filter(q=>q.category===cat).length;
     const el=document.getElementById('catCount'+cat);
     if(el) el.textContent=n+'問';
   });
-})();
+}
 // スワイプジェスチャー（モバイル対応）
 (function(){
   let sx=0,sy=0;
@@ -7482,6 +7482,7 @@ fetch('questions.json')
   .then(function(data){
     QUESTIONS = data;
     FIELDS = [...new Set(QUESTIONS.map(function(q){return q.field;}))].sort();
+    initCatCounts();
     if(window._pendingStart){var _fn=window._pendingStart;window._pendingStart=null;_fn();return;}
     renderHomeSummary();
     updateBnWeakBadge();
