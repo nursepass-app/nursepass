@@ -532,6 +532,35 @@ body.font-xl .explanation{font-size:16px}
 .lv-up-evolve{font-size:15px;color:rgba(255,255,255,0.85);margin-top:6px;font-family:'Noto Sans JP',sans-serif}
 .lv-up-tap{font-size:12px;color:rgba(255,255,255,0.4);margin-top:24px;font-family:'Noto Sans JP',sans-serif}
 .lv-up-particle{position:fixed;border-radius:3px;pointer-events:none;z-index:10001;animation:lvParticle 1.4s ease-out forwards}
+/* ===== アイテム・ポイントシステム ===== */
+#pointDisplay{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 0 2px;margin-bottom:6px}
+.pt-label{font-size:11px;color:#8A6A50;font-weight:600}
+.pt-balance{font-size:20px;font-weight:800;color:#D97706;letter-spacing:.02em;font-family:'Zen Kaku Gothic New',sans-serif}
+.pt-unit{font-size:11px;color:#8A6A50}
+.present-section{padding:8px 12px 4px;border-top:1px solid rgba(85,80,77,0.08)}
+.present-btn{width:100%;padding:9px 12px;background:linear-gradient(135deg,rgba(255,200,150,0.25),rgba(255,170,200,0.2));border:1.5px solid rgba(217,150,100,0.4);border-radius:14px;font-size:13px;font-weight:700;color:#9A5A2A;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .2s}
+.present-btn:active{background:rgba(255,200,150,0.4)}
+.gift-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9010;display:flex;align-items:flex-end;justify-content:center}
+.gift-modal-card{background:linear-gradient(170deg,#FFF8F0,#FFF0E8);border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px 20px 36px;box-shadow:0 -8px 40px rgba(0,0,0,0.18)}
+.gift-modal-title{font-size:17px;font-weight:800;color:#7A3A10;text-align:center;margin-bottom:4px;font-family:'Zen Kaku Gothic New',sans-serif}
+.gift-modal-pts{text-align:center;font-size:12px;color:#8A6A50;margin-bottom:16px}
+.gift-items-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+.gift-item-btn{flex:1;max-width:110px;padding:12px 6px;background:rgba(255,255,255,0.7);border:1.5px solid rgba(217,197,178,0.5);border-radius:16px;cursor:pointer;text-align:center;transition:all .2s;font-family:'Noto Sans JP',sans-serif}
+.gift-item-btn:active{transform:scale(.95)}
+.gift-item-btn.selected{border-color:#D97706;background:rgba(255,215,100,0.2);box-shadow:0 0 0 2px rgba(217,150,0,0.25)}
+.gift-item-emoji{font-size:28px;display:block;margin-bottom:4px}
+.gift-item-name{font-size:11px;font-weight:700;color:#5A3A1A;display:block;margin-bottom:2px}
+.gift-item-cost{font-size:10px;color:#D97706;font-weight:600}
+.gift-reaction-box{min-height:56px;background:rgba(255,245,235,0.8);border:1.5px solid rgba(217,197,178,0.4);border-radius:14px;padding:10px 14px;font-size:13px;color:#5A3A1A;line-height:1.6;margin-bottom:14px;text-align:center;font-style:italic}
+.gift-confirm-btn{width:100%;padding:13px;background:linear-gradient(135deg,#F97316,#FBBF24);border:none;border-radius:16px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;letter-spacing:.05em;transition:opacity .2s}
+.gift-confirm-btn:disabled{opacity:.4;cursor:default}
+.gift-cancel-btn{width:100%;padding:9px;background:transparent;border:none;font-size:12px;color:#8A6A50;cursor:pointer;margin-top:4px;font-family:'Noto Sans JP',sans-serif}
+.pt-earned-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,0.95);border:2px solid rgba(217,150,0,0.5);border-radius:20px;padding:10px 22px;font-size:16px;font-weight:800;color:#D97706;z-index:9100;pointer-events:none;font-family:'Zen Kaku Gothic New',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.12);animation:ptEarnedIn .3s ease-out forwards}
+.char-gift-float{animation:charGiftFloat 1.2s ease-in-out infinite alternate}
+.gift-sparkle{position:fixed;pointer-events:none;z-index:9050;font-size:20px;animation:giftSparkle 1s ease-out forwards}
+@keyframes ptEarnedIn{0%{opacity:0;transform:translate(-50%,-60%) scale(.7)}60%{transform:translate(-50%,-48%) scale(1.12)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes charGiftFloat{0%{transform:translateY(0)}100%{transform:translateY(-10px)}}
+@keyframes giftSparkle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--gx),var(--gy)) scale(0) rotate(var(--gr))}}
 </style>
 </head>
 <body ontouchstart="">
@@ -582,6 +611,12 @@ body.font-xl .explanation{font-size:16px}
     </div>
     <div id="streakHomeBadge"></div>
     <div id="streakWarnBanner"></div>
+    <!-- ポイント残高表示 -->
+    <div id="pointDisplay">
+      <span class="pt-label">⭐ ポイント</span>
+      <span class="pt-balance" id="pointBalance">0</span>
+      <span class="pt-unit">pt</span>
+    </div>
     <!-- エリア3: モード切替 -->
     <div class="mode-switch-wrap" id="modeSwitchBar" style="margin-bottom:18px">
       <button class="mode-switch-btn active hikari" id="modeBtnHikari" onclick="setQuizMode('hikari')">🌸 やさしく</button>
@@ -697,6 +732,9 @@ body.font-xl .explanation{font-size:16px}
           <button onclick="quickChat('看護師国試の効率的な勉強法を教えて')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">効率的な勉強法</button>
           <button onclick="quickChat('今日の学習で気をつけることは何？')" style="padding:5px 10px;background:rgba(240,232,222,0.8);border:1px solid rgba(184,160,144,0.4);border-radius:14px;font-size:11px;color:#6B5040;cursor:pointer;font-family:'Noto Sans JP',sans-serif;white-space:nowrap">今日のポイント</button>
         </div>
+        <div class="present-section">
+          <button class="present-btn" onclick="openGiftModal()">🎁 プレゼントする <span id="presentPtBadge" style="font-size:11px;font-weight:600;color:#D97706;margin-left:4px"></span></button>
+        </div>
         <div class="chat-input-row">
           <textarea class="chat-input" id="chatInput" rows="1" placeholder="ヒカリに相談する..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
           <button class="chat-send-btn" id="chatSendBtn" onclick="sendChat()">送信</button>
@@ -810,6 +848,34 @@ body.font-xl .explanation{font-size:16px}
     <button class="modal-btn" onclick="saveApiKey()">保存して始める</button>
     <button class="modal-skip" id="apiSkipBtn" onclick="skipApiKey()">あとで設定する</button>
     <button class="modal-del" id="apiDelBtn" onclick="deleteApiKey()" style="display:none">⚠ 現在のキーを削除する</button>
+  </div>
+</div>
+
+<!-- プレゼントモーダル -->
+<div class="gift-modal-overlay" id="giftModal" style="display:none" onclick="if(event.target===this)closeGiftModal()">
+  <div class="gift-modal-card">
+    <div class="gift-modal-title">🎁 プレゼントを贈る</div>
+    <div class="gift-modal-pts">残り <span id="giftPtBalance" style="font-weight:800;color:#D97706">0</span> pt</div>
+    <div class="gift-items-row">
+      <div class="gift-item-btn" id="giftItemCake" onclick="selectGiftItem('cake')">
+        <span class="gift-item-emoji">🍰</span>
+        <span class="gift-item-name">ケーキ</span>
+        <span class="gift-item-cost">30pt</span>
+      </div>
+      <div class="gift-item-btn" id="giftItemFlower" onclick="selectGiftItem('flower')">
+        <span class="gift-item-emoji">🌸</span>
+        <span class="gift-item-name">お花</span>
+        <span class="gift-item-cost">20pt</span>
+      </div>
+      <div class="gift-item-btn" id="giftItemStar" onclick="selectGiftItem('star')">
+        <span class="gift-item-emoji">⭐</span>
+        <span class="gift-item-name">応援スター</span>
+        <span class="gift-item-cost">50pt</span>
+      </div>
+    </div>
+    <div class="gift-reaction-box" id="giftReactionBox">アイテムを選んでね</div>
+    <button class="gift-confirm-btn" id="giftConfirmBtn" onclick="confirmGift()" disabled>プレゼントする</button>
+    <button class="gift-cancel-btn" onclick="closeGiftModal()">閉じる</button>
   </div>
 </div>
 
@@ -1069,6 +1135,99 @@ function deleteMemo(id){
   const btn=document.getElementById('memoBtn'+id);
   if(btn){btn.textContent='📋';btn.style.color='#8A7060';}
   showToast('メモを削除しました');
+}
+// ===== アイテム・ポイントシステム =====
+let np_points=parseInt(localStorage.getItem('np_points')||'0');
+const GIFT_ITEMS={
+  cake:{emoji:'🍰',name:'ケーキ',cost:30},
+  flower:{emoji:'🌸',name:'お花',cost:20},
+  star:{emoji:'⭐',name:'応援スター',cost:50}
+};
+const GIFT_REACTIONS={
+  hikari:{cake:'わあ✨そっと照らしてあげるね🌟',flower:'きれい…ありがとう、大切にするね',star:'一緒に頑張ろうね、絶対合格できる！'},
+  hana:  {cake:'やったー！元気100倍！一緒に頑張ろ！',flower:'かわいい！ハナと一緒だね🌸',star:'輝いてる！あなたも絶対輝ける！'},
+  sora:  {cake:'…月に誓って、合格させてみせる',flower:'星みたい…大切にする',star:'宇宙に届きそう…一緒に飛ぼう'},
+  riku:  {cake:'…ちゃんと受け取った。頑張る',flower:'…綺麗だ。ありがとう',star:'…この輝き、忘れない'},
+  ren:   {cake:'最高！燃えてきた！⚡一緒に突破しよう！',flower:'わあ！エネルギーもらった！',star:'この星のパワー、全部注ぎ込む！'}
+};
+let _selectedGiftItem=null;
+function updatePointDisplay(){
+  const el=document.getElementById('pointBalance');
+  if(el) el.textContent=np_points;
+  const badge=document.getElementById('presentPtBadge');
+  if(badge) badge.textContent='('+np_points+'pt)';
+}
+function awardPoints(stars){
+  const pts=stars>=3?3:stars>=2?2:1;
+  np_points+=pts;
+  try{localStorage.setItem('np_points',String(np_points));}catch(e){}
+  updatePointDisplay();
+  // 小さな獲得表示
+  const t=document.createElement('div');
+  t.className='pt-earned-toast';
+  t.textContent='+'+pts+'pt';
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(()=>t.remove(),400);},800);
+}
+function openGiftModal(){
+  _selectedGiftItem=null;
+  document.getElementById('giftPtBalance').textContent=np_points;
+  document.getElementById('giftReactionBox').textContent='アイテムを選んでね';
+  document.getElementById('giftConfirmBtn').disabled=true;
+  ['cake','flower','star'].forEach(k=>{
+    const el=document.getElementById('giftItem'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(el) el.classList.remove('selected');
+  });
+  document.getElementById('giftModal').style.display='flex';
+}
+function closeGiftModal(){
+  document.getElementById('giftModal').style.display='none';
+  _selectedGiftItem=null;
+}
+function selectGiftItem(key){
+  _selectedGiftItem=key;
+  ['cake','flower','star'].forEach(k=>{
+    const el=document.getElementById('giftItem'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(el) el.classList.toggle('selected',k===key);
+  });
+  const reactions=GIFT_REACTIONS[selectedChar]||GIFT_REACTIONS.hikari;
+  document.getElementById('giftReactionBox').textContent=reactions[key]||'…ありがとう';
+  const item=GIFT_ITEMS[key];
+  const btn=document.getElementById('giftConfirmBtn');
+  btn.disabled=np_points<item.cost;
+  btn.textContent=np_points>=item.cost?'プレゼントする（'+item.cost+'pt）':'ポイントが足りません';
+}
+function confirmGift(){
+  if(!_selectedGiftItem) return;
+  const item=GIFT_ITEMS[_selectedGiftItem];
+  if(np_points<item.cost){showToast('ポイントが足りません');return;}
+  np_points-=item.cost;
+  try{localStorage.setItem('np_points',String(np_points));}catch(e){}
+  updatePointDisplay();
+  closeGiftModal();
+  // 反応を表示
+  const reactions=GIFT_REACTIONS[selectedChar]||GIFT_REACTIONS.hikari;
+  const msg=reactions[_selectedGiftItem]||'…ありがとう';
+  _launchGiftAnimation(item.emoji);
+  setTimeout(()=>{showHikariMsg(item.emoji+' '+msg);},400);
+  showToast(item.emoji+' '+item.name+'を贈った！');
+}
+function _launchGiftAnimation(emoji){
+  for(let i=0;i<8;i++){
+    const s=document.createElement('div');
+    s.className='gift-sparkle';
+    const cx=window.innerWidth/2,cy=window.innerHeight/2;
+    s.style.left=cx+'px';s.style.top=cy+'px';
+    const angle=Math.random()*360;const dist=60+Math.random()*100;
+    const gx=Math.cos(angle*Math.PI/180)*dist+'px';
+    const gy=Math.sin(angle*Math.PI/180)*dist+'px';
+    s.style.setProperty('--gx',gx);s.style.setProperty('--gy',gy);
+    s.style.setProperty('--gr',(Math.random()*360)+'deg');
+    s.textContent=['✨','🌸','⭐','💫','🌟'][i%5];
+    s.style.animationDelay=(i*80)+'ms';
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),1200);
+  }
 }
 // ===== アチーブメント =====
 const ACHIEVEMENTS=[
@@ -4234,7 +4393,7 @@ function answer(key){
   const correct=key===q.answer;
   if(!history[q.id]) history[q.id]={correct:0,wrong:0};
   const prevH={...history[q.id]};
-  if(correct) history[q.id].correct++;
+  if(correct){history[q.id].correct++;awardPoints(q.stars||1);}
   else {history[q.id].wrong++;if(!todayWrong.ids.includes(q.id))todayWrong.ids.push(q.id);saveTodayWrong();}
   // 苦手問題克服お祝い（以前に間違えた問題が3回正解に到達）
   if(correct&&prevH.wrong>=2&&prevH.correct===2&&history[q.id].correct===3){
@@ -7475,6 +7634,7 @@ fetch('questions.json')
     QUESTIONS = data;
     FIELDS = [...new Set(QUESTIONS.map(function(q){return q.field;}))].sort();
     initCatCounts();
+    updatePointDisplay();
     if(window._pendingStart){var _fn=window._pendingStart;window._pendingStart=null;_fn();return;}
     renderHomeSummary();
     updateBnWeakBadge();
