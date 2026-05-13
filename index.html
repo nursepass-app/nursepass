@@ -562,6 +562,18 @@ body.font-xl .explanation{font-size:16px}
 @keyframes ptEarnedIn{0%{opacity:0;transform:translate(-50%,-60%) scale(.7)}60%{transform:translate(-50%,-48%) scale(1.12)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @keyframes charGiftFloat{0%{transform:translateY(0)}100%{transform:translateY(-10px)}}
 @keyframes giftSparkle{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--gx),var(--gy)) scale(0) rotate(var(--gr))}}
+/* ===== LOADING SCREEN ===== */
+#loadingScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,#F5EFE8,#EDE0D0,#E8D8C8);z-index:20000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease;}
+.ld-logo{font-size:36px;font-weight:900;color:#5A3828;font-family:'Zen Kaku Gothic New',sans-serif;letter-spacing:.04em;margin-bottom:4px}
+.ld-sub{font-size:13px;color:#B8907A;font-weight:600;font-family:'Noto Sans JP',sans-serif;letter-spacing:.1em;margin-bottom:22px}
+.ld-hikari{width:110px;height:110px;object-fit:contain;animation:ldFloat 2.4s ease-in-out infinite;margin-bottom:18px}
+@keyframes ldFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-13px)}}
+.ld-quote{font-size:15px;color:#7A5840;font-weight:600;font-family:'Noto Sans JP',sans-serif;margin-bottom:26px;text-align:center;line-height:1.75;padding:0 28px;min-height:26px}
+.ld-dots{display:flex;gap:9px;align-items:center;justify-content:center}
+.ld-dot{width:9px;height:9px;border-radius:50%;background:#C8956A;animation:ldDot 1.5s ease-in-out infinite}
+.ld-dot:nth-child(2){animation-delay:.2s}
+.ld-dot:nth-child(3){animation-delay:.4s}
+@keyframes ldDot{0%,60%,100%{transform:scale(0.65);opacity:0.3}30%{transform:scale(1.25);opacity:1}}
 </style>
 </head>
 <body ontouchstart="">
@@ -578,6 +590,37 @@ body.font-xl .explanation{font-size:16px}
     <!-- obPhase2・obPhase3はJSで動的生成（display:none要素の同時レンダリングバグ回避） -->
   </div>
 </div>
+<!-- ③ ローディング画面 -->
+<div id="loadingScreen">
+  <div class="ld-logo">NursePass</div>
+  <div class="ld-sub">看護師国試対策アプリ</div>
+  <img class="ld-hikari" src="images/hikari/hikari_lv0birth1.png" alt="ヒカリ" onerror="this.style.display='none'">
+  <div class="ld-quote" id="ldQuote"></div>
+  <div class="ld-dots">
+    <div class="ld-dot"></div>
+    <div class="ld-dot"></div>
+    <div class="ld-dot"></div>
+  </div>
+</div>
+<script>
+(function(){
+  window._ldStart = Date.now();
+  var quotes = [
+    '一緒に合格しようね🌟',
+    '今日も頑張ろう！',
+    '毎日続けることが大切だよ✨'
+  ];
+  try {
+    var ed = localStorage.getItem('np_exam_date');
+    if (ed) {
+      var diff = Math.ceil((new Date(ed) - new Date()) / (1000*60*60*24));
+      if (diff > 0) quotes.push('国試まであと' + diff + '日！');
+    }
+  } catch(e) {}
+  var el = document.getElementById('ldQuote');
+  if (el) el.textContent = quotes[Math.floor(Math.random() * quotes.length)];
+})();
+</script>
 <div class="blob blob1"></div>
 <div class="blob blob2"></div>
 <div class="wrap">
@@ -7633,6 +7676,16 @@ updateStreakDisplay();
     setTimeout(function(){showHikariMsg(nm[Math.floor(Math.random()*2)]);},5500);
   }
 })();
+function hideLoadingScreen(){
+  var scr=document.getElementById('loadingScreen');
+  if(!scr) return;
+  var elapsed=Date.now()-(window._ldStart||Date.now());
+  var wait=Math.max(0,1500-elapsed);
+  setTimeout(function(){
+    scr.style.opacity='0';
+    setTimeout(function(){if(scr.parentNode)scr.remove();},520);
+  },wait);
+}
 fetch('questions.json')
   .then(function(r){return r.json();})
   .then(function(data){
@@ -7640,6 +7693,7 @@ fetch('questions.json')
     FIELDS = [...new Set(QUESTIONS.map(function(q){return q.field;}))].sort();
     initCatCounts();
     updatePointDisplay();
+    hideLoadingScreen();
     if(window._pendingStart){var _fn=window._pendingStart;window._pendingStart=null;_fn();return;}
     renderHomeSummary();
     updateBnWeakBadge();
@@ -7728,6 +7782,7 @@ fetch('questions.json')
   })
   .catch(function(err){
     console.error('questions.json の読み込みに失敗しました:', err);
+    var scr=document.getElementById('loadingScreen');if(scr)scr.remove();
     document.body.innerHTML='<div style="text-align:center;padding:40px;font-family:sans-serif"><h2>データ読み込みエラー</h2><p>ページを再読み込みしてください。</p></div>';
   });
 </script>
