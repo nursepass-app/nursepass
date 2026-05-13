@@ -464,9 +464,15 @@ body.font-xl .explanation{font-size:16px}
 /* ===== ANSWER FEEDBACK ANIMATIONS ===== */
 @keyframes feedbackZoomIn{0%{opacity:0;transform:translate(-50%,-50%) scale(.3);}40%{opacity:1;transform:translate(-50%,-50%) scale(1.15);}70%{transform:translate(-50%,-50%) scale(.95);}100%{opacity:1;transform:translate(-50%,-50%) scale(1);}}
 @keyframes feedbackFadeOut{0%{opacity:1;transform:translate(-50%,-50%) scale(1);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1);}}
+@keyframes wrongGentleIn{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}55%{opacity:1;transform:translate(-50%,-50%) scale(1.07)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes wrongGentleOut{0%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(0.82) translateY(-16px)}}
 .answer-feedback-wrap{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:12px;}
 .answer-feedback-symbol{font-weight:900;line-height:1;text-align:center;}
 .answer-feedback-text{font-weight:700;text-align:center;}
+@keyframes xpGainFloat{0%{opacity:1;transform:translateY(0) scale(1)}65%{opacity:1}100%{opacity:0;transform:translateY(-46px) scale(0.82)}}
+.xp-gain-pop{position:fixed;font-size:13px;font-weight:900;color:#f0a020;text-shadow:0 1px 6px rgba(240,160,32,0.45);pointer-events:none;z-index:9600;animation:xpGainFloat 1.2s ease forwards;font-family:'Zen Kaku Gothic New',sans-serif;white-space:nowrap;}
+@keyframes comboRingPulse{0%{box-shadow:0 0 0 0 rgba(245,197,24,0.85)}55%{box-shadow:0 0 0 10px rgba(245,197,24,0.22)}100%{box-shadow:0 0 0 20px rgba(245,197,24,0)}}
+.combo-ring{animation:comboRingPulse 0.65s ease-out forwards!important;}
 
 @keyframes sparkleOut{0%{opacity:0;transform:scale(0) rotate(0deg)}28%{opacity:1;transform:scale(1.4) rotate(18deg)}78%{opacity:0.7}100%{opacity:0;transform:scale(0.3) rotate(55deg) translate(var(--sx),var(--sy))}}
 @keyframes charMsgPop{0%{opacity:0;transform:translateY(14px) scale(0.78)}55%{transform:translateY(-2px) scale(1.06)}100%{opacity:1;transform:translateY(0) scale(1)}}
@@ -1136,9 +1142,14 @@ function toggleHaptic(){
   if(hapticEnabled&&navigator.vibrate) navigator.vibrate(50);
   showToast(hapticEnabled?'バイブレーションON':'バイブレーションOFF');
 }
-function haptic(correct){
+function haptic(correct,combo){
   if(!hapticEnabled||!navigator.vibrate) return;
-  navigator.vibrate(correct?40:[80,40,80]);
+  if(!correct){navigator.vibrate([80,40,80]);return;}
+  var c=combo||0;
+  if(c>=10) navigator.vibrate([40,15,40,15,80]);
+  else if(c>=5) navigator.vibrate([30,15,60,15,40]);
+  else if(c>=3) navigator.vibrate([30,20,60]);
+  else navigator.vibrate([30,20,60]);
 }
 (()=>{const btn=document.getElementById('hapticBtn');if(btn)btn.style.opacity=hapticEnabled?'1':'0.3';})();
 // ===== キャラクター選択・解放システム =====
@@ -4168,14 +4179,27 @@ function showHikariMsg(text,duration){
   document.body.appendChild(d);
   setTimeout(function(){d.style.transition='opacity .4s ease';d.style.opacity='0';setTimeout(function(){if(d.parentNode)d.remove();},420);},duration);
 }
+function showComboKeepEffect(combo){
+  document.querySelectorAll('.combo-keep-badge').forEach(function(e){e.remove();});
+  var b=document.createElement('div');
+  b.className='combo-keep-badge';
+  b.style.cssText='position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(245,197,24,0.18);border:1.5px solid rgba(245,197,24,0.55);color:#c07c00;font-weight:800;font-size:13px;padding:5px 18px;border-radius:20px;z-index:9700;pointer-events:none;white-space:nowrap;font-family:"Zen Kaku Gothic New",sans-serif;animation:comboBannerIn 0.28s cubic-bezier(.17,.67,.35,1.3) forwards;';
+  b.textContent='🔥 '+combo+'連続';
+  document.body.appendChild(b);
+  setTimeout(function(){
+    b.style.animation='comboBannerOut 0.28s ease forwards';
+    setTimeout(function(){if(b.parentNode)b.remove();},300);
+  },1100);
+}
 function showComboBanner(combo){
-  document.querySelectorAll('.combo-banner').forEach(function(e){e.remove();});
+  document.querySelectorAll('.combo-banner,.combo-keep-badge').forEach(function(e){e.remove();});
   var map={3:'🔥 3連続正解！',5:'⚡ 5連続！すごい！',10:'👑 10連続！天才！',20:'🌟 20連続！神ってる！'};
   var msg=map[combo];
   if(!msg) return;
   var b=document.createElement('div');
   b.className='combo-banner';
   b.textContent=msg;
+  if(combo>=10) b.style.cssText+='font-size:20px;letter-spacing:.5px;';
   document.body.appendChild(b);
   setTimeout(function(){
     b.style.animation='comboBannerOut 0.3s ease forwards';
@@ -4230,6 +4254,19 @@ function updateStreakDisplay(){
     }
   }
 }
+function showXpGain(){
+  var xpEl=document.getElementById('hikariXpFill');
+  if(!xpEl) return;
+  var rect=xpEl.getBoundingClientRect();
+  if(!rect.width) return;
+  var pop=document.createElement('div');
+  pop.className='xp-gain-pop';
+  pop.textContent='+1 EXP';
+  pop.style.left=(rect.left+rect.width*0.5-22)+'px';
+  pop.style.top=(rect.top-2)+'px';
+  document.body.appendChild(pop);
+  setTimeout(function(){if(pop.parentNode)pop.remove();},1300);
+}
 function showAnswerFeedback(correct){
   document.querySelectorAll('.answer-feedback-wrap,.char-correct-overlay').forEach(e=>e.remove());
   if(correct){
@@ -4264,19 +4301,19 @@ function showAnswerFeedback(correct){
     wrap.className='answer-feedback-wrap';
     const sym=document.createElement('div');
     sym.className='answer-feedback-symbol';
-    sym.textContent='×';
-    sym.style.cssText='font-size:60px;color:#999999;';
+    sym.textContent='△';
+    sym.style.cssText='font-size:54px;color:#D9A060;opacity:0.9;';
     const txt=document.createElement('div');
     txt.className='answer-feedback-text';
-    txt.textContent='あと少し';
-    txt.style.cssText='font-size:24px;color:#999999;';
+    txt.textContent='もう少し！';
+    txt.style.cssText='font-size:21px;color:#B8907A;font-family:"Noto Sans JP",sans-serif;';
     wrap.appendChild(sym);wrap.appendChild(txt);
     document.body.appendChild(wrap);
-    wrap.style.animation='feedbackZoomIn .35s cubic-bezier(.17,.67,.35,1.3) forwards';
+    wrap.style.animation='wrongGentleIn .38s cubic-bezier(.25,.8,.35,1.2) forwards';
     setTimeout(()=>{
-      wrap.style.animation='feedbackFadeOut .3s ease-in forwards';
-      setTimeout(()=>wrap.remove(),300);
-    },600);
+      wrap.style.animation='wrongGentleOut .32s ease-in forwards';
+      setTimeout(()=>wrap.remove(),330);
+    },620);
   }
 }
 function answer(key){
@@ -4331,18 +4368,20 @@ function answer(key){
     else if(q.category==='状況設定') session.jokyoCorrect=(session.jokyoCorrect||0)+1;
   }
   if(session.answerLog) session.answerLog.push(correct?1:0);
-  haptic(correct);
+  haptic(correct, correct?(session.combo||0)+1:0);
   playAnswerSound(correct);
   showAnswerFeedback(correct);
   if(correct){
-    // XPバーのpopアニメーション
+    // XPバーのpopアニメーション + XPゲイン可視化
     var _xp=document.getElementById('hikariXpFill');
     if(_xp){_xp.classList.remove('pop');void _xp.offsetWidth;_xp.classList.add('pop');setTimeout(function(){_xp.classList.remove('pop');},400);}
+    setTimeout(showXpGain,80);
     session.correct++;
     session.combo=(session.combo||0)+1;
     if(session.combo>bestCombo){bestCombo=session.combo;localStorage.setItem('np_best_combo',bestCombo);}
     const milestones=[3,5,10,20];
     if(milestones.includes(session.combo)){setTimeout(function(){showComboBanner(session.combo);},200);if(session.combo>=5)setTimeout(launchConfetti,400);}
+    if(session.combo>=2&&!milestones.includes(session.combo)){setTimeout(function(){showComboKeepEffect(session.combo);},180);}
     localStorage.setItem('np_last_study_ts',Date.now());
   } else {
     session.combo=0;
@@ -4380,8 +4419,12 @@ function answer(key){
   Object.keys(q.choices).forEach(k=>{
     const btn=document.getElementById('ch'+k);
     if(!btn) return;
-    if(k===q.answer) btn.classList.add('correct');
-    else if(k===key&&!correct) btn.classList.add('wrong');
+    if(k===q.answer){
+      btn.classList.add('correct');
+      if(correct&&session.combo>=2){
+        setTimeout(function(){btn.classList.add('combo-ring');setTimeout(function(){btn.classList.remove('combo-ring');},700);},60);
+      }
+    } else if(k===key&&!correct) btn.classList.add('wrong');
     btn.disabled=true;
   });
 
