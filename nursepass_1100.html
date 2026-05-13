@@ -538,6 +538,16 @@ body.font-xl .explanation{font-size:16px}
 .lv-up-evolve{font-size:15px;color:rgba(255,255,255,0.85);margin-top:6px;font-family:'Noto Sans JP',sans-serif}
 .lv-up-tap{font-size:12px;color:rgba(255,255,255,0.4);margin-top:24px;font-family:'Noto Sans JP',sans-serif}
 .lv-up-particle{position:fixed;border-radius:3px;pointer-events:none;z-index:10001;animation:lvParticle 1.4s ease-out forwards}
+/* ===== Lv5 覚醒演出 ===== */
+.lv-awaken-screen{background:linear-gradient(160deg,rgba(40,0,80,0.99),rgba(100,10,180,0.98))!important;}
+.lv-awaken-title{color:#FF88FF!important;animation:lvAwakenTitle 0.7s cubic-bezier(.17,.67,.35,1.3) forwards,lvAwakenGlow 1.8s ease 0.75s infinite!important;}
+@keyframes lvAwakenTitle{0%{opacity:0;transform:scale(0.2) rotate(-8deg)}35%{opacity:1;transform:scale(1.28) rotate(4deg)}58%{transform:scale(0.92) rotate(-1deg)}78%{transform:scale(1.07)}100%{opacity:1;transform:scale(1)}}
+@keyframes lvAwakenGlow{0%,100%{text-shadow:0 0 30px rgba(255,100,255,0.9),0 0 60px rgba(200,0,255,0.6),0 3px 12px rgba(0,0,0,0.8)}50%{text-shadow:0 0 60px rgba(255,150,255,1),0 0 120px rgba(220,0,255,1),0 0 200px rgba(255,100,200,0.5),0 3px 12px rgba(0,0,0,0.8)}}
+@keyframes lvAwakenImgReveal{0%{filter:brightness(0);transform:scale(0.7)}35%{filter:brightness(3) saturate(0.5);transform:scale(1.18)}65%{filter:brightness(1.3) saturate(1.3);transform:scale(0.97)}85%{filter:brightness(1.05) drop-shadow(0 0 28px rgba(255,100,255,0.9)) drop-shadow(0 0 56px rgba(200,0,255,0.6));transform:scale(1.04)}100%{filter:drop-shadow(0 0 28px rgba(255,100,255,0.9)) drop-shadow(0 0 56px rgba(200,0,255,0.6));transform:scale(1)}}
+@keyframes lvAwakenBurst{0%{opacity:0.9;transform:translate(-50%,-50%) scale(0.05)}70%{opacity:0.7}100%{opacity:0;transform:translate(-50%,-50%) scale(4.5)}}
+@keyframes lvAwakenRing{0%{opacity:0.85;transform:translate(-50%,-50%) scale(0.05)}100%{opacity:0;transform:translate(-50%,-50%) scale(6)}}
+.lv-awaken-burst{position:fixed;top:50%;left:50%;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,1),rgba(255,120,255,0.8),rgba(180,0,255,0.4),transparent);pointer-events:none;z-index:10002;animation:lvAwakenBurst 0.9s ease-out forwards;}
+.lv-awaken-ring{position:fixed;top:50%;left:50%;width:180px;height:180px;border-radius:50%;border:3px solid rgba(255,140,255,0.85);pointer-events:none;z-index:10002;animation:lvAwakenRing 1.1s ease-out forwards;}
 /* 文字サイズ */
 body.font-small .q-text{font-size:15px!important}
 body.font-small .choice-btn{font-size:13px!important}
@@ -4050,10 +4060,16 @@ function updateHikariLevel(){
   if(_hikariLvPrev>=0&&lv>_hikariLvPrev) showLevelUp(lv);
   _hikariLvPrev=lv;
 }
+function hapticLvUp(lv){
+  if(!hapticEnabled||!navigator.vibrate) return;
+  if(lv>=5) navigator.vibrate([60,40,60,40,200,40,200,40,200]);
+  else navigator.vibrate([40,30,80,30,120]);
+}
 function showLevelUp(lv){
   document.querySelectorAll('.lv-up-screen').forEach(function(e){e.remove();});
-  // Lv.1 (孵化) は専用演出
   if(lv===1){showHatchAnimation();return;}
+  if(lv===5){showAwakenAnimation();return;}
+  hapticLvUp(lv);
   var prevLv=lv-1;
   var screen=document.createElement('div');
   screen.className='lv-up-screen';
@@ -4072,20 +4088,88 @@ function showLevelUp(lv){
     setTimeout(function(){if(screen.parentNode)screen.remove();},400);
   };
   document.body.appendChild(screen);
-  // パーティクル（2ウェーブ）
   setTimeout(function(){spawnLvUpParticles(screen);},300);
   setTimeout(function(){spawnLvUpParticles(screen);},900);
   setTimeout(launchConfetti,400);
   setTimeout(launchConfetti,1000);
   setTimeout(launchConfetti,1900);
-  if(lv>=4){setTimeout(launchConfetti,2700);setTimeout(launchConfetti,3600);}
-  // 自動クローズ（10秒）
+  if(lv>=4) setTimeout(launchConfetti,2700);
+  // 自動クローズ（3秒）
   setTimeout(function(){
     if(screen.parentNode){
       screen.style.transition='opacity .5s ease';screen.style.opacity='0';
       setTimeout(function(){if(screen.parentNode)screen.remove();},500);
     }
-  },10000);
+  },3000);
+}
+function showAwakenAnimation(){
+  hapticLvUp(5);
+  var screen=document.createElement('div');
+  screen.className='lv-up-screen lv-awaken-screen';
+  var title=document.createElement('div');
+  title.className='lv-up-screen-title lv-awaken-title';
+  title.textContent='🌟 覚醒！ 🌟';
+  screen.appendChild(title);
+  // Phase1: Lv0画像（グレースケール）
+  var charImg=document.createElement('img');
+  charImg.className='lv-up-new-img';
+  charImg.src=getCharImgSrc(selectedChar,0);
+  charImg.style.cssText='filter:grayscale(1) brightness(0.45);transition:opacity 0.35s ease;';
+  screen.appendChild(charImg);
+  var nameWrap=document.createElement('div');
+  nameWrap.className='lv-up-name-wrap';
+  nameWrap.innerHTML=
+    '<div class="lv-up-lv-num" style="color:#FF88FF">Lv.4 → Lv.5</div>'
+    +'<div class="lv-up-name-text">'+getCharLvName(selectedChar,5)+'</div>'
+    +'<div class="lv-up-evolve" style="color:#FF99FF;font-size:17px;font-weight:700">最高レベルに覚醒した！✨</div>'
+    +'<div style="font-size:14px;color:rgba(255,255,255,0.88);margin-top:12px;font-family:\'Noto Sans JP\',sans-serif;text-align:center;line-height:1.6;font-weight:500">'+getCharMsg('levelup')+'</div>';
+  screen.appendChild(nameWrap);
+  var tap=document.createElement('div');
+  tap.className='lv-up-tap';
+  tap.textContent='タップして続ける';
+  screen.appendChild(tap);
+  screen.onclick=function(){
+    screen.style.transition='opacity .4s ease';screen.style.opacity='0';
+    setTimeout(function(){if(screen.parentNode)screen.remove();},400);
+  };
+  document.body.appendChild(screen);
+  // Phase1: Lv0画像シェイク
+  setTimeout(function(){charImg.style.animation='eggShake 0.35s ease 2';},500);
+  // Phase2: 光の爆発 + Lv5画像へ切り替え
+  setTimeout(function(){
+    // 光のリング（3連）
+    [0,150,300].forEach(function(d){
+      setTimeout(function(){
+        var ring=document.createElement('div');
+        ring.className='lv-awaken-ring';
+        document.body.appendChild(ring);
+        setTimeout(function(){ring.remove();},1200);
+      },d);
+    });
+    // 中心バースト
+    var burst=document.createElement('div');
+    burst.className='lv-awaken-burst';
+    document.body.appendChild(burst);
+    setTimeout(function(){burst.remove();},1000);
+    // Lv0→Lv5 画像スワップ
+    charImg.style.opacity='0';
+    setTimeout(function(){
+      charImg.src=getCharImgSrc(selectedChar,5);
+      charImg.style.filter='none';
+      charImg.style.animation='lvAwakenImgReveal 0.9s ease forwards';
+      charImg.style.opacity='1';
+    },350);
+    spawnLvUpParticles(screen);
+    spawnLvUpParticles(screen);
+  },1300);
+  [600,1400,2000,2700,3500].forEach(function(t){setTimeout(launchConfetti,t);});
+  // 自動クローズ（5秒 - 覚醒演出が長いため）
+  setTimeout(function(){
+    if(screen.parentNode){
+      screen.style.transition='opacity .5s ease';screen.style.opacity='0';
+      setTimeout(function(){if(screen.parentNode)screen.remove();},500);
+    }
+  },5000);
 }
 function spawnLvUpParticles(container){
   var colors=['#FFD700','#FFA500','#FF6B9D','#FF4FD8','#7DF9FF','#4FC3F7','#B4FF6B','#69F0AE','#FF9F43','#fff','#FFE082','#CE93D8'];
