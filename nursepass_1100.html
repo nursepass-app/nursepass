@@ -123,6 +123,16 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 @keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(25px,-15px)}}
 @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-15px,20px)}}
 @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* ===== 科目ロードオーバーレイ ===== */
+#_sqLoad{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(245,239,232,0.94);z-index:19000;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:fadein .2s ease}
+#_sqLoad .sq-icon{font-size:36px;margin-bottom:12px;animation:sqBounce 1.1s ease-in-out infinite alternate}
+#_sqLoad .sq-msg{font-size:15px;font-weight:700;color:#5A3828;font-family:'Noto Sans JP',sans-serif;text-align:center;padding:0 24px;margin-bottom:16px}
+#_sqLoad .sq-dots{display:flex;gap:8px}
+#_sqLoad .sq-dot{width:8px;height:8px;border-radius:50%;background:#C8956A;animation:sqDot 1.4s ease-in-out infinite}
+#_sqLoad .sq-dot:nth-child(2){animation-delay:.18s}
+#_sqLoad .sq-dot:nth-child(3){animation-delay:.36s}
+@keyframes sqBounce{0%{transform:translateY(0)}100%{transform:translateY(-8px)}}
+@keyframes sqDot{0%,60%,100%{transform:scale(0.65);opacity:.3}30%{transform:scale(1.25);opacity:1}}
 .case-card{background:rgba(230,255,245,0.95);border:1.5px solid rgba(5,150,105,0.3);border-radius:16px;padding:14px;margin-bottom:10px;font-size:13px;line-height:1.85;color:#064e3b}
 .case-label{font-size:10px;font-weight:700;color:#059669;margin-bottom:6px}
 .jstep{font-size:11px;color:#6b7280;text-align:center;margin:0 0 8px}
@@ -894,6 +904,8 @@ const HIKARI_IMAGE="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA60AAAOjCAYAAA
 const CHARACTER={name:'ヒカリ',color:'#D9C5B2',messages:{greeting:'今日もよく頑張ったね。自分を褒めてあげて✨',correct:'正解！やっぱりすごいね、あなたって✨',incorrect:'惜しかった！でも次はきっと大丈夫だよ',rest:'疲れたときは休んでいいんだよ。また一緒に頑張ろう',encouragement:'少しずつでいいよ。あなたのペースで進もう🌟',unknown:'分からなくて当然。一緒に考えようね'}};
 
 let QUESTIONS = [];
+let QUESTION_INDEX = null;   // questions_index.json のパース結果
+const questionCache = {};    // field → [questions] の遅延ロードキャッシュ
 
 let FIELDS = [];
 // ===== 科目別学習 =====
@@ -1533,9 +1545,21 @@ function pickCount(mode, label){
   document.body.appendChild(modal);
 }
 function startQuizWithCount(mode, count){
-  if(!QUESTIONS||!QUESTIONS.length){
+  if(!QUESTION_INDEX){
     window._pendingStart=function(){startQuizWithCount(mode,count);};
     showToast('データ読み込み中… 準備ができたら自動で始まります');
+    return;
+  }
+  // 未ロード科目を先にfetch
+  var _neededFields=selectedFields.length?selectedFields:QUESTION_INDEX.subjects.map(function(s){return s.field;});
+  var _unloaded=_neededFields.filter(function(f){return !questionCache[f];});
+  if(_unloaded.length){
+    var _msg=_unloaded.length===1?_unloaded[0]+'を読み込み中...':'問題を読み込み中...';
+    showSubjectLoading(_msg);
+    Promise.all(_unloaded.map(loadSubjectQuestions)).then(function(){
+      hideSubjectLoading();
+      startQuizWithCount(mode,count);
+    }).catch(function(e){hideSubjectLoading();console.error(e);});
     return;
   }
   const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
@@ -3032,7 +3056,8 @@ function renderHomeSummary(){
   const streak=streakData.streak||0;
   const today=weeklyData[todayKey]||0;
   const attempted=Object.keys(history).length;
-  const coverPct=Math.round(attempted/QUESTIONS.length*100);
+  const _qtotal=(QUESTION_INDEX&&QUESTION_INDEX.total)||QUESTIONS.length||1;
+  const coverPct=Math.round(attempted/_qtotal*100);
   const sd=document.getElementById('streakDisp');
   const td=document.getElementById('todayDisp');
   const cd=document.getElementById('coverDisp');
@@ -3634,7 +3659,19 @@ function initModeButtons(){
 
 // START QUIZ
 function startQuiz(mode){
-  if(!QUESTIONS||!QUESTIONS.length){alert('データ読み込み中です。しばらくお待ちください。');return;}
+  if(!QUESTION_INDEX){alert('データ読み込み中です。しばらくお待ちください。');return;}
+  // 必要科目がキャッシュ済みか確認、未ロードなら先にfetch
+  var _neededFields=selectedFields.length?selectedFields:QUESTION_INDEX.subjects.map(function(s){return s.field;});
+  var _unloaded=_neededFields.filter(function(f){return !questionCache[f];});
+  if(_unloaded.length){
+    var _msg=_unloaded.length===1?_unloaded[0]+'を読み込み中...':'問題を読み込み中...';
+    showSubjectLoading(_msg);
+    Promise.all(_unloaded.map(loadSubjectQuestions)).then(function(){
+      hideSubjectLoading();
+      startQuiz(mode);
+    }).catch(function(e){hideSubjectLoading();console.error(e);});
+    return;
+  }
   let pool=[];
   const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
   const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
@@ -7510,11 +7547,25 @@ function _pqAnswer(type){
 
 // INIT
 function initCatCounts(){
-  ['必修','一般','状況設定'].forEach(cat=>{
-    const n=QUESTIONS.filter(q=>q.category===cat).length;
-    const el=document.getElementById('catCount'+cat);
-    if(el) el.textContent=n+'問';
-  });
+  // インデックスから集計（全科目ロード前でも正確な数を表示）
+  if(QUESTION_INDEX){
+    const catMap={'必修':0,'一般':0,'状況設定':0};
+    QUESTION_INDEX.subjects.forEach(function(s){
+      Object.keys(s.categories||{}).forEach(function(cat){
+        if(catMap[cat]!==undefined) catMap[cat]+=s.categories[cat];
+      });
+    });
+    ['必修','一般','状況設定'].forEach(function(cat){
+      const el=document.getElementById('catCount'+cat);
+      if(el) el.textContent=catMap[cat]+'問';
+    });
+  } else {
+    ['必修','一般','状況設定'].forEach(cat=>{
+      const n=QUESTIONS.filter(q=>q.category===cat).length;
+      const el=document.getElementById('catCount'+cat);
+      if(el) el.textContent=n+'問';
+    });
+  }
 }
 // スワイプジェスチャー（モバイル対応）
 (function(){
@@ -7604,11 +7655,47 @@ updateStreakDisplay();
     setTimeout(function(){showHikariMsg(nm[Math.floor(Math.random()*2)]);},5500);
   }
 })();
-fetch('questions.json')
+// ===== 科目別遅延ロード =====
+function showSubjectLoading(msg){
+  var el=document.getElementById('_sqLoad');
+  if(!el){
+    el=document.createElement('div');
+    el.id='_sqLoad';
+    el.innerHTML='<div class="sq-icon">📚</div><div class="sq-msg"></div><div class="sq-dots"><div class="sq-dot"></div><div class="sq-dot"></div><div class="sq-dot"></div></div>';
+    document.body.appendChild(el);
+  }
+  el.querySelector('.sq-msg').textContent=msg||'読み込み中...';
+}
+function hideSubjectLoading(){
+  var el=document.getElementById('_sqLoad');
+  if(el){el.style.opacity='0';el.style.transition='opacity .25s';setTimeout(function(){if(el.parentNode)el.remove();},260);}
+}
+function loadSubjectQuestions(field){
+  if(questionCache[field]) return Promise.resolve(questionCache[field]);
+  if(!QUESTION_INDEX) return Promise.resolve([]);
+  var subject=QUESTION_INDEX.subjects.find(function(s){return s.field===field;});
+  if(!subject) return Promise.resolve([]);
+  return fetch(subject.path)
+    .then(function(r){return r.json();})
+    .then(function(data){
+      questionCache[field]=data.questions;
+      var existing=new Set(QUESTIONS.map(function(q){return q.id;}));
+      data.questions.forEach(function(q){if(!existing.has(q.id)) QUESTIONS.push(q);});
+      return data.questions;
+    });
+}
+function loadAllQuestions(){
+  if(!QUESTION_INDEX) return Promise.resolve();
+  var unloaded=QUESTION_INDEX.subjects.filter(function(s){return !questionCache[s.field];});
+  return Promise.all(unloaded.map(function(s){return loadSubjectQuestions(s.field);}));
+}
+
+// Step1: インデックスのみfetch（13KBで即時描画）
+fetch('questions_index.json')
   .then(function(r){return r.json();})
-  .then(function(data){
-    QUESTIONS = data;
-    FIELDS = [...new Set(QUESTIONS.map(function(q){return q.field;}))].sort();
+  .then(function(index){
+    QUESTION_INDEX=index;
+    FIELDS=index.subjects.map(function(s){return s.field;}).sort();
     initCatCounts();
     if(window._pendingStart){var _fn=window._pendingStart;window._pendingStart=null;_fn();return;}
     renderHomeSummary();
@@ -7695,9 +7782,24 @@ fetch('questions.json')
       });
       obs.observe(document.body,{childList:true,subtree:true});
     })();
+    // Step2: バックグラウンドで全科目を順次プリロード（ユーザー操作をブロックしない）
+    (function bgPreload(){
+      var subjects=index.subjects.slice();
+      function next(){
+        if(!subjects.length) return;
+        var s=subjects.shift();
+        if(questionCache[s.field]){next();return;}
+        loadSubjectQuestions(s.field).then(function(){
+          renderHomeSummary();  // カバー率を更新
+          next();
+        }).catch(next);
+      }
+      // 少し遅らせてUIの初期描画を優先
+      setTimeout(next,400);
+    })();
   })
   .catch(function(err){
-    console.error('questions.json の読み込みに失敗しました:', err);
+    console.error('questions_index.json の読み込みに失敗しました:', err);
     document.body.innerHTML='<div style="text-align:center;padding:40px;font-family:sans-serif"><h2>データ読み込みエラー</h2><p>ページを再読み込みしてください。</p></div>';
   });
 </script>
