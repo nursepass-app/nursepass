@@ -212,6 +212,8 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 ._ob_show #onboardingScreen{display:flex!important}
 ._ob_show .wrap{display:none!important}
 ._ob_show #bottomNav{display:none!important}
+/* ローディング画面はオンボーディング中は非表示（z-index:20000でオンボーディングを覆うため） */
+._ob_show #loadingScreen{display:none!important}
 .onboarding-inner{max-width:420px;width:100%;text-align:center}
 .onboarding-title{font-size:20px;font-weight:700;color:#55504D;font-family:'Zen Kaku Gothic New',sans-serif;margin-bottom:8px}
 .onboarding-sub{font-size:13px;color:#8A7A70;margin-bottom:22px;line-height:1.7}
@@ -7678,7 +7680,8 @@ updateStreakDisplay();
 })();
 function hideLoadingScreen(){
   var scr=document.getElementById('loadingScreen');
-  if(!scr) return;
+  if(!scr||scr._hiding) return;
+  scr._hiding=true;
   var elapsed=Date.now()-(window._ldStart||Date.now());
   var wait=Math.max(0,1500-elapsed);
   setTimeout(function(){
@@ -7686,8 +7689,16 @@ function hideLoadingScreen(){
     setTimeout(function(){if(scr.parentNode)scr.remove();},520);
   },wait);
 }
-fetch('questions.json')
-  .then(function(r){return r.json();})
+// フェッチタイムアウト：15秒で強制的にローディング解除
+var _ldTimeout=setTimeout(function(){
+  console.warn('questions.json load timeout — removing loading screen');
+  hideLoadingScreen();
+},15000);
+// fetchにAbortController でタイムアウトを設定
+var _ldAbort=new AbortController();
+setTimeout(function(){_ldAbort.abort();},14000);
+fetch('questions.json',{signal:_ldAbort.signal})
+  .then(function(r){clearTimeout(_ldTimeout);return r.json();})
   .then(function(data){
     QUESTIONS = data;
     FIELDS = [...new Set(QUESTIONS.map(function(q){return q.field;}))].sort();
@@ -7781,6 +7792,13 @@ fetch('questions.json')
     })();
   })
   .catch(function(err){
+    clearTimeout(_ldTimeout);
+    // AbortErrorはタイムアウト由来なので画面破壊しない
+    if(err&&err.name==='AbortError'){
+      console.warn('questions.json fetch aborted (timeout)');
+      hideLoadingScreen();
+      return;
+    }
     console.error('questions.json の読み込みに失敗しました:', err);
     var scr=document.getElementById('loadingScreen');if(scr)scr.remove();
     document.body.innerHTML='<div style="text-align:center;padding:40px;font-family:sans-serif"><h2>データ読み込みエラー</h2><p>ページを再読み込みしてください。</p></div>';
