@@ -142,10 +142,15 @@ def find_subject(query: str) -> dict:
                 print(f"  {c}")
             sys.exit(1)
         else:
-            print(f"科目 '{query}' が見つかりません。利用可能な科目:")
-            for f in all_fields:
-                print(f"  {f}")
-            sys.exit(1)
+            # 既存フィールドにない場合は新規フィールドとして扱う（一般問題）
+            print(f"  新規フィールド '{query}' を作成します。")
+            matched_field = query
+            return {
+                "label": matched_field,
+                "category": "一般",
+                "field": matched_field,
+                "description": f"看護師国家試験「一般問題」の「{matched_field}」領域。",
+            }
 
     cats = Counter(q["category"] for q in data if q["field"] == matched_field)
     category = cats.most_common(1)[0][0]
