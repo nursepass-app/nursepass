@@ -426,8 +426,9 @@ body.font-xl .explanation{font-size:16px}
 .mode-switch-btn.active.gachi{background:linear-gradient(135deg,#475569,#334155);color:white;box-shadow:0 2px 8px rgba(51,65,85,.3)}
 
 /* HOME SIMPLE */
-.home-main-btn{width:100%;padding:22px;background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border:none;border-radius:20px;font-size:20px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 6px 24px rgba(184,160,144,.35);letter-spacing:.02em;transition:.15s;text-align:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-.home-main-btn:active{transform:scale(.98);opacity:.92}
+.home-main-btn{width:100%;padding:24px;background:linear-gradient(135deg,#E8834A,#D95E2A);color:white;border:none;border-radius:22px;font-size:21px;font-weight:900;cursor:pointer;font-family:'Noto Sans JP',sans-serif;box-shadow:0 8px 28px rgba(217,90,42,.42);letter-spacing:.02em;transition:.15s;text-align:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;animation:mainBtnPulse 2.8s ease-in-out infinite;}
+@keyframes mainBtnPulse{0%,100%{box-shadow:0 8px 28px rgba(217,90,42,.42)}50%{box-shadow:0 8px 40px rgba(217,90,42,.7),0 0 0 7px rgba(217,90,42,.11)}}
+.home-main-btn:active{transform:scale(.97);opacity:.92;animation:none;}
 .home-mid-btn{padding:18px 12px;background:linear-gradient(135deg,rgba(245,239,232,0.98),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.6);border-radius:18px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(184,160,144,.1);transition:.15s;width:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .home-mid-btn:active{transform:scale(.97)}
 .home-mid-btn .btn-icon{font-size:22px;line-height:1}
@@ -479,7 +480,7 @@ body.font-xl .explanation{font-size:16px}
 .hikari-msg-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,#EDE0D4,#D9C5B2);}
 .hikari-msg-av img{width:100%;height:100%;object-fit:contain;}
 .hikari-msg-body{font-size:15px;color:#4A3828;font-weight:500;line-height:1.55;font-family:'Noto Sans JP',sans-serif;}
-#streakHomeBadge{text-align:center;font-size:12px;font-weight:700;color:#B8907A;letter-spacing:.3px;margin-bottom:10px;display:none;}
+#streakHomeBadge{text-align:center;margin-bottom:12px;display:none;}
 @keyframes xpPop{0%{transform:scaleY(1)}30%{transform:scaleY(1.45)}60%{transform:scaleY(0.9)}100%{transform:scaleY(1)}}
 @keyframes comboBannerIn{0%{opacity:0;transform:translate(-50%,-110%)}100%{opacity:1;transform:translate(-50%,0)}}
 @keyframes comboBannerOut{0%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-110%)}}
@@ -533,10 +534,10 @@ body.font-xl .explanation{font-size:16px}
 .lv-up-tap{font-size:12px;color:rgba(255,255,255,0.4);margin-top:24px;font-family:'Noto Sans JP',sans-serif}
 .lv-up-particle{position:fixed;border-radius:3px;pointer-events:none;z-index:10001;animation:lvParticle 1.4s ease-out forwards}
 /* ===== アイテム・ポイントシステム ===== */
-#pointDisplay{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 0 2px;margin-bottom:6px}
-.pt-label{font-size:11px;color:#8A6A50;font-weight:600}
-.pt-balance{font-size:20px;font-weight:800;color:#D97706;letter-spacing:.02em;font-family:'Zen Kaku Gothic New',sans-serif}
-.pt-unit{font-size:11px;color:#8A6A50}
+#pointDisplay{background:linear-gradient(135deg,rgba(255,215,0,0.14),rgba(255,165,0,0.07));border:1.5px solid rgba(217,160,0,0.38);border-radius:16px;padding:10px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px}
+.pt-label{font-size:12px;color:#92400E;font-weight:700}
+.pt-balance{font-size:30px;font-weight:900;color:#B45309;letter-spacing:.02em;font-family:'Zen Kaku Gothic New',sans-serif;line-height:1}
+.pt-unit{font-size:13px;color:#92400E;font-weight:700}
 .present-section{padding:8px 12px 4px;border-top:1px solid rgba(85,80,77,0.08)}
 .present-btn{width:100%;padding:9px 12px;background:linear-gradient(135deg,rgba(255,200,150,0.25),rgba(255,170,200,0.2));border:1.5px solid rgba(217,150,100,0.4);border-radius:14px;font-size:13px;font-weight:700;color:#9A5A2A;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .2s}
 .present-btn:active{background:rgba(255,200,150,0.4)}
@@ -624,7 +625,7 @@ body.font-xl .explanation{font-size:16px}
     </div>
     <!-- エリア4: メインボタン -->
     <div style="display:flex;flex-direction:column;gap:12px">
-      <button onclick="startQuizWithCount('random',5)" class="home-main-btn">▶ 今日の5問を始める</button>
+      <button onclick="startQuizWithCount('random',5)" class="home-main-btn">🌟 今日の5問に挑戦！</button>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
         <button onclick="pickCount('field','分野別')" class="home-mid-btn">
           <span class="btn-icon">🎲</span><span class="btn-lbl" style="font-size:13px">分野別</span>
@@ -4305,9 +4306,13 @@ function updateStreakDisplay(){
   // ストリークバッジ
   if(el){
     if(s>=2){
-      el.innerHTML='<span style="font-size:22px;vertical-align:middle">🔥</span>'
-        +' <span style="font-size:20px;font-weight:900;vertical-align:middle;color:#dc2626">'+s+'</span>'
-        +' <span style="font-size:12px;vertical-align:middle;color:#B8907A">日連続学習中！</span>';
+      el.innerHTML='<div style="background:linear-gradient(135deg,rgba(255,140,0,0.18),rgba(255,80,0,0.09));border:2px solid rgba(255,130,0,0.45);border-radius:18px;padding:10px 20px;display:inline-flex;align-items:center;gap:12px;min-width:55%">'
+        +'<span style="font-size:32px;line-height:1">🔥</span>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2">'
+        +'<div style="font-size:30px;font-weight:900;color:#EA580C;font-family:\'Zen Kaku Gothic New\',sans-serif;line-height:1">'+s+'日連続！</div>'
+        +'<div style="font-size:12px;font-weight:700;color:#C2410C;margin-top:3px">この調子でいこう🌟</div>'
+        +'</div>'
+        +'</div>';
       el.style.display='block';
     } else {
       el.style.display='none';
