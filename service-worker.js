@@ -1,8 +1,8 @@
-const CACHE_NAME = 'nursepass-v5';
+const CACHE_NAME = 'nursepass-v6';
 const CACHE_FILES = [
   '/nursepass/',
   '/nursepass/index.html',
-  '/nursepass/questions.json',
+  '/nursepass/questions_index.json',
   '/nursepass/images/hikari/hikari_lv0.png',
   '/nursepass/images/hikari/hikari_lv0birth1.png',
   '/nursepass/images/hikari/hikari_lv0birth2.png',
@@ -44,10 +44,12 @@ self.addEventListener('activate', function(event) {
 // Fetch: network-first for HTML, cache-first for other assets
 self.addEventListener('fetch', function(event) {
   var url = event.request.url;
-  var isHtml = event.request.mode === 'navigate' || url.endsWith('.html') || url.endsWith('/nursepass/');
+  // questions.json・科目別JSONはネットワーク優先（更新を即反映）
+  var isJson = url.includes('questions');
+  var isHtml = !isJson && (event.request.mode === 'navigate' || url.endsWith('.html') || url.endsWith('/nursepass/'));
 
-  if (isHtml) {
-    // Network-first for HTML: always get fresh code, fall back to cache offline
+  if (isHtml || isJson) {
+    // Network-first for HTML & JSON: always get fresh data, fall back to cache offline
     event.respondWith(
       fetch(event.request).then(function(response) {
         if (response.status === 200) {

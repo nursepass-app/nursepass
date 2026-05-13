@@ -936,6 +936,10 @@ const SUBJECT_LIST=[
    filter:q=>q.field.includes('在宅看護')||q.field==='在宅・地域'},
   {key:'tougou',name:'看護の統合と実践',icon:'',color:'#E74C3C',
    filter:q=>q.field.includes('看護の統合と実践')},
+  {key:'shikkan',name:'各臓器系疾患',icon:'',color:'#DC2626',
+   filter:q=>['免疫・アレルギー','内分泌・代謝疾患','呼吸器疾患','循環器疾患','感染症',
+              '消化管疾患','脳・神経疾患','腎・泌尿器疾患','血液・造血器疾患','運動器疾患',
+              '皮膚疾患','眼疾患','耳鼻咽喉疾患','女性生殖器疾患'].includes(q.field)},
 ];
 function getSubjectPool(key){
   const subj=SUBJECT_LIST.find(s=>s.key===key);
