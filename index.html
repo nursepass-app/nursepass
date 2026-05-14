@@ -483,6 +483,9 @@ body.font-xl .explanation{font-size:16px}
 .hikari-msg-toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:9500;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(245,239,232,0.97),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.65);border-radius:20px;padding:10px 14px;box-shadow:0 4px 20px rgba(184,144,122,0.3);max-width:300px;width:88%;pointer-events:none;animation:hikariMsgIn .35s ease forwards;}
 /* ===== 今日だけコーチ ===== */
 .today-coach-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.28);border-radius:20px;padding:2px 8px;margin-top:3px}
+/* ===== 今日の気分バッジ ===== */
+.mood-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;border-radius:20px;padding:3px 10px;margin-top:8px;cursor:pointer;border:1.5px solid;transition:.15s;-webkit-tap-highlight-color:transparent;user-select:none}
+.mood-badge:active{opacity:.75}
 .today-coach-btn{display:block;width:100%;margin-top:8px;padding:7px 0;font-size:12px;font-weight:700;color:#8A6A50;background:rgba(240,232,222,0.7);border:1.5px solid rgba(217,197,178,0.55);border-radius:10px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:.15s;-webkit-tap-highlight-color:transparent}
 .today-coach-btn:active{background:rgba(217,197,178,0.6)}
 .tc-sheet{position:fixed;bottom:0;left:0;right:0;z-index:9800;background:linear-gradient(180deg,#FDFAF7,#F8F0E8);border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -4px 30px rgba(0,0,0,0.15);animation:tcSlideUp .28s ease}
@@ -1502,6 +1505,48 @@ function showTodayCoachModal(){
 function hideTodayCoachModal(){
   ['_tcOverlay','_tcSheet'].forEach(function(id){var e=document.getElementById(id);if(e)e.remove();});
 }
+// ===== 今日の気分 =====
+const MOODS=[
+  {id:'hot',   label:'熱血モード',   emoji:'🔥', color:'#DC2626', bg:'rgba(220,38,38,0.1)',  border:'rgba(220,38,38,0.3)',  weight:25},
+  {id:'cool',  label:'クールモード', emoji:'😎', color:'#2563EB', bg:'rgba(37,99,235,0.1)',  border:'rgba(37,99,235,0.3)',  weight:25},
+  {id:'hype',  label:'ハイテンション',emoji:'🎉', color:'#D97706', bg:'rgba(217,119,6,0.1)', border:'rgba(217,119,6,0.3)',  weight:25},
+  {id:'grumpy',label:'機嫌悪いモード',emoji:'😤', color:'#6B7280', bg:'rgba(107,114,128,0.1)',border:'rgba(107,114,128,0.3)',weight:12.5},
+  {id:'anxious',label:'不安モード',  emoji:'🥺', color:'#7C3AED', bg:'rgba(124,58,237,0.1)',border:'rgba(124,58,237,0.3)', weight:12.5},
+];
+function _pickMood(){
+  var total=MOODS.reduce(function(s,m){return s+m.weight;},0);
+  var r=Math.random()*total;
+  var acc=0;
+  for(var i=0;i<MOODS.length;i++){acc+=MOODS[i].weight;if(r<acc)return MOODS[i].id;}
+  return MOODS[0].id;
+}
+function initTodayMood(){
+  try{
+    var raw=localStorage.getItem('np_today_mood');
+    if(raw){var d=JSON.parse(raw);if(d.date===todayKey)return d.mood;}
+    var mood=_pickMood();
+    localStorage.setItem('np_today_mood',JSON.stringify({mood:mood,date:todayKey}));
+    return mood;
+  }catch(e){return 'hot';}
+}
+function getActiveMood(){
+  try{
+    var raw=localStorage.getItem('np_today_mood');
+    if(raw){var d=JSON.parse(raw);if(d.date===todayKey)return d.mood;}
+    return initTodayMood();
+  }catch(e){return 'hot';}
+}
+function getMoodData(id){return MOODS.find(function(m){return m.id===id;})||MOODS[0];}
+function getMoodPrompt(moodId){
+  var map={
+    hot:'今日のあなたの気分は「熱血モード🔥」です。力強く鼓舞するセリフで、情熱的に背中を押してください。',
+    cool:'今日のあなたの気分は「クールモード😎」です。感情を抑えた、無駄なく的確なアドバイスをしてください。',
+    hype:'今日のあなたの気分は「ハイテンションモード🎉」です。とにかく明るく、ポジティブなエネルギーで元気にしてください。',
+    grumpy:'今日のあなたの気分は「機嫌悪いモード😤」です。ぶっきらぼうだけど憎めない口調で、でも心はしっかり寄り添ってください。',
+    anxious:'今日のあなたの気分は「不安モード🥺」です。自分も一緒に頑張ろうと、寄り添いながら励ましてください。',
+  };
+  return map[moodId]||map.hot;
+}
 // ===== キャラメッセージ =====
 function getCharMsg(type){
   var active=getActiveChar();
@@ -2404,11 +2449,19 @@ function renderHikariCard(){
       </div>
     </div>
   </div>
-  <button class="today-coach-btn" onclick="showTodayCoachModal()">📅 今日だけ変更${todayCoach?' ('+activeCharData.name+'中)':''}</button>`;
+  <button class="today-coach-btn" onclick="showTodayCoachModal()">📅 今日だけ変更${todayCoach?' ('+activeCharData.name+'中)':''}</button>
+  <div id="moodBadgeWrap" style="text-align:center;margin-top:4px"></div>`;
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     var f=document.getElementById('hikariCardXpFill');
     if(f) f.style.width=lvPct+'%';
   });});
+  // 気分バッジ
+  var moodId=getActiveMood();
+  var md=getMoodData(moodId);
+  var moodWrap=document.getElementById('moodBadgeWrap');
+  if(moodWrap){
+    moodWrap.innerHTML='<span class="mood-badge" style="color:'+md.color+';background:'+md.bg+';border-color:'+md.border+'" onclick="showToast(\'明日また気分が変わるよ！\')">'+md.emoji+' 今日は'+md.label+'</span>';
+  }
 }
 // ヒカリのひとこと（ホーム1行バナー用）日替わり低ハードルメッセージ
 const HIKARI_HINTS=[
@@ -5550,7 +5603,7 @@ async function requestHikariAnalysis(){
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
       body:JSON.stringify({model:'gpt-4o',messages:[
-        {role:'system',content:'あなたは看護師国家試験対策アプリ「NursePass」のAIコーチ「ヒカリ（叶愛）」です。静かなやさしさで不安な心に寄り添い、温かく励ます口調で学習アドバイスをします。200字以内で簡潔に。'},
+        {role:'system',content:'あなたは看護師国家試験対策アプリ「NursePass」のAIコーチ「ヒカリ（叶愛）」です。静かなやさしさで不安な心に寄り添い、温かく励ます口調で学習アドバイスをします。200字以内で簡潔に。'+getMoodPrompt(getActiveMood())},
         {role:'user',content:`以下の学習データに基づき、具体的で実用的な学習アドバイスをください。\n\n${summary}`}
       ],max_tokens:250,temperature:0.7})
     });
@@ -6982,7 +7035,7 @@ async function sendMiniChat(){
   typing.innerHTML='<div class="mini-av-xs"><img class="hikari-av-img" src="'+getHikariImgSrc()+'" alt="ヒカリ"></div><div class="mini-bbl"><div class="typing-wrap"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>';
   list.appendChild(typing);
   list.scrollTop=list.scrollHeight;
-  const sysP='あなたは看護師国家試験対策アプリNursePassのAIコーチ「ヒカリ」です。\n現在の問題:【'+miniCtx.field+'】'+miniCtx.question+'\n解説:'+miniCtx.explanation+'\nこの問題に関連した学生の質問に、200文字以内で温かく、わかりやすく答えてください。';
+  const sysP='あなたは看護師国家試験対策アプリNursePassのAIコーチ「ヒカリ」です。\n現在の問題:【'+miniCtx.field+'】'+miniCtx.question+'\n解説:'+miniCtx.explanation+'\nこの問題に関連した学生の質問に、200文字以内で温かく、わかりやすく答えてください。\n'+getMoodPrompt(getActiveMood());
   try{
     const apiMsgs=[{role:'system',content:sysP}];
     miniMsgs.slice(-8).forEach(m=>apiMsgs.push({role:m.role==='hikari'?'assistant':'user',content:m.text}));
@@ -7012,7 +7065,7 @@ async function sendMiniChat(){
 // ===== ヒカリチャット =====
 let chatHistory = [];
 let chatInitialized = false;
-const CHAT_SYSTEM = 'あなたは看護師国家試験対策アプリNursePassのAIコーチ「ヒカリ」です。願いに寄り添い、希望をそっと照らす先生として、看護学生の不安や悩みに温かく寄り添います。静かなやさしさで、桜のようにそっと心に触れる言葉を届けてください。国家試験の勉強法、不安な気持ち、励ましが必要なとき、何でも相談を受け付けます。返答は200文字以内で、温かく、押しつけがましくなく、そっと背中を押すトーンで。';
+const CHAT_SYSTEM = 'あなたは看護師国家試験対策アプリNursePassのAIコーチ「ヒカリ」です。願いに寄り添い、希望をそっと照らす先生として、看護学生の不安や悩みに温かく寄り添います。静かなやさしさで、桜のようにそっと心に触れる言葉を届けてください。国家試験の勉強法、不安な気持ち、励ましが必要なとき、何でも相談を受け付けます。返答は200文字以内で、温かく、押しつけがましくなく、そっと背中を押すトーンで。'+getMoodPrompt(getActiveMood());
 const CHAT_LIMIT = 10;
 
 function getChatCount(){
@@ -7778,6 +7831,7 @@ initChips();
 initModeButtons();
 updateScoreBadge();
 initDailyMessage();
+initTodayMood();
 updateHikariLevel();
 updateStreakDisplay();
 (function(){
