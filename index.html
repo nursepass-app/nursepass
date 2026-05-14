@@ -687,6 +687,7 @@ body.font-xl .explanation{font-size:16px}
           <span class="daily-msg-date" id="dailyMsgDate"></span>
           <span class="daily-msg-countdown" id="dailyMsgCountdown"></span>
         </div>
+        <div id="homeCoachControls"></div>
       </div>
     </div>
     <div id="streakHomeBadge"></div>
@@ -1473,12 +1474,12 @@ function setTodayCoach(charId){
     showToast(CHAR_LIST.find(c=>c.id===charId).name+'が今日だけのコーチになったよ🌟');
   }
   hideTodayCoachModal();
-  renderHikariCard();
+  initDailyMessage();
 }
 function clearTodayCoach(){
   localStorage.removeItem('np_today_coach');
   hideTodayCoachModal();
-  renderHikariCard();
+  initDailyMessage();
   showToast('メインコーチに戻りました');
 }
 function showTodayCoachModal(){
@@ -7712,6 +7713,19 @@ function initDailyMessage(){
   _set('dailyMsgText',msg);
   _set('dailyMsgDate',m+'月'+d+'日');
   _set('dailyMsgCountdown',diffDays>0?'国試まで'+diffDays+'日、一緒に頑張ろう✨':'今日も一歩ずつ、一緒に歩いていこう✨');
+  renderHomeCoachControls();
+}
+function renderHomeCoachControls(){
+  var wrap=document.getElementById('homeCoachControls');
+  if(!wrap) return;
+  var todayCoach=getTodayCoach();
+  var activeChar=getActiveChar();
+  var activeCharData=CHAR_LIST.find(function(c){return c.id===activeChar;})||CHAR_LIST[0];
+  var moodId=getActiveMood();
+  var md=getMoodData(moodId);
+  var todayBadgeHtml=todayCoach?'<div class="today-coach-badge" style="margin-top:8px">📅 今日は'+activeCharData.name+'モード中</div>':'' ;
+  var moodBadgeHtml='<div style="margin-top:6px"><span class="mood-badge" style="color:'+md.color+';background:'+md.bg+';border-color:'+md.border+';margin-top:0" onclick="showToast(\'明日また気分が変わるよ！\')">'+md.emoji+' 今日は'+md.label+'</span></div>';
+  wrap.innerHTML=todayBadgeHtml+moodBadgeHtml+'<button class="today-coach-btn" style="margin-top:6px" onclick="showTodayCoachModal()">📅 今日だけ変更'+(todayCoach?' ('+activeCharData.name+'中)':'')+'</button>';
 }
 
 // ===== 性格タイプ診断システム =====
