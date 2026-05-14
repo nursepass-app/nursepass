@@ -69,6 +69,15 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .sub-tabs{display:flex;gap:8px;padding:12px 16px 8px}
 .sub-tab{flex:1;padding:8px 4px;border:1.5px solid rgba(85,80,77,0.25);border-radius:12px;background:rgba(240,232,222,.5);font-size:11px;font-weight:500;cursor:pointer;font-family:'Noto Sans JP',sans-serif;color:#55504D;transition:.2s;text-align:center;line-height:1.4}
 .sub-tab.active{background:linear-gradient(135deg,#D9C5B2,#B8A090);color:white;border-color:transparent;font-weight:700}
+/* ===== ★フィルター ===== */
+.sf-wrap{margin:10px 0 14px}
+.sf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sf-btn{padding:6px 2px;font-size:11px;font-weight:700;color:#8A6A50;background:rgba(240,232,222,0.7);border:1.5px solid rgba(217,197,178,0.45);border-radius:10px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:.15s;-webkit-tap-highlight-color:transparent;letter-spacing:.2px;text-align:center}
+.sf-btn.sf-on{background:rgba(234,179,8,0.18);border-color:rgba(234,179,8,0.65);color:#92400e;font-weight:800}
+.sf-btn:active{opacity:.7}
+.sf-status{font-size:10px;font-weight:700;color:#92400e;background:rgba(234,179,8,0.13);border:1px solid rgba(234,179,8,0.35);border-radius:8px;padding:2px 10px;display:inline-block;margin-top:5px}
+body.dark .sf-btn{background:rgba(50,38,30,0.8);border-color:rgba(180,160,140,0.2);color:#C8B8A8}
+body.dark .sf-btn.sf-on{background:rgba(234,179,8,0.15);border-color:rgba(234,179,8,0.5);color:#FDE68A}
 .cat-count{font-size:10px;display:block;margin-top:2px;opacity:.85}
 .per-cat-stats{margin-top:16px}
 .cat-stat-header{font-size:12px;font-weight:700;color:#6B5040;margin:14px 0 8px;letter-spacing:.04em}
@@ -706,6 +715,17 @@ body.font-xl .explanation{font-size:16px}
     <!-- エリア4: メインボタン -->
     <div style="display:flex;flex-direction:column;gap:12px">
       <button onclick="startQuizWithCount('random',5)" class="home-main-btn">🌟 今日の5問に挑戦！</button>
+      <!-- ★フィルター -->
+      <div class="sf-wrap" id="starFilterWrap">
+        <div style="font-size:10px;color:#8A6A50;font-weight:700;margin-bottom:6px;letter-spacing:.5px">⭐ 重要度フィルター</div>
+        <div class="sf-grid">
+          <button class="sf-btn sf-on" id="sfBtn0" onclick="setStarFilter(0)">全て</button>
+          <button class="sf-btn" id="sfBtn1" onclick="setStarFilter(1)">★のみ</button>
+          <button class="sf-btn" id="sfBtn2" onclick="setStarFilter(2)">★★のみ</button>
+          <button class="sf-btn" id="sfBtn3" onclick="setStarFilter(3)">★★★のみ</button>
+        </div>
+        <div style="min-height:20px;margin-top:2px;text-align:center" id="starFilterStatus"></div>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
         <button onclick="pickCount('field','分野別')" class="home-mid-btn">
           <span class="btn-icon">🎲</span><span class="btn-lbl" style="font-size:13px">分野別</span>
@@ -1144,14 +1164,15 @@ function startSubjectQuiz(key){
   document.body.appendChild(modal);
 }
 function launchSubjectQuiz(key,count){
-  const pool=shuffle(getSubjectPool(key)).slice(0,count);
-  if(!pool.length){showToast('問題が見つかりません');return;}
+  const pool=shuffle(applyHomeStarFilter(getSubjectPool(key))).slice(0,count);
+  if(!pool.length){showToast(homeStarFilter>0?'この科目で選択した★フィルターに該当する問題がありません':'問題が見つかりません');return;}
   closeSubjectScreen();
   session={pool,idx:0,correct:0,wrong:0,mode:'field'};
   showQuiz();
 }
 let selectedFields = [];
 let currentCategory = '必修';
+let homeStarFilter = parseInt(localStorage.getItem('np_star_filter')||'0');
 let session = null;
 let history = JSON.parse(localStorage.getItem('np_history')||'{}');
 // history[id] = {correct:n, wrong:n}
@@ -1831,6 +1852,30 @@ function shareResult(rate, total, correct){
     });
   }
 }
+// ===== ★フィルター =====
+function applyHomeStarFilter(arr){
+  if(homeStarFilter===0) return arr;
+  if(homeStarFilter===3) return arr.filter(function(q){return (q.stars||1)>=3;});
+  return arr.filter(function(q){return (q.stars||1)===homeStarFilter;});
+}
+function setStarFilter(n){
+  homeStarFilter=n;
+  try{localStorage.setItem('np_star_filter',String(n));}catch(e){}
+  updateStarFilterUI();
+}
+function updateStarFilterUI(){
+  [0,1,2,3].forEach(function(n){
+    var b=document.getElementById('sfBtn'+n);
+    if(b){b.classList.toggle('sf-on',n===homeStarFilter);}
+  });
+  var st=document.getElementById('starFilterStatus');
+  if(!st) return;
+  if(homeStarFilter===0){st.innerHTML='';}
+  else{
+    var lbl={1:'★',2:'★★',3:'★★★'}[homeStarFilter];
+    st.innerHTML='<span class="sf-status">'+lbl+'モードで出題中</span>';
+  }
+}
 function pickCount(mode, label){
   const existing=document.getElementById('countModal');
   if(existing) existing.remove();
@@ -1856,12 +1901,16 @@ function startQuizWithCount(mode, count){
   }
   const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
   const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
+  const sfPool=applyHomeStarFilter(fieldFilter);
   let pool;
-  if(mode==='random') pool=shuffle([...fieldFilter]).slice(0,count);
-  else if(mode==='field') pool=shuffle([...fieldFilter]).slice(0,count);
+  if(mode==='random') pool=shuffle([...sfPool]).slice(0,count);
+  else if(mode==='field') pool=shuffle([...sfPool]).slice(0,count);
   else if(mode==='allcat') pool=shuffle([...catQ]).slice(0,count);
   else { startQuiz(mode); return; }
-  if(!pool.length){alert('問題が見つかりません。');return;}
+  if(!pool.length){
+    if(homeStarFilter>0){showToast('選択した★フィルターに該当する問題がありません');return;}
+    alert('問題が見つかりません。');return;
+  }
   session={pool,idx:0,correct:0,wrong:0,mode};
   showQuiz();
 }
@@ -3968,10 +4017,11 @@ function startQuiz(mode){
   let pool=[];
   const catQ=QUESTIONS.filter(q=>q.category===currentCategory);
   const fieldFilter=selectedFields.length?catQ.filter(q=>selectedFields.includes(q.field)):catQ;
+  const sfBase=applyHomeStarFilter(fieldFilter);
   const applySkip=arr=>skipMastered?arr.filter(q=>!isMastered(q.id)):arr;
   if(mode==='random'){
     // Smart weighted random: 40% weak/unmastered, 30% unread, 30% general
-    const base=applySkip(fieldFilter);
+    const base=applySkip(sfBase);
     const weakQ=base.filter(q=>{const h=history[String(q.id)];return h&&h.wrong>0&&h.correct<=h.wrong;});
     const unreadQ=base.filter(q=>!history[String(q.id)]);
     const otherQ=base.filter(q=>{const h=history[String(q.id)];return h&&(h.correct>h.wrong);});
@@ -3983,9 +4033,10 @@ function startQuiz(mode){
     const selected=new Set([...pick(weakQ,weakN),...pick(unreadQ,unreadN),...pick(otherQ,otherN)].map(q=>q.id));
     if(selected.size<n){shuffle([...base]).forEach(q=>{if(selected.size<n)selected.add(q.id);});}
     pool=shuffle(QUESTIONS.filter(q=>selected.has(q.id)).slice(0,n));
-    if(!pool.length&&skipMastered){showToast('習得済み以外の問題がありません。スキップを解除します');skipMastered=false;pool=shuffle([...fieldFilter]).slice(0,5);}
+    if(!pool.length&&skipMastered){showToast('習得済み以外の問題がありません。スキップを解除します');skipMastered=false;pool=shuffle([...sfBase]).slice(0,5);}
+    if(!pool.length&&homeStarFilter>0){showToast('選択した★フィルターに該当する問題がありません');return;}
   }
-  else if(mode==='field') pool=shuffle([...applySkip(fieldFilter)]).slice(0,10);
+  else if(mode==='field') pool=shuffle([...applyHomeStarFilter(applySkip(fieldFilter))]).slice(0,10);
   else if(mode==='weak'){
     const weakIds=Object.keys(history).filter(id=>history[id].wrong>0);
     pool=shuffle(catQ.filter(q=>weakIds.includes(String(q.id))));
@@ -7910,6 +7961,7 @@ initModeButtons();
 updateScoreBadge();
 initDailyMessage();
 initTodayMood();
+updateStarFilterUI();
 updateHikariLevel();
 updateStreakDisplay();
 (function(){
