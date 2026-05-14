@@ -82,6 +82,15 @@ body{min-height:100vh;background:linear-gradient(135deg,#F5EFE8 0%,#EDE0D0 50%,#
 .q-count{font-size:13px;color:#5A5450;white-space:nowrap}
 .q-field{padding:10px 20px 0;font-size:12px;color:#5A5450;letter-spacing:.05em}
 .q-text{padding:14px 20px 16px;font-size:18px;line-height:1.7;color:#55504D;font-weight:500}
+/* ===== ★★★ 重要問題バナー ===== */
+.star3-banner{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(255,235,59,0.13),rgba(255,193,7,0.10));border:1.5px solid rgba(234,179,8,0.45);border-radius:12px;padding:8px 12px;margin:0 16px 4px;cursor:pointer;animation:star3BannerIn .35s ease;position:relative}
+@keyframes star3BannerIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes star3BannerOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-8px)}}
+.star3-banner-icon{width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(234,179,8,0.45);background:#EDE0D4}
+.star3-banner-text{flex:1;font-size:12px;font-weight:700;color:#4A3828;line-height:1.55}
+.star3-banner-close{font-size:11px;color:#B8907A;flex-shrink:0;padding:2px 0 2px 4px}
+body.dark .star3-banner{background:linear-gradient(135deg,rgba(255,235,59,0.08),rgba(255,193,7,0.06));border-color:rgba(234,179,8,0.35)}
+body.dark .star3-banner-text{color:#D8C8B8}
 .choices{display:flex;flex-direction:column;gap:8px;padding:0 16px 16px}
 .choice-btn{width:100%;padding:12px 16px;border:1.5px solid rgba(85,80,77,0.3);border-radius:14px;background:rgba(240,232,222,.8);text-align:left;cursor:pointer;font-size:16px;line-height:1.5;color:#55504D;font-family:'Noto Sans JP',sans-serif;transition:.2s;display:flex;align-items:flex-start;gap:10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .choice-btn:hover:not(:disabled){border-color:rgba(217,197,178,.4);background:rgba(245,239,232,.9)}
@@ -4269,6 +4278,60 @@ function autoAnswerTimeout(){
     }
   }
 }
+// ===== ★★★ 重要問題コーチバナー =====
+const STAR3_LINES={
+  hikari:{
+    normal:['これ大事だから、しっかり読んでね💛','落ち着いてね、でもこれは本当に重要だよ💛','この問題、試験に出る可能性が高いよ。丁寧に考えてね💛'],
+    hot:   ['ヒカリが保証する！これは絶対出るよ！','来た！これ超重要！全力で考えて！','これを制したら合格に一歩近づくよ！'],
+    grumpy:['…一応言っとくけど、これ重要だから','…ちゃんと読んでよ。重要なんだから','…気乗りしないけど、これは覚えて'],
+  },
+  riku:{
+    normal:['重要問題だ。集中しろ','これは必ず出る。冷静に考えろ','ここ落とすな。頻出だ'],
+    hot:   ['これを制する者が国試を制する','この問題が全てだ。全力で挑め','覚えろ。これは絶対に出る'],
+    grumpy:['…覚えなくていいなら言わない。覚えろ','…気は乗らないが、ここは重要だ','…ったく。これくらい知っておけ'],
+  },
+  hana:{
+    normal:['国試頻出よ。落ち着いて考えて','よく出るところだから丁寧にね','ここ、毎年出てるわよ。頑張って'],
+    hot:   ['これ間違えたら今夜復習確定ね！','絶対正解して！応援してるわよ！','ここは絶対取って！大切な問題よ！'],
+    grumpy:['ため息…。これくらい覚えてほしいな','もう…。これは大事なんだから','…はあ。せめてこれだけは正解してね'],
+  },
+  sora:{
+    normal:['超重要問題キタ━━━！！いけるいける！','やばい出た！これ絶対正解できるよ！','重要問題！でも大丈夫、落ち着いて！'],
+    hot:   ['これ正解したらめちゃくちゃ褒める！！','やれ！絶対できる！！燃えてきたー！！','これが出たら全力で！絶対取れるから！！'],
+    grumpy:['うーん今日眠いけど…これは覚えて！','テンション低いけど…これだけは集中して','はー…でもこれは大事だから頑張って'],
+  },
+  ren:{
+    normal:['これ知らないのは流石にマズい','頻出。知ってて当然のやつ','ここを落とすのはもったいない'],
+    hot:   ['覚えないと後悔するぞ、絶対に','これを制するか？かかってこい','全力で来い。これは取れる問題だ'],
+    grumpy:['は？これも知らないの？覚えて','はあ…。せめてこれくらいは','呆れた。でも覚えてほしいから言う'],
+  },
+};
+function _star3MoodKey(moodId){return moodId==='hot'?'hot':moodId==='grumpy'?'grumpy':'normal';}
+function _dismissStar3Banner(banner){
+  if(!banner||!banner.parentNode) return;
+  if(banner._t) clearTimeout(banner._t);
+  banner.style.animation='star3BannerOut .25s ease forwards';
+  setTimeout(function(){if(banner.parentNode)banner.parentNode.removeChild(banner);},240);
+}
+function showStar3Banner(q){
+  if(!q||q.stars<3) return;
+  if(!session.star3Shown) session.star3Shown=new Set();
+  if(session.star3Shown.has(q.id)) return;
+  session.star3Shown.add(q.id);
+  var charId=getActiveChar();
+  var moodKey=_star3MoodKey(getActiveMood());
+  var pool=(STAR3_LINES[charId]||STAR3_LINES.hikari)[moodKey]||(STAR3_LINES[charId]||STAR3_LINES.hikari).normal;
+  var line=pool[Math.floor(Math.random()*pool.length)];
+  var lv=getHikariLevel();
+  var banner=document.createElement('div');
+  banner.className='star3-banner';
+  banner.innerHTML='<img class="star3-banner-icon" src="'+getCharImgSrc(charId,lv)+'" alt="" onerror="this.style.opacity=0"><div class="star3-banner-text">'+line+'</div><span class="star3-banner-close">✕</span>';
+  banner.onclick=function(){_dismissStar3Banner(banner);};
+  var qtxt=document.querySelector('#quizArea .q-text');
+  if(!qtxt) return;
+  qtxt.parentNode.insertBefore(banner,qtxt);
+  banner._t=setTimeout(function(){_dismissStar3Banner(banner);},2000);
+}
 function renderQuestion(){
   clearQuizTimer();
   resetMiniChat();
@@ -4306,6 +4369,7 @@ function renderQuestion(){
       </div>
     </div>`;
   if(isTime) startQuizTimer();
+  showStar3Banner(q);
 }
 
 
