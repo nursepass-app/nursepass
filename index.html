@@ -481,6 +481,26 @@ body.font-xl .explanation{font-size:16px}
 /* ===== HIKARI MSG TOAST ===== */
 @keyframes hikariMsgIn{0%{opacity:0;transform:translateX(-50%) translateY(14px);}100%{opacity:1;transform:translateX(-50%) translateY(0);}}
 .hikari-msg-toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:9500;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(245,239,232,0.97),rgba(237,224,212,0.95));border:1.5px solid rgba(217,197,178,0.65);border-radius:20px;padding:10px 14px;box-shadow:0 4px 20px rgba(184,144,122,0.3);max-width:300px;width:88%;pointer-events:none;animation:hikariMsgIn .35s ease forwards;}
+/* ===== 今日だけコーチ ===== */
+.today-coach-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.28);border-radius:20px;padding:2px 8px;margin-top:3px}
+.today-coach-btn{display:block;width:100%;margin-top:8px;padding:7px 0;font-size:12px;font-weight:700;color:#8A6A50;background:rgba(240,232,222,0.7);border:1.5px solid rgba(217,197,178,0.55);border-radius:10px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;transition:.15s;-webkit-tap-highlight-color:transparent}
+.today-coach-btn:active{background:rgba(217,197,178,0.6)}
+.tc-sheet{position:fixed;bottom:0;left:0;right:0;z-index:9800;background:linear-gradient(180deg,#FDFAF7,#F8F0E8);border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -4px 30px rgba(0,0,0,0.15);animation:tcSlideUp .28s ease}
+@keyframes tcSlideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.tc-sheet-inner{padding:16px 16px 20px;max-height:70vh;overflow-y:auto}
+.tc-sheet-handle{width:36px;height:4px;background:rgba(180,160,140,0.4);border-radius:2px;margin:10px auto 14px}
+.tc-sheet-title{font-size:14px;font-weight:800;color:#5A3828;font-family:'Zen Kaku Gothic New',sans-serif;text-align:center;margin-bottom:14px}
+.tc-char-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.tc-char-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:12px;border:1.5px solid rgba(217,197,178,0.4);background:rgba(245,239,232,0.7);cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent;position:relative}
+.tc-char-item:active{transform:scale(0.96)}
+.tc-char-item.tc-active{border-color:#7C3AED;background:rgba(124,58,237,0.1)}
+.tc-char-item.tc-main{border-color:#D9A060;background:rgba(217,160,96,0.1)}
+.tc-char-img{width:48px;height:48px;object-fit:contain;border-radius:50%;background:#F0E8DC}
+.tc-char-name{font-size:11px;font-weight:700;color:#5A3828;font-family:'Noto Sans JP',sans-serif}
+.tc-char-tag{font-size:9px;color:#B8907A;text-align:center;line-height:1.3}
+.tc-char-lock{position:absolute;top:4px;right:4px;font-size:10px}
+.tc-reset-btn{display:block;width:100%;margin-top:12px;padding:11px;font-size:13px;font-weight:700;color:#7C3AED;background:rgba(124,58,237,0.07);border:1.5px solid rgba(124,58,237,0.3);border-radius:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;-webkit-tap-highlight-color:transparent}
+.tc-overlay{position:fixed;inset:0;z-index:9799;background:rgba(0,0,0,0.35)}
 .hikari-msg-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;overflow:hidden;background:linear-gradient(135deg,#EDE0D4,#D9C5B2);}
 .hikari-msg-av img{width:100%;height:100%;object-fit:contain;}
 .hikari-msg-body{font-size:15px;color:#4A3828;font-weight:500;line-height:1.55;font-family:'Noto Sans JP',sans-serif;}
@@ -1419,8 +1439,73 @@ var CHAR_MESSAGES={
     levelup:['レベルアップだーー！！⚡やったぜ！','もっと強くなれるぞ！燃えてきた！🌞','一緒に上り詰めよう！！🔥']
   }
 };
+// ===== 今日だけコーチ =====
+function getTodayCoach(){
+  try{
+    var raw=localStorage.getItem('np_today_coach');
+    if(!raw) return null;
+    var d=JSON.parse(raw);
+    if(d.date!==todayKey){localStorage.removeItem('np_today_coach');return null;}
+    return d.charId;
+  }catch(e){return null;}
+}
+function getActiveChar(){
+  return getTodayCoach()||selectedChar;
+}
+function setTodayCoach(charId){
+  if(charId===selectedChar){
+    localStorage.removeItem('np_today_coach');
+    showToast(CHAR_LIST.find(c=>c.id===charId).name+'が今日のコーチ（メインと同じ）');
+  } else {
+    localStorage.setItem('np_today_coach',JSON.stringify({charId:charId,date:todayKey}));
+    showToast(CHAR_LIST.find(c=>c.id===charId).name+'が今日だけのコーチになったよ🌟');
+  }
+  hideTodayCoachModal();
+  renderHikariCard();
+}
+function clearTodayCoach(){
+  localStorage.removeItem('np_today_coach');
+  hideTodayCoachModal();
+  renderHikariCard();
+  showToast('メインコーチに戻りました');
+}
+function showTodayCoachModal(){
+  hideTodayCoachModal();
+  var ov=document.createElement('div');
+  ov.className='tc-overlay';
+  ov.id='_tcOverlay';
+  ov.onclick=hideTodayCoachModal;
+  document.body.appendChild(ov);
+  var lv=getHikariLevel();
+  var todayCoach=getTodayCoach();
+  var charsHtml=CHAR_LIST.map(function(c){
+    var unlocked=isCharUnlocked(c.id)||c.id==='hikari';
+    var isMain=c.id===selectedChar;
+    var isToday=c.id===todayCoach;
+    var cls='tc-char-item'+(isToday?' tc-active':isMain?' tc-main':'');
+    var lock=unlocked?'':`<span class="tc-char-lock">🔒</span>`;
+    var badge=isToday?'<div style="font-size:9px;color:#7C3AED;font-weight:700">今日✓</div>':
+               isMain?'<div style="font-size:9px;color:#D9A060;font-weight:700">メイン</div>':'';
+    return `<div class="${cls}" onclick="${unlocked?'setTodayCoach(\''+c.id+'\')':'showToast(\'🔒 まだ解放されていません\')'}">${lock}
+      <img class="tc-char-img" src="${getCharImgSrc(c.id,unlocked?lv:0)}" alt="${c.name}" onerror="this.style.background='#EDE0D4'">
+      <div class="tc-char-name">${c.name}</div>
+      ${badge}
+    </div>`;
+  }).join('');
+  var resetBtn=todayCoach?`<button class="tc-reset-btn" onclick="clearTodayCoach()">🔄 メインコーチ（${CHAR_LIST.find(c=>c.id===selectedChar).name}）に戻す</button>`:'';
+  var sh=document.createElement('div');
+  sh.className='tc-sheet';
+  sh.id='_tcSheet';
+  sh.innerHTML=`<div class="tc-sheet-inner"><div class="tc-sheet-handle"></div><div class="tc-sheet-title">📅 今日だけのコーチを選ぶ</div><div class="tc-char-grid">${charsHtml}</div>${resetBtn}</div>`;
+  document.body.appendChild(sh);
+}
+function hideTodayCoachModal(){
+  ['_tcOverlay','_tcSheet'].forEach(function(id){var e=document.getElementById(id);if(e)e.remove();});
+}
+// ===== キャラメッセージ =====
 function getCharMsg(type){
-  var msgs=(CHAR_MESSAGES[selectedChar]||CHAR_MESSAGES.hikari)[type]||[];
+  var active=getActiveChar();
+  var msgs=(CHAR_MESSAGES[active]||CHAR_MESSAGES.hikari)[type]||[];
   return msgs[Math.floor(Math.random()*msgs.length)]||'';
 }
 function showCharMsg(type,duration){
@@ -1430,8 +1515,9 @@ function showCharMsg(type,duration){
   document.querySelectorAll('.hikari-msg-toast').forEach(function(e){e.remove();});
   var d=document.createElement('div');
   d.className='hikari-msg-toast';
-  var imgSrc=getCharImgSrc(selectedChar,getHikariLevel());
-  d.innerHTML='<div class="hikari-msg-av"><img src="'+imgSrc+'" alt="'+selectedChar+'" style="width:100%;height:100%;object-fit:contain;border-radius:50%" onerror="this.style.background=\'#F5EFE8\';this.onerror=null"></div><div class="hikari-msg-body">'+msg+'</div>';
+  var active=getActiveChar();
+  var imgSrc=getCharImgSrc(active,getHikariLevel());
+  d.innerHTML='<div class="hikari-msg-av"><img src="'+imgSrc+'" alt="'+active+'" style="width:100%;height:100%;object-fit:contain;border-radius:50%" onerror="this.style.background=\'#F5EFE8\';this.onerror=null"></div><div class="hikari-msg-body">'+msg+'</div>';
   document.body.appendChild(d);
   setTimeout(function(){d.style.transition='opacity .4s ease';d.style.opacity='0';setTimeout(function(){if(d.parentNode)d.remove();},420);},duration);
 }
@@ -2297,11 +2383,17 @@ function renderHikariCard(){
   const t=getTotalAnswered();
   const lvPct=lv<5?Math.min(100,Math.round((t-HIKARI_LV_REQ[lv])/(HIKARI_LV_REQ[lv+1]-HIKARI_LV_REQ[lv])*100)):100;
   const rem=lv<5?HIKARI_LV_REQ[lv+1]-t:0;
+  const todayCoach=getTodayCoach();
+  const activeChar=todayCoach||selectedChar;
+  const activeCharData=CHAR_LIST.find(c=>c.id===activeChar)||CHAR_LIST[0];
+  const coachLabel=activeCharData.name+'より';
+  const todayBadge=todayCoach?`<div class="today-coach-badge">📅 今日は${activeCharData.name}モード中</div>`:'';
   el.innerHTML=`<div style="background:linear-gradient(135deg,rgba(245,239,232,0.92),rgba(237,224,212,0.85));border:1.5px solid rgba(217,197,178,0.45);border-radius:16px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start">
     <div style="font-size:22px;flex-shrink:0;margin-top:1px">${icon}</div>
     <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;font-weight:700;color:#B8907A;letter-spacing:.8px">ヒカリより</span><span style="font-size:10px;font-weight:700;color:#D9A060;background:rgba(217,160,96,0.12);border:1px solid rgba(217,160,96,0.3);border-radius:8px;padding:1px 7px">${loginStreak.streak<=1?'🔥1日目':'🔥'+loginStreak.streak+'日連続'}</span></div>
-      <div style="font-size:13px;color:#4A3828;line-height:1.7;font-weight:500">${msg}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:10px;font-weight:700;color:#B8907A;letter-spacing:.8px">${coachLabel}</span><span style="font-size:10px;font-weight:700;color:#D9A060;background:rgba(217,160,96,0.12);border:1px solid rgba(217,160,96,0.3);border-radius:8px;padding:1px 7px">${loginStreak.streak<=1?'🔥1日目':'🔥'+loginStreak.streak+'日連続'}</span></div>
+      ${todayBadge}
+      <div style="font-size:13px;color:#4A3828;line-height:1.7;font-weight:500;margin-top:${todayCoach?'4px':'0'}">${msg}</div>
       <div style="margin-top:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
           <span style="font-size:9px;font-weight:700;color:#8A6A50">Lv.${lv}</span>
@@ -2311,7 +2403,8 @@ function renderHikariCard(){
         <div class="hikari-xp-track" style="height:7px;margin:0"><div class="hikari-xp-fill" id="hikariCardXpFill"></div></div>
       </div>
     </div>
-  </div>`;
+  </div>
+  <button class="today-coach-btn" onclick="showTodayCoachModal()">📅 今日だけ変更${todayCoach?' ('+activeCharData.name+'中)':''}</button>`;
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     var f=document.getElementById('hikariCardXpFill');
     if(f) f.style.width=lvPct+'%';
@@ -4193,7 +4286,7 @@ function updateHikariLevel(){
   if(av) av.className='daily-msg-avatar'+(lv>0?' hikari-av-lv'+lv:'');
   if(crown) crown.style.display=lv>=5?'':'none';
   // image swap（選択キャラのlvに対応した画像）
-  var src=getCharImgSrc(selectedChar,lv);
+  var src=getCharImgSrc(getActiveChar(),lv);
   var imgs=['dailyAvImg','hikariAvLg'];
   imgs.forEach(function(id){var e=document.getElementById(id);if(e)e.src=src;});
   // badge and name
@@ -7470,14 +7563,14 @@ const DAILY_MESSAGES = {
 function initDailyMessage(){
   // アバター画像（選択キャラ）
   var lv=getHikariLevel();
-  var charSrc=getCharImgSrc(selectedChar,lv);
+  var activeChar=getActiveChar();
+  var charSrc=getCharImgSrc(activeChar,lv);
   ['dailyAvImg','hikariAvLg'].forEach(function(id){var e=document.getElementById(id);if(e)e.src=charSrc;});
   // キャラ名ラベル更新
   var labelEl=document.getElementById('dailyMsgLabel');
   if(labelEl){
     var badge=document.getElementById('hikariLvBadge');
-    var charName=(CHAR_LIST.find(function(c){return c.id===selectedChar;})||{name:'ヒカリ'}).name;
-    // テキストノードだけ書き換え（spnバッジを保持）
+    var charName=(CHAR_LIST.find(function(c){return c.id===activeChar;})||{name:'ヒカリ'}).name;
     var tn=labelEl.firstChild;
     if(tn&&tn.nodeType===3) tn.textContent=charName+'より ';
     else labelEl.insertBefore(document.createTextNode(charName+'より '),labelEl.firstChild);
@@ -7486,10 +7579,10 @@ function initDailyMessage(){
   var lastDate=localStorage.getItem('np_last_msg_date');
   var lastChar=localStorage.getItem('np_last_msg_char');
   var msg=localStorage.getItem('np_last_msg');
-  if(lastDate!==todayKey||lastChar!==selectedChar||!msg){
-    var dayMsgs=(CHAR_MESSAGES[selectedChar]||CHAR_MESSAGES.hikari).daily;
+  if(lastDate!==todayKey||lastChar!==activeChar||!msg){
+    var dayMsgs=(CHAR_MESSAGES[activeChar]||CHAR_MESSAGES.hikari).daily;
     msg=dayMsgs[Math.floor(Math.random()*dayMsgs.length)];
-    try{localStorage.setItem('np_last_msg_date',todayKey);localStorage.setItem('np_last_msg_char',selectedChar);localStorage.setItem('np_last_msg',msg);}catch(e){}
+    try{localStorage.setItem('np_last_msg_date',todayKey);localStorage.setItem('np_last_msg_char',activeChar);localStorage.setItem('np_last_msg',msg);}catch(e){}
   }
   // 日付・カウントダウン
   var today=new Date();
