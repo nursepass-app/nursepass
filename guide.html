@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NursePass 使い方ガイド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Zen Maru Gothic',sans-serif;background:#fdf6ef;color:#4a3828;line-height:1.7;max-width:480px;margin:0 auto;padding-bottom:40px}
+
+/* ヒーロー */
+.hero{background:linear-gradient(160deg,#f5e6d3 0%,#eddcc8 100%);padding:48px 24px 40px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:rgba(196,149,106,0.12);border-radius:50%}
+.hero::after{content:'';position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;background:rgba(196,149,106,0.1);border-radius:50%}
+.hero-badge{display:inline-block;font-size:11px;font-weight:700;color:#c4956a;background:rgba(196,149,106,0.15);border:1.5px solid rgba(196,149,106,0.35);border-radius:20px;padding:3px 12px;margin-bottom:14px;letter-spacing:.8px}
+.hero h1{font-size:22px;font-weight:900;color:#3c2a1e;line-height:1.45;margin-bottom:10px}
+.hero h1 span{color:#c4956a}
+.hero-sub{font-size:13px;color:#7a5c48;margin-bottom:28px}
+.hero-btn{display:inline-block;background:linear-gradient(135deg,#c4956a,#a8784f);color:#fff;font-family:'Zen Maru Gothic',sans-serif;font-size:15px;font-weight:700;padding:14px 32px;border-radius:50px;text-decoration:none;box-shadow:0 4px 16px rgba(196,149,106,0.4);transition:.2s;letter-spacing:.5px}
+.hero-btn:active{opacity:.85;transform:scale(.98)}
+
+/* セクション共通 */
+section{padding:36px 20px 8px}
+.sec-label{font-size:10px;font-weight:700;color:#c4956a;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.sec-title{font-size:18px;font-weight:900;color:#3c2a1e;margin-bottom:6px}
+.sec-desc{font-size:13px;color:#7a5c48;margin-bottom:20px;line-height:1.7}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(196,149,106,0.25),transparent);margin:8px 20px 0}
+
+/* ステップ */
+.steps{display:flex;flex-direction:column;gap:14px}
+.step{display:flex;align-items:flex-start;gap:14px;background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(196,149,106,0.1)}
+.step-num{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#c4956a,#a8784f);color:#fff;font-size:16px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-body{}
+.step-title{font-size:14px;font-weight:700;color:#3c2a1e;margin-bottom:3px}
+.step-desc{font-size:12px;color:#7a5c48}
+
+/* キャラ */
+.chars{display:flex;flex-direction:column;gap:10px}
+.char-card{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(196,149,106,0.08)}
+.char-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.char-body{}
+.char-name{font-size:14px;font-weight:700;color:#3c2a1e}
+.char-type{font-size:11px;font-weight:700;border-radius:8px;padding:1px 8px;display:inline-block;margin:2px 0}
+.char-desc{font-size:11px;color:#7a5c48;line-height:1.6}
+
+/* モード */
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode-card{background:#fff;border-radius:16px;padding:16px 14px;text-align:center;box-shadow:0 2px 8px rgba(196,149,106,0.08)}
+.mode-icon{font-size:26px;margin-bottom:6px}
+.mode-name{font-size:13px;font-weight:700;color:#3c2a1e;margin-bottom:4px}
+.mode-desc{font-size:11px;color:#7a5c48;line-height:1.5}
+
+/* 問題数バッジ */
+.q-counts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.q-badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px}
+
+/* 星フィルター */
+.stars{display:flex;flex-direction:column;gap:10px}
+.star-row{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(196,149,106,0.08)}
+.star-mark{font-size:18px;min-width:56px;font-weight:900;letter-spacing:-1px}
+.star-body{}
+.star-title{font-size:13px;font-weight:700;color:#3c2a1e}
+.star-desc{font-size:11px;color:#7a5c48}
+
+/* AIコーチ */
+.ai-cards{display:flex;flex-direction:column;gap:10px}
+.ai-card{background:#fff;border-radius:16px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 2px 8px rgba(196,149,106,0.08)}
+.ai-badge{font-size:18px;flex-shrink:0;margin-top:1px}
+.ai-body{}
+.ai-title{font-size:13px;font-weight:700;color:#3c2a1e;margin-bottom:2px}
+.ai-desc{font-size:11px;color:#7a5c48;line-height:1.6}
+
+/* 気分 */
+.moods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mood-card{border-radius:14px;padding:12px 10px;text-align:center;border:1.5px solid}
+.mood-emoji{font-size:22px;margin-bottom:4px}
+.mood-name{font-size:11px;font-weight:700;margin-bottom:2px}
+.mood-desc{font-size:10px;line-height:1.5;opacity:.85}
+
+/* フッター */
+footer{background:linear-gradient(135deg,#f0e4d4,#e8d5be);margin:36px 0 0;padding:32px 24px;text-align:center}
+footer h2{font-size:17px;font-weight:900;color:#3c2a1e;margin-bottom:8px}
+footer p{font-size:12px;color:#7a5c48;margin-bottom:22px}
+.footer-btn{display:inline-block;background:linear-gradient(135deg,#c4956a,#a8784f);color:#fff;font-family:'Zen Maru Gothic',sans-serif;font-size:14px;font-weight:700;padding:13px 28px;border-radius:50px;text-decoration:none;box-shadow:0 4px 14px rgba(196,149,106,0.38)}
+.footer-note{font-size:10px;color:#b8907a;margin-top:18px}
+</style>
+</head>
+<body>
+
+<!-- ① ヒーロー -->
+<div class="hero">
+  <div class="hero-badge">📖 使い方ガイド</div>
+  <h1>看護師国試を<br><span>キャラと一緒に</span><br>突破しよう</h1>
+  <p class="hero-sub">全5,132問 × 5体のコーチ × AIサポート</p>
+  <a class="hero-btn" href="https://nursepass-app.github.io/nursepass/">🌟 アプリをはじめる</a>
+</div>
+
+<div class="divider"></div>
+
+<!-- ② はじめかた -->
+<section>
+  <div class="sec-label">How to start</div>
+  <div class="sec-title">はじめかた</div>
+  <div class="sec-desc">3ステップで今日から学習スタート</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">キャラを選ぶ</div>
+        <div class="step-desc">ヒカリ・ハナ・ソラ・リク・レンの中から<br>自分に合ったコーチを選択。学習するほどキャラが育っていきます。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">今日の5問に挑戦</div>
+        <div class="step-desc">ホーム画面のメインボタンからすぐ開始。苦手問題・未解答問題を自動で選んで出題します。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">キャラを育てる</div>
+        <div class="step-desc">正解するたびにXPが貯まり、Lv.0〜5までキャラが成長。新しいコーチも解放されます。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ③ キャラクター -->
+<section>
+  <div class="sec-label">Characters</div>
+  <div class="sec-title">コーチ紹介</div>
+  <div class="sec-desc">5体のキャラが毎日あなたを応援します</div>
+  <div class="chars">
+
+    <div class="char-card">
+      <div class="char-icon" style="background:linear-gradient(135deg,#fde8d8,#f5d0b8)">🌸</div>
+      <div class="char-body">
+        <div class="char-name">ヒカリ</div>
+        <div class="char-type" style="background:rgba(253,186,116,0.18);color:#c2610c">やさしい癒し系</div>
+        <div class="char-desc">静かなやさしさで寄り添うデフォルトコーチ。不安な心をそっと照らしてくれます。</div>
+      </div>
+    </div>
+
+    <div class="char-card">
+      <div class="char-icon" style="background:linear-gradient(135deg,#ffd6c4,#ffbda0)">🌺</div>
+      <div class="char-body">
+        <div class="char-name">ハナ</div>
+        <div class="char-type" style="background:rgba(251,146,60,0.15);color:#c2410c">お姉さん先輩系</div>
+        <div class="char-desc">頼れるお姉さんタイプ。「国試頻出よ、落ち着いて」と的確にサポート。</div>
+      </div>
+    </div>
+
+    <div class="char-card">
+      <div class="char-icon" style="background:linear-gradient(135deg,#c8b8e8,#b8a0e0)">🌙</div>
+      <div class="char-body">
+        <div class="char-name">ソラ</div>
+        <div class="char-type" style="background:rgba(167,139,250,0.18);color:#6d28d9">ポジティブ不思議系</div>
+        <div class="char-desc">「超重要問題キタ━━━！！」圧倒的な明るさで学習を盛り上げます。</div>
+      </div>
+    </div>
+
+    <div class="char-card">
+      <div class="char-icon" style="background:linear-gradient(135deg,#b8d4ee,#9ab8de)">❄️</div>
+      <div class="char-body">
+        <div class="char-name">リク</div>
+        <div class="char-type" style="background:rgba(96,165,250,0.15);color:#1d4ed8">クール分析系</div>
+        <div class="char-desc">無駄なく的確。「重要問題だ。集中しろ」と冷静に引っ張ってくれます。</div>
+      </div>
+    </div>
+
+    <div class="char-card">
+      <div class="char-icon" style="background:linear-gradient(135deg,#c8e8b0,#b0da90)">⚡</div>
+      <div class="char-body">
+        <div class="char-name">レン</div>
+        <div class="char-type" style="background:rgba(74,222,128,0.15);color:#15803d">毒舌クール系</div>
+        <div class="char-desc">「これ知らないのは流石にマズい」核心を突くコメントで実力を引き出します。</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ④ 学習モード -->
+<section>
+  <div class="sec-label">Study Modes</div>
+  <div class="sec-title">学習モード</div>
+  <div class="sec-desc">目的に合わせて4つのモードを使い分けよう</div>
+
+  <div class="q-counts">
+    <span class="q-badge" style="background:rgba(196,149,106,0.15);color:#a8784f">必修 1,232問</span>
+    <span class="q-badge" style="background:rgba(96,165,250,0.12);color:#1d4ed8">一般 2,900問</span>
+    <span class="q-badge" style="background:rgba(74,222,128,0.12);color:#15803d">状況設定 1,000問</span>
+  </div>
+
+  <div class="modes">
+    <div class="mode-card">
+      <div class="mode-icon">🌟</div>
+      <div class="mode-name">今日の5問</div>
+      <div class="mode-desc">苦手・未解答・得意をバランスよくミックスして出題</div>
+    </div>
+    <div class="mode-card">
+      <div class="mode-icon">🎲</div>
+      <div class="mode-name">分野別</div>
+      <div class="mode-desc">カテゴリ・分野を絞って集中学習。問題数も選択可能</div>
+    </div>
+    <div class="mode-card">
+      <div class="mode-icon">⚠️</div>
+      <div class="mode-name">苦手強化</div>
+      <div class="mode-desc">間違えた問題だけを繰り返し出題。弱点を確実に克服</div>
+    </div>
+    <div class="mode-card">
+      <div class="mode-icon">📖</div>
+      <div class="mode-name">科目別</div>
+      <div class="mode-desc">53科目から選んで集中演習。国試の出題分野を網羅</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ⑤ 星フィルター -->
+<section>
+  <div class="sec-label">Star Filter</div>
+  <div class="sec-title">★重要度フィルター</div>
+  <div class="sec-desc">ホーム画面で★を選ぶと、そのレベルの問題だけ出題されます</div>
+  <div class="stars">
+    <div class="star-row">
+      <div class="star-mark" style="color:#d97706">★★★</div>
+      <div class="star-body">
+        <div class="star-title">最頻出問題</div>
+        <div class="star-desc">国試で毎年出題される最重要問題。★★★が出た瞬間にコーチから特別セリフが届きます。</div>
+      </div>
+    </div>
+    <div class="star-row">
+      <div class="star-mark" style="color:#92400e">★★</div>
+      <div class="star-body">
+        <div class="star-title">頻出問題</div>
+        <div class="star-desc">出題頻度が高く、確実に押さえておきたい重要問題。</div>
+      </div>
+    </div>
+    <div class="star-row">
+      <div class="star-mark" style="color:#b8907a">★</div>
+      <div class="star-body">
+        <div class="star-title">標準問題</div>
+        <div class="star-desc">基礎固めに最適。まず★を完璧にしてから★★★を攻略しよう。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ⑥ AIコーチ機能 -->
+<section>
+  <div class="sec-label">AI Coach</div>
+  <div class="sec-title">AIコーチ機能</div>
+  <div class="sec-desc">OpenAI APIキーを設定すると4つのAI機能が使えます</div>
+  <div class="ai-cards">
+    <div class="ai-card">
+      <div class="ai-badge">🌸</div>
+      <div class="ai-body">
+        <div class="ai-title">学習分析アドバイス</div>
+        <div class="ai-desc">正答率・連続日数・苦手分野を分析し、今日やるべき学習をパーソナライズして提案。</div>
+      </div>
+    </div>
+    <div class="ai-card">
+      <div class="ai-badge">💬</div>
+      <div class="ai-body">
+        <div class="ai-title">ミニコーチ（問題解説）</div>
+        <div class="ai-desc">問題を解いた後に表示されるチャット。解説への質問をその場でAIに聞けます。</div>
+      </div>
+    </div>
+    <div class="ai-card">
+      <div class="ai-badge">🫂</div>
+      <div class="ai-body">
+        <div class="ai-title">カウンセリングチャット</div>
+        <div class="ai-desc">勉強の不安・悩みを相談できるチャット画面。コーチが温かく寄り添います。</div>
+      </div>
+    </div>
+    <div class="ai-card">
+      <div class="ai-badge">📝</div>
+      <div class="ai-body">
+        <div class="ai-title">解説サポート</div>
+        <div class="ai-desc">正解・不正解に関わらず、問題の根拠や関連知識をAIがわかりやすく補足します。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ⑦ 今日の気分 -->
+<section>
+  <div class="sec-label">Today's Mood</div>
+  <div class="sec-title">今日の気分システム</div>
+  <div class="sec-desc">毎日ログインするとコーチの気分がランダムに変わります。セリフのトーンもそれぞれ違うから飽きずに続けられます。</div>
+  <div class="moods">
+    <div class="mood-card" style="background:rgba(220,38,38,0.06);border-color:rgba(220,38,38,0.25)">
+      <div class="mood-emoji">🔥</div>
+      <div class="mood-name" style="color:#dc2626">熱血モード</div>
+      <div class="mood-desc" style="color:#7f1d1d">力強く鼓舞する情熱的なセリフ</div>
+    </div>
+    <div class="mood-card" style="background:rgba(107,114,128,0.07);border-color:rgba(107,114,128,0.25)">
+      <div class="mood-emoji">😤</div>
+      <div class="mood-name" style="color:#4b5563">すねてるモード</div>
+      <div class="mood-desc" style="color:#374151">ぶっきらぼうだけど応援してる</div>
+    </div>
+    <div class="mood-card" style="background:rgba(124,58,237,0.07);border-color:rgba(124,58,237,0.25)">
+      <div class="mood-emoji">🥺</div>
+      <div class="mood-name" style="color:#7c3aed">不安モード</div>
+      <div class="mood-desc" style="color:#4c1d95">一緒に頑張ろうと寄り添う</div>
+    </div>
+    <div class="mood-card" style="background:rgba(37,99,235,0.06);border-color:rgba(37,99,235,0.22)">
+      <div class="mood-emoji">😎</div>
+      <div class="mood-name" style="color:#1d4ed8">クールモード</div>
+      <div class="mood-desc" style="color:#1e3a8a">無駄なく的確なアドバイス</div>
+    </div>
+    <div class="mood-card" style="background:rgba(217,119,6,0.08);border-color:rgba(217,119,6,0.28);grid-column:1/-1">
+      <div class="mood-emoji">🎉</div>
+      <div class="mood-name" style="color:#d97706">ハイテンションモード</div>
+      <div class="mood-desc" style="color:#92400e">とにかく明るく全力で背中を押す</div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑧ フッター -->
+<footer>
+  <h2>さあ、一緒に合格を目指そう</h2>
+  <p>毎日少しずつ。キャラと一緒なら続けられる。</p>
+  <a class="footer-btn" href="https://nursepass-app.github.io/nursepass/">🌟 NursePassをはじめる</a>
+  <div class="footer-note">NursePass — 看護師国家試験対策アプリ</div>
+</footer>
+
+</body>
+</html>
